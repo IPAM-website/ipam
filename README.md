@@ -1,65 +1,54 @@
-# Qwik City App ⚡️
+# IPAM
 
-- [Qwik Docs](https://qwik.dev/)
-- [Discord](https://qwik.dev/chat)
-- [Qwik GitHub](https://github.com/QwikDev/qwik)
-- [@QwikDev](https://twitter.com/QwikDev)
-- [Vite](https://vitejs.dev/)
+## What is it?
 
----
+IP Address Manager is a application useful to add, update or remove IP Addresses from a local DB.
 
-## Project Structure
+## What do we use?
 
-This project is using Qwik with [QwikCity](https://qwik.dev/qwikcity/overview/). QwikCity is just an extra set of tools on top of Qwik to make it easier to build a full site, including directory-based routing, layouts, and more.
+### Front-end and server-side
+The application uses the Qwik.js framework that permits the creation of the front-end of the web-app.
+It can also create middleware functions and API.
 
-Inside your project, you'll see the following directory structure:
+### Database
+The database we use is POSTGRES.
+Here the initial E/R (still in work in progress): https://app.gleek.io/diagrams/CeCUNLWItc0CkFVN6vzQXQ
 
-```
-├── public/
-│   └── ...
-└── src/
-    ├── components/
-    │   └── ...
-    └── routes/
-        └── ...
-```
+### Team Management
+We also use Jira to manage sprints and increments in order to easily divide work through time.
 
-- `src/routes`: Provides the directory-based routing, which can include a hierarchy of `layout.tsx` layout files, and an `index.tsx` file as the page. Additionally, `index.ts` files are endpoints. Please see the [routing docs](https://qwik.dev/qwikcity/routing/overview/) for more info.
+# How to use it?
 
-- `src/components`: Recommended directory for components.
-
-- `public`: Any static assets, like images, can be placed in the public directory. Please see the [Vite public directory](https://vitejs.dev/guide/assets.html#the-public-directory) for more info.
-
-## Add Integrations and deployment
-
-Use the `pnpm qwik add` command to add additional integrations. Some examples of integrations includes: Cloudflare, Netlify or Express Server, and the [Static Site Generator (SSG)](https://qwik.dev/qwikcity/guides/static-site-generation/).
-
+## Run the site
+For running the application in development mode, use this command:
 ```shell
-pnpm qwik add # or `pnpm qwik add`
+pnpm run dev
 ```
 
-## Development
-
-Development mode uses [Vite's development server](https://vitejs.dev/). The `dev` command will server-side render (SSR) the output during development.
-
+If you need it in production, use this instead:
 ```shell
-npm start # or `pnpm start`
+pnpm run build
 ```
 
-> Note: during dev mode, Vite may request a significant number of `.js` files. This does not represent a Qwik production build.
-
-## Preview
-
-The preview command will create a production build of the client modules, a production build of `src/entry.preview.tsx`, and run a local server. The preview server is only for convenience to preview a production build locally and should not be used as a production server.
-
+or for the previw
 ```shell
-pnpm preview # or `pnpm preview`
+pnpm previw
 ```
 
-## Production
-
-The production build will generate client and server modules by running both client and server build commands. The build command will use Typescript to run a type check on the source code.
-
+## Run the DB
+The postgres database runs inside a container using docker.
+You need first to create the .env file with this structure:
+```env
+POSTGRES_HOST= <host ip> (or localhost)
+POSTGRES_PORT=5432
+POSTGRES_USER= <user>
+POSTGRES_PASSWORD= <password>
+POSTGRES_DB= <dbname>
+```
+Then you can create the container and run it with:
 ```shell
-pnpm build # or `pnpm build`
+docker-compose up
 ```
+
+# Credits
+The site was made by Ricks and L0rexist
