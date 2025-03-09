@@ -3,7 +3,7 @@ import { component$, Slot } from "@builder.io/qwik";
 export default component$(() => {
     return (
         <>
-            <button class="w-[400px] h-10 px-4 cursor-pointer bg-black rounded-lg inline-flex justify-center items-center gap-2 text-white text-base font-medium font-['Inter'] leading-normal transition-all hover:shadow hover:-translate-0.5 active:bg-gray-800">
+            <button class="w-[400px] h-10 px-4 cursor-pointer bg-gray-950 rounded-lg inline-flex justify-center items-center gap-2 text-white text-base font-medium font-['Inter'] leading-normal transition-all hover:shadow hover:-translate-y-1 active:bg-gray-800">
                 <Slot />
             </button>
         </>

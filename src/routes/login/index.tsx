@@ -24,6 +24,7 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
   let userP = undefined;
   try {
     const query = await sql`SELECT * FROM tecnici WHERE emailtecnico = ${data.username}`;
+    //console.log(query);
 
     const user = query[0];
     if (user) {
@@ -67,18 +68,20 @@ export default component$(() => {
     if(val=="back")
       successful.value = false;
   })
-
   return (
     <>
       {
         !action.value?.success || !successful.value ?
           <Form action={action} onSubmit$={()=>{successful.value=true}} class="h-[100vh] flex flex-col justify-center items-center gap-[40px]">
-            <div>
-              <div class="relative text-center justify-center text-black text-[32px] font-semibold font-['Inter'] leading-[48px]">IPAM</div>
+            <img src="/images/datacenter1.png" alt="" class="fixed size-full" />
+            <div class="border-1 z-10 shadow-2xl border-gray-100 rounded-3xl px-6 py-12 bg-white">
+              <div class="relative text-center justify-center text-black text-[32px] font-semibold font-['Inter'] leading-[48px]">
+                <img src="../logo.svg" alt="" class="relative -top-5 w-25" /> 
+              </div>
               <div class="w-[400px] inline-flex flex-col justify-start items-center gap-6">
                 <div class="flex flex-col justify-start items-center gap-1">
-                  <div class="relative text-center justify-start text-black text-2xl font-semibold font-['Inter'] leading-9">Log in</div>
-                  <div class="relative text-center justify-start text-black text-base font-normal font-['Inter'] leading-normal">Proceed to sign in to use this app</div>
+                  <div class="relative text-center justify-start text-black text-2xl font-semibold font-['Inter'] leading-9">Sign in</div>
+                  {/* <div class="relative text-center justify-start text-black text-base font-normal font-['Inter'] leading-normal">Proceed to sign in to use this app</div> */}
                 </div>
                 <div class="flex flex-col justify-start items-start gap-4">
                   <Textbox id="email" name='username' placeholder='Email'></Textbox>
@@ -106,11 +109,11 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: "Welcome to Qwik",
+  title: "Login",
   meta: [
     {
-      name: "description",
-      content: "Qwik site description",
+      name: "Pagina di login",
+      content: "Login con successiva verifica 2FA",
     },
   ],
 };

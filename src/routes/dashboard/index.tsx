@@ -1,20 +1,24 @@
 import { $, component$, getLocale } from "@builder.io/qwik";
-import { RequestHandler } from "@builder.io/qwik-city";
+import { RequestHandler, useNavigate, routeLoader$, DocumentHead } from "@builder.io/qwik-city";
+import User from "../user"
 import jwt from "jsonwebtoken"
-import { useNavigate } from "@builder.io/qwik-city";
 
-export const onRequest: RequestHandler = async ({ cookie, redirect, locale, env }) => {
+export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
     if (cookie.has("jwt")) {
         let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
-        locale(JSON.stringify(user));
+        sharedMap.set("user",user);
     }
     else
         throw redirect(301, "/login");
 };
 
+export const useUser = routeLoader$(({ sharedMap }) => {
+    return sharedMap.get('user') as User;
+  });
+
 export default component$(() => {
 
-    const user = JSON.parse(getLocale());
+    const user : User = useUser().value;
     const nav = useNavigate();
 
     const logout = $(async () => {
@@ -41,3 +45,13 @@ export default component$(() => {
         </>
     )
 })
+
+export const head: DocumentHead = {
+  title: "Dashboard",
+  meta: [
+    {
+      name: "Pagina iniziale",
+      content: "Pagina iniziale dell'applicazione IPAM",
+    },
+  ],
+};

@@ -57,8 +57,7 @@ export const QRverify = server$(async ({ tokenP, secret }) => {
 export const QRupdateDB = server$(async ({ userP, secret }) => {
     const user = JSON.parse(userP);
     try {
-
-        const response = await sql`UPDATE tecnici SET fa=${secret}`
+        const response = await sql`UPDATE tecnici SET fa=${secret} WHERE idtecnico=${user.idtecnico}`;
         return ({ success: true });
     }
     catch (e) {
@@ -107,11 +106,14 @@ export default component$<LoginData>((props) => {
     });
 
     const verifyOTP = $(async () => {
-
+        console.log("CIAOO PORCODIO")
         verifiedClicked.value = true;
-
+        console.log(otpCode.value + " " + secret.value);
         const verifica = await QRverify({ "tokenP": otpCode.value, "secret": secret.value });
+        console.log(verifica);
 
+
+        error.value = false;
         if (verifica.success) {
             if (firstTime.value) {
                 const update = await QRupdateDB({ "userP": utente.value, "secret": secret.value });
@@ -132,13 +134,15 @@ export default component$<LoginData>((props) => {
             nav("/dashboard");
 
         } else {
+            console.log("Errore nella verifica dell'OTP");
             error.value = true;
         }
     });
 
     return (
         <>
-            <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <img src="/images/datacenter1.png" alt="" class="absolute -z-10 size-full" />
+            <div class="fixed inset-0 flex items-center justify-center bg-opacity-50 ">
                 <div class="bg-white p-6 rounded-lg shadow-lg w-96">
                     <h2 class="text-xl font-semibold text-gray-800 mb-4">Abilita 2FA</h2>
                     <p class="text-gray-600 mb-4">Scansiona questo codice QR con Google Authenticator o Authy.</p>
@@ -155,7 +159,9 @@ export default component$<LoginData>((props) => {
 
             {/* Modal di verifica OTP */}
             {showModal.value && (
-                <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                
+                <div class="fixed inset-0 flex items-center justify-center bg-opacity-50">
+                    <img src="/images/datacenter1.png" alt="" class="absolute -z-10 size-full" />
                     <div class="bg-white p-6 rounded-lg shadow-lg w-96">
                         <h2 class="text-xl font-semibold text-gray-800 mb-4">Verifica OTP</h2>
                         <p class="text-gray-600 mb-4">Inserisci il codice generato dall'app di autenticazione.</p>
@@ -179,9 +185,10 @@ export default component$<LoginData>((props) => {
                                 Annulla
                             </button>
                         </div>
-                        {verifiedClicked.value && error && <div class="text-red-600 z-10 mt-4">Errore nella verifica dell'OTP</div>}
+                        {verifiedClicked.value && error.value && <div class="text-red-600 z-10 mt-4">Errore nella verifica dell'OTP</div>}
                     </div>
                 </div>
+                
             )}
 
         </>

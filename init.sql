@@ -1,3 +1,4 @@
+-- SQLBook: Code
 -- Creazione della tabella Tecnici
 CREATE TABLE Tecnici (
     IDTecnico INTEGER NOT NULL,
@@ -18,7 +19,7 @@ CREATE TABLE Paesi(
 );
 
 CREATE TABLE Citta(
-    IDCitta SERIAL NOT NULL,
+    IDCitta SERIAL,
     nomeCitta VARCHAR(50) NOT NULL,
     IDPaese VARCHAR(15) NOT NULL,
     PRIMARY KEY (IDCitta),
