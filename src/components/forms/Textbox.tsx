@@ -1,4 +1,4 @@
-import { component$, useSignal, useTask$ } from "@builder.io/qwik";
+import { component$, useSignal} from "@builder.io/qwik";
 
 interface p{
     id: string,

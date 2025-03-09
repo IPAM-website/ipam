@@ -1,4 +1,4 @@
-import { component$, useSignal, useTask$, $, useStore } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, $, useStore, PropFunction } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
@@ -8,7 +8,8 @@ import sql from "../../../db"
 
 
 interface LoginData {
-    userP?: string;
+    userP?: string,
+    onValueChange$?: PropFunction<(value: string) => void>;
 }
 
 export const getQR = server$(async () => {
@@ -21,11 +22,6 @@ export const getQR = server$(async () => {
 
         const qrCodeDataUrl = await QRCode.toDataURL(secret.otpauth_url);
 
-        /*json(200, {
-          secret: secret.base32,
-          qrCode: qrCodeDataUrl,
-        });*/
-        //console.log("🔑 Secret utilizzato per la verifica:", secret);
         return {
             secret: secret.base32,
             qrCode: qrCodeDataUrl,
@@ -33,7 +29,6 @@ export const getQR = server$(async () => {
         }
     } catch (error) {
         console.error("Errore API 2FA:", error);
-        // json(500, { error: "Errore durante la generazione del 2FA" });
         return {
             secret: null,
             qrCode: null,
@@ -43,9 +38,6 @@ export const getQR = server$(async () => {
 });
 
 export const QRverify = server$(async ({ tokenP, secret }) => {
-    //console.log("👉 Token ricevuto:", tokenP);
-    //console.log("👉 Secret ricevuto:", secret);
-    //console.log("🕒 Ora server:", new Date().toISOString());
     const token = String(tokenP).trim();
     try {
 
@@ -54,21 +46,16 @@ export const QRverify = server$(async ({ tokenP, secret }) => {
             encoding: "base32",
             token
         });
-        //console.log("👉 Verificato:", verified);
 
         return verified ? { success: true, error: "OTP Verificato!" } : { success: false, error: "Verifica dell'OTP non andata a buon fine" };
-        //json(verified ? 200 : 400, { success: verified });
     } catch (error) {
         console.error("Errore nella verifica OTP:", error);
-        //json(500, { error: "Errore durante la verifica OTP" });
         return { success: false, error: "Errore durante la verifica OTP" }
     }
 });
 
 export const QRupdateDB = server$(async ({ userP, secret }) => {
     const user = JSON.parse(userP);
-    // console.log(user);
-    // console.log(secret);
     try {
 
         const response = await sql`UPDATE tecnici SET fa=${secret}`
@@ -80,7 +67,6 @@ export const QRupdateDB = server$(async ({ userP, secret }) => {
 });
 
 export default component$<LoginData>((props) => {
-    //console.log("👉 Props:", props.userP);
     const nav = useNavigate();
     const qrCode = useSignal<string | null>(null);
     const secret = useSignal<string | null>(null);
@@ -89,18 +75,20 @@ export default component$<LoginData>((props) => {
     const utente = useSignal(props.userP);
     const error = useSignal(false);
     const firstTime = useSignal(false);
+    const verifiedClicked = useSignal(false);
     const cookie = useStore({
         mail: "",
+        admin: false,
         expire: ""
     })
 
 
     useTask$(async () => {
-        //console.log("👉 Utente:", utente.value);
         if (utente.value) {
             const user = JSON.parse(utente.value);
             console.log(user);
             cookie.mail = user.emailtecnico;
+            cookie.admin = user.admin;
             const expires = new Date();
             expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000));
             cookie.expire = expires.toUTCString();
@@ -116,12 +104,12 @@ export default component$<LoginData>((props) => {
                 showModal.value = true;
             }
         }
-
-        //console.log(faResult);
     });
 
-
     const verifyOTP = $(async () => {
+
+        verifiedClicked.value = true;
+
         const verifica = await QRverify({ "tokenP": otpCode.value, "secret": secret.value });
 
         if (verifica.success) {
@@ -133,13 +121,14 @@ export default component$<LoginData>((props) => {
                     console.log("Errore nell'aggiornamento del DB!");
             }
 
-            await fetch("/api/cookie",{
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
+            await fetch("/api/cookie", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
                 },
-                body:JSON.stringify(cookie)
+                body: JSON.stringify(cookie)
             })
+
             nav("/dashboard");
 
         } else {
@@ -178,22 +167,23 @@ export default component$<LoginData>((props) => {
                         />
                         <div class="flex justify-between">
                             <button
-                                class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition"
+                                class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600 transition cursor-pointer"
                                 onClick$={verifyOTP}
                             >
                                 Verifica
                             </button>
                             <button
-                                class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
-                                onClick$={() => showModal.value = false}
+                                class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition cursor-pointer"
+                                onClick$={() => props.onValueChange$?.("back")}
                             >
                                 Annulla
                             </button>
                         </div>
+                        {verifiedClicked.value && error && <div class="text-red-600 z-10 mt-4">Errore nella verifica dell'OTP</div>}
                     </div>
                 </div>
             )}
-            {error && <div>Errore nella verifica dell'OTP</div>}
+
         </>
     );
 });

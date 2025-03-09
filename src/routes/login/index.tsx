@@ -1,14 +1,21 @@
-import { component$ } from "@builder.io/qwik";
+import { $, component$, useSignal } from "@builder.io/qwik";
 import { DocumentHead, RequestEventAction, routeAction$, Form, zod$, z, RequestHandler } from "@builder.io/qwik-city";
-import Textbox from '~/components/forms/Textbox/Textbox';
-import FMButton from '~/components/forms/FMButton/FMButton';
-import Password from '~/components/forms/Password/Password';
+import Textbox from '~/components/forms/Textbox';
+import FMButton from '~/components/forms/FMButton';
+import Password from '~/components/forms/Password';
 import sql from '../../../db';
 import FA from "~/components/auth/FA";
+import jwt from "jsonwebtoken";
 
-export const onGet : RequestHandler = async ({query,redirect})=>{
-  if(query.has("bomboclaat") && query.get("bomboclaat")=="true")
-    throw redirect(302,"/dashboard")
+export const onGet: RequestHandler = async ({ cookie, redirect, env }) => {
+  if (cookie.has("jwt")) {
+    try{
+      const user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
+      throw redirect(301, "/dashboard");
+    }catch{
+
+    }
+  }
 }
 
 export const useLogin = routeAction$(async (data, requestEvent: RequestEventAction) => {
@@ -23,7 +30,7 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
       if (user.pwdtecnico === data.pwd && user.fa == "") {
         success = true;
         message = "Login effettuato con successo"
-        userP  = JSON.stringify(user);
+        userP = JSON.stringify(user);
       }
       else if (user.pwdtecnico === data.pwd && user.fa != "") {
         success = true;
@@ -54,39 +61,46 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
 
 export default component$(() => {
   const action = useLogin();
+  const successful = useSignal(false);
+  
+  const revert = $(async(val:string)=>{
+    if(val=="back")
+      successful.value = false;
+  })
+
   return (
     <>
-    {
-      !action.value?.success ?
-      <Form action={action} class="h-[100vh] flex flex-col justify-center items-center gap-[40px]">
-        <div>
-          <div class="relative text-center justify-center text-black text-[32px] font-semibold font-['Inter'] leading-[48px]">IPAM</div>
-          <div class="w-[400px] inline-flex flex-col justify-start items-center gap-6">
-            <div class="flex flex-col justify-start items-center gap-1">
-              <div class="relative text-center justify-start text-black text-2xl font-semibold font-['Inter'] leading-9">Log in</div>
-              <div class="relative text-center justify-start text-black text-base font-normal font-['Inter'] leading-normal">Proceed to sign in to use this app</div>
+      {
+        !action.value?.success || !successful.value ?
+          <Form action={action} onSubmit$={()=>{successful.value=true}} class="h-[100vh] flex flex-col justify-center items-center gap-[40px]">
+            <div>
+              <div class="relative text-center justify-center text-black text-[32px] font-semibold font-['Inter'] leading-[48px]">IPAM</div>
+              <div class="w-[400px] inline-flex flex-col justify-start items-center gap-6">
+                <div class="flex flex-col justify-start items-center gap-1">
+                  <div class="relative text-center justify-start text-black text-2xl font-semibold font-['Inter'] leading-9">Log in</div>
+                  <div class="relative text-center justify-start text-black text-base font-normal font-['Inter'] leading-normal">Proceed to sign in to use this app</div>
+                </div>
+                <div class="flex flex-col justify-start items-start gap-4">
+                  <Textbox id="email" name='username' placeholder='Email'></Textbox>
+                  {action.value?.failed && action.value?.fieldErrors.username && (<div class="text-sm text-red-600 ms-2">{action.value?.fieldErrors.username}</div>)}
+                  <Password id="password" name='pwd' placeholder='Password'></Password>
+                  {action.value?.failed && action.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 ms-2">{action.value?.fieldErrors.pwd}</div>)}
+                  <FMButton>Sign in</FMButton>
+                </div>
+                <div class="self-stretch relative text-center justify-start">
+                  <span class="text-[#828282] text-base font-normal font-['Inter'] leading-normal">By clicking continue, you agree to our </span>
+                  <span class="text-black text-base font-normal font-['Inter'] leading-normal">Terms of Service</span>
+                  <span class="text-[#828282] text-base font-normal font-['Inter'] leading-normal"> and </span>
+                  <span class="text-black text-base font-normal font-['Inter'] leading-normal">Privacy Policy</span>
+                </div>
+              </div>
+              {action.value && action.value.message && successful.value && (<p class={action.value.success ? "bg-green-500 mt-2 p-3 rounded-md text-gray-100" : "bg-red-500 mt-2 p-3 rounded-md text-gray-100"} >{action.value.message}</p>)}
             </div>
-            <div class="flex flex-col justify-start items-start gap-4">
-              <Textbox id="email" name='username' placeholder='Email'></Textbox>
-              {action.value?.failed && action.value?.fieldErrors.username && (<div class="text-sm text-red-600 ms-2">{action.value?.fieldErrors.username}</div>)}
-              <Password id="password" name='pwd' placeholder='Password'></Password>
-              {action.value?.failed && action.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 ms-2">{action.value?.fieldErrors.pwd}</div>)}
-              <FMButton>Sign in</FMButton>
-            </div>
-            <div class="self-stretch relative text-center justify-start">
-              <span class="text-[#828282] text-base font-normal font-['Inter'] leading-normal">By clicking continue, you agree to our </span>
-              <span class="text-black text-base font-normal font-['Inter'] leading-normal">Terms of Service</span>
-              <span class="text-[#828282] text-base font-normal font-['Inter'] leading-normal"> and </span>
-              <span class="text-black text-base font-normal font-['Inter'] leading-normal">Privacy Policy</span>
-            </div>
-          </div>
-          {action.value && action.value.message && (<p class={action.value.success ? "bg-green-500 mt-2 p-3 rounded-md text-gray-100" : "bg-red-500 mt-2 p-3 rounded-md text-gray-100"} >{action.value.message}</p>)}
-        </div>
-      </Form>
-      :
-      <FA userP={action.value.userP}></FA>
+          </Form>
+          :
+          <FA userP={action.value.userP} onValueChange$={revert}></FA>
       }
-      
+
     </>
   );
 });

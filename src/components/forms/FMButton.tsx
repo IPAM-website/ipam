@@ -1,10 +1,5 @@
 import { component$, Slot } from "@builder.io/qwik";
 
-
-interface p {
-
-}
-
 export default component$(() => {
     return (
         <>

@@ -1,30 +1,43 @@
-import { component$, getLocale } from "@builder.io/qwik";
+import { $, component$, getLocale } from "@builder.io/qwik";
 import { RequestHandler } from "@builder.io/qwik-city";
-import sql from "../../../db"
+import jwt from "jsonwebtoken"
+import { useNavigate } from "@builder.io/qwik-city";
 
-export const onRequest: RequestHandler = async ({request,cookie,redirect,locale }) => {
-    if(cookie.has("mail"))
-        console.log(cookie.get("mail")!.value);
+export const onRequest: RequestHandler = async ({ cookie, redirect, locale, env }) => {
+    if (cookie.has("jwt")) {
+        let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
+        locale(JSON.stringify(user));
+    }
     else
-        throw redirect(301,"/login");
-    const mail = cookie.get("mail")!.value;
-
-    const query = await sql`SELECT * FROM tecnici WHERE emailtecnico=${mail}`
-    const user = query[0];
-
-    locale(JSON.stringify(user));
+        throw redirect(301, "/login");
 };
 
-export default component$(()=>{
+export default component$(() => {
 
-    const loc = getLocale();
-    const user = JSON.parse(loc);
+    const user = JSON.parse(getLocale());
+    const nav = useNavigate();
+
+    const logout = $(async () => {
+        const request = await fetch("/api/cookie", { method: "DELETE" });
+        const response = await request.json();
+
+        if (response.success)
+            nav("/login");
+
+    })
+
     return (
         <>
             <div>
                 SEI NELLA DASHBOARD!!
             </div>
-            {user.admin ? "Sei admin" : "Non sei admin"}
+            <div>
+                {user.mail}
+                {user.admin ? <p>Sei admin!</p> : <p>Non sei admin 😱​</p>}
+            </div>
+            <div>
+                <button onClick$={logout}>Log out</button>
+            </div>
         </>
     )
 })

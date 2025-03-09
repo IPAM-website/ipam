@@ -1,10 +1,5 @@
 import { component$ } from "@builder.io/qwik";
-import { DocumentHead, RequestEventAction, routeAction$, Form, zod$, z, RequestHandler } from "@builder.io/qwik-city";
-import Textbox from '~/components/forms/Textbox/Textbox';
-import FMButton from '~/components/forms/FMButton/FMButton';
-import Password from '~/components/forms/Password/Password';
-import sql from '../../db';
-import FA from "~/components/auth/FA";
+import { DocumentHead, RequestHandler } from "@builder.io/qwik-city";
 
 export const onRequest: RequestHandler = async ({redirect}) => {
   throw redirect(301,"/login");
