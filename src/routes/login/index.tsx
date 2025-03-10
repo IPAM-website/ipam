@@ -3,7 +3,7 @@ import { DocumentHead, RequestEventAction, routeAction$, Form, zod$, z, RequestH
 import Textbox from '~/components/forms/Textbox';
 import FMButton from '~/components/forms/FMButton';
 import Password from '~/components/forms/Password';
-import sql from '../../../db';
+import sql from "../../../db"
 import FA from "~/components/auth/FA";
 import jwt from "jsonwebtoken";
 
@@ -73,12 +73,12 @@ export default component$(() => {
       {
         !action.value?.success || !successful.value ?
           <Form action={action} onSubmit$={()=>{successful.value=true}} class="h-[100vh] flex flex-col justify-center items-center gap-[40px]">
-            <img src="/images/datacenter1.png" alt="" class="fixed size-full" />
-            <div class="border-1 z-10 shadow-2xl border-gray-100 rounded-3xl px-6 py-12 bg-white">
+            <img src="/images/datacenter1.png" alt="" class="fixed size-full -top-1 md:top-0" />
+            <div class="border-1 z-10 shadow-2xl border-gray-100 rounded-3xl px-4 py-8 md:px-6 md:py-12 bg-white">
               <div class="relative text-center justify-center text-black text-[32px] font-semibold font-['Inter'] leading-[48px]">
                 <img src="../logo.svg" alt="" class="relative -top-5 w-25" /> 
               </div>
-              <div class="w-[400px] inline-flex flex-col justify-start items-center gap-6">
+              <div class="w-[340px]  md:w-[400px] inline-flex flex-col justify-start items-center gap-6">
                 <div class="flex flex-col justify-start items-center gap-1">
                   <div class="relative text-center justify-start text-black text-2xl font-semibold font-['Inter'] leading-9">Sign in</div>
                   {/* <div class="relative text-center justify-start text-black text-base font-normal font-['Inter'] leading-normal">Proceed to sign in to use this app</div> */}
