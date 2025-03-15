@@ -1,25 +1,24 @@
 import { component$ } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { DocumentHead, RequestHandler } from "@builder.io/qwik-city";
+
+export const onRequest: RequestHandler = async ({redirect}) => {
+  throw redirect(301,"/login");
+};
+
 
 export default component$(() => {
   return (
     <>
-      <h1>Hi 👋</h1>
-      <div>
-        Can't wait to see what you build with qwik!
-        <br />
-        Happy coding.
-      </div>
     </>
   );
 });
 
 export const head: DocumentHead = {
-  title: "Welcome to Qwik",
+  title: "IPAM",
   meta: [
     {
-      name: "description",
-      content: "Qwik site description",
+      name: "IPAM",
+      content: "IPAM",
     },
   ],
 };
