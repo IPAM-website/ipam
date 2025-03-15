@@ -24,7 +24,6 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
   let userP = undefined;
   try {
     const query = await sql`SELECT * FROM tecnici WHERE emailtecnico = ${data.username}`;
-    //console.log(query);
 
     const user = query[0];
     if (user) {
