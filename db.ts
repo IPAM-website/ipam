@@ -14,4 +14,6 @@ const sql = postgres({
     port: parseInt(POSTGRES_PORT || '5432')
 });
 
+console.log('Connected to PostgreSQL')
+
 export default sql;
