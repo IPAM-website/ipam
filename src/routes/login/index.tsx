@@ -10,11 +10,11 @@ import jwt from "jsonwebtoken";
 export const onGet: RequestHandler = async ({ cookie, redirect, env }) => {
   if (cookie.has("jwt")) {
     try{
-      const user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
-      throw redirect(301, "/dashboard");
+      jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
     }catch{
-
+      return;
     }
+    throw redirect(302, "/dashboard");
   }
 }
 

@@ -85,7 +85,7 @@ export default component$<LoginData>((props) => {
     useTask$(async () => {
         if (utente.value) {
             const user = JSON.parse(utente.value);
-            console.log(user);
+            // console.log(user);
             cookie.mail = user.emailtecnico;
             cookie.admin = user.admin;
             const expires = new Date();
@@ -106,21 +106,17 @@ export default component$<LoginData>((props) => {
     });
 
     const verifyOTP = $(async () => {
-        console.log("CIAOO PORCODIO")
         verifiedClicked.value = true;
-        console.log(otpCode.value + " " + secret.value);
+        // console.log(otpCode.value + " " + secret.value);
         const verifica = await QRverify({ "tokenP": otpCode.value, "secret": secret.value });
-        console.log(verifica);
+        // console.log(verifica);
 
 
         error.value = false;
         if (verifica.success) {
             if (firstTime.value) {
                 const update = await QRupdateDB({ "userP": utente.value, "secret": secret.value });
-                if (update.success)
-                    console.log("DB Aggiornato!");
-                else
-                    console.log("Errore nell'aggiornamento del DB!");
+                
             }
 
             await fetch("/api/cookie", {

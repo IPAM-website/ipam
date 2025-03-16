@@ -5,14 +5,6 @@ export const onRequest: RequestHandler = async ({redirect}) => {
   throw redirect(301,"/login");
 };
 
-
-export default component$(() => {
-  return (
-    <>
-    </>
-  );
-});
-
 export const head: DocumentHead = {
   title: "IPAM",
   meta: [
