@@ -12,19 +12,22 @@ export const useClients = server$(async () => {
     return query;
   }
   catch {
-    return {
-      errore: "SI"
-    }
+    throw new Error("ciadi");
   }
-
 
 })
 
 export const ClientList = component$<ClientListProps>((props) => {
   const clientList = useSignal<ClientInfo[] | null>(null)
   useTask$(async () => {
-    clientList.value = await useClients() as any;
-    console.log(clientList.value);
+    try
+    {
+      clientList.value = await useClients() as any;
+      console.log(clientList.value);
+    }
+    catch{
+      clientList.value = null;
+    }
   })
 
   return (
@@ -40,7 +43,9 @@ export const ClientList = component$<ClientListProps>((props) => {
         )
       }) 
       : 
-      <p>Non ci sono clienti.</p>
+      <div class={"cursor-pointer justify-center flex-auto p-6 bg-white rounded-lg shadow-md outline-1 outline-offset-[-1px] outline-gray-300 flex items-start gap-4"}>
+        <p class="font-semibold">Non ci sono clienti</p>
+      </div>
       }
       {/* <div class="w-[363px] h-[272px] p-6 left-[75px] top-[202px] absolute bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] outline outline-1 outline-offset-[-1px] outline-[#dfdfdf] inline-flex flex-col justify-start items-start gap-4 overflow-hidden">
                 <img class="w-[311px] h-[162px] rounded-[40px] border border-black/20" src="https://placehold.co/311x162" />

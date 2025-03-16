@@ -8,6 +8,7 @@ import TimeDiv from "~/components/utils/TimeDiv";
 import { ClientList } from "~/components/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 
+
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
     if (cookie.has("jwt")) {
         let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
@@ -26,14 +27,7 @@ export default component$(() => {
     const user: User = useUser().value;
     const nav = useNavigate();
 
-    const logout = $(async () => {
-        const request = await fetch("/api/cookie", { method: "DELETE" });
-        const response = await request.json();
-
-        if (response.success)
-            nav("/login");
-
-    })
+    
 
     
 
