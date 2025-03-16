@@ -1,6 +1,8 @@
-import { component$, Slot } from "@builder.io/qwik";
-import { useLocation, type RequestHandler } from "@builder.io/qwik-city";
+import { component$, Slot, useVisibleTask$ } from "@builder.io/qwik";
+import { routeLoader$, useLocation, type RequestHandler } from "@builder.io/qwik-city";
+import { selectSearchbar } from "~/components/forms/SearchBar";
 import Navbar from "~/components/layout/Navbar";
+import Sidebar, { toggleSidebar } from "~/components/layout/Sidebar";
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
   // Control caching for this request for best performance and to reduce hosting costs:
@@ -14,11 +16,29 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
 };
 
 export default component$(() => {
+
   const location = useLocation();
-  console.log(location.url.pathname);
+
+  useVisibleTask$(({ cleanup }) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === 's') {
+        event.preventDefault();
+        toggleSidebar();
+      }
+      if (event.ctrlKey && event.key === 'k') {
+        event.preventDefault();
+        selectSearchbar();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    cleanup(() => document.removeEventListener('keydown', handleKeyDown));
+  });
+
   return (
     <>
-      {location.url.pathname!=='/login/' && <Navbar />}
+      {location.url.pathname !== '/login/' && <Sidebar />}
+      {location.url.pathname !== '/login/' && <Navbar />}
       <Slot />
     </>
   );

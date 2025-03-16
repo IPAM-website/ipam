@@ -23,7 +23,6 @@ export const ClientList = component$<ClientListProps>((props) => {
     try
     {
       clientList.value = await useClients() as any;
-      console.log(clientList.value);
     }
     catch{
       clientList.value = null;
@@ -47,22 +46,6 @@ export const ClientList = component$<ClientListProps>((props) => {
         <p class="font-semibold">Non ci sono clienti</p>
       </div>
       }
-      {/* <div class="w-[363px] h-[272px] p-6 left-[75px] top-[202px] absolute bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] outline outline-1 outline-offset-[-1px] outline-[#dfdfdf] inline-flex flex-col justify-start items-start gap-4 overflow-hidden">
-                <img class="w-[311px] h-[162px] rounded-[40px] border border-black/20" src="https://placehold.co/311x162" />
-                <div class="self-stretch text-center justify-start text-black text-[40px] font-semibold font-['Inter'] leading-[44px]">Stellantis</div>
-            </div>
-            <div class="w-[363px] h-[272px] p-6 left-[536px] top-[202px] absolute bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] outline outline-1 outline-offset-[-1px] outline-[#dfdfdf] inline-flex flex-col justify-start items-start gap-4 overflow-hidden">
-                <div class="w-[314px] h-[161px] relative overflow-hidden">
-                    <img class="w-[154px] h-[154px] left-[85px] top-[7px] absolute" src="https://placehold.co/154x154" />
-                </div>
-                <div class="self-stretch text-center justify-start text-black text-[40px] font-semibold font-['Inter'] leading-[44px]">Iveco</div>
-            </div>
-            <div class="w-[363px] h-[272px] p-6 left-[997px] top-[202px] absolute bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] outline outline-1 outline-offset-[-1px] outline-[#dfdfdf] inline-flex flex-col justify-start items-start gap-4 overflow-hidden">
-                <div class="w-[314px] h-[161px] relative overflow-hidden">
-                    <img class="w-40 h-40 left-[80px] top-[10px] absolute" src="https://placehold.co/160x160" />
-                </div>
-                <div class="self-stretch text-center justify-start text-black text-[40px] font-semibold font-['Inter'] leading-[44px]">CNH</div>
-            </div> */}
     </div>
   );
 });

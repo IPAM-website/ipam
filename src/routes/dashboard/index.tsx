@@ -1,10 +1,7 @@
-import { $, component$, getLocale } from "@builder.io/qwik";
+import { $, component$, getLocale, useVisibleTask$ } from "@builder.io/qwik";
 import { RequestHandler, useNavigate, routeLoader$, DocumentHead, Form, routeAction$ } from "@builder.io/qwik-city";
 import User from "../user"
 import jwt from "jsonwebtoken"
-import Navbar from "~/components/layout/Navbar";
-import SearchBar from "~/components/forms/SearchBar";
-import TimeDiv from "~/components/utils/TimeDiv";
 import { ClientList } from "~/components/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 
@@ -25,11 +22,6 @@ export const useUser = routeLoader$(({ sharedMap }) => {
 export default component$(() => {
 
     const user: User = useUser().value;
-    const nav = useNavigate();
-
-    
-
-    
 
     return (
         <div class="size-full px-24 lg:px-40">

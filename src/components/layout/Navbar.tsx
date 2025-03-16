@@ -1,6 +1,8 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { NavLink } from "../NavLink/NavLink";
-import { useNavigate } from "@builder.io/qwik-city";
+import { server$, useNavigate } from "@builder.io/qwik-city";
+import { toggleSidebar } from "./Sidebar";
+
 
 export default component$(() => {
     const clicked = useSignal(false);
@@ -14,7 +16,13 @@ export default component$(() => {
     return (
         <>
             <div class="w-full h-16 bg-white border-b border-[#dfdfdf] mb-8 flex *:h-full *:items-center">
-                <div class="w-1/12 flex-none"></div>
+                <div class="w-1/12 flex-none flex justify-end pe-2 items-center">
+                    <button class="cursor-pointer" onClick$={toggleSidebar}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    </button>
+                </div>
                 <div class="w-9/12 flex flex-auto">
                     <span class="font-['Inter'] leading-[30px] text-black text-xl font-semibold">
                         IP Address Manager
