@@ -1,21 +1,20 @@
 import { component$ } from "@builder.io/qwik";
-import SearchBar from "~/components/forms/SearchBar";
+import { DocumentHead } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
-import TimeDiv from "~/components/utils/TimeDiv";
 
 export default component$(() => {
     return (
         <>
             <div class="size-full px-24 lg:px-40 bg-white overflow-hidden">
-                <Title haveReturn={true}>Admin Panel</Title>
+                <Title haveReturn={true} url={"/dashboard"}>Admin Panel</Title>
                 <div class="w-[418px] h-[194px] left-[595px] top-[295px] absolute rounded-lg outline outline-1 outline-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
                     <div class="flex-1 self-stretch inline-flex flex-col justify-start items-start">
                         <div class="self-stretch h-[46px] relative border-b border-[#f3f3f3] overflow-hidden">
                             <div class="left-[19px] top-[11px] absolute justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Operazioni</div>
                         </div>
-                        <div class="self-stretch px-[19px] py-[11px] inline-flex justify-between items-center overflow-hidden">
+                        <a href="/admin/panel/tecnici" class="self-stretch px-[19px] py-[11px] inline-flex justify-between overflow-hidden cursor-pointer hover:bg-gray-100 transition-all duration-300">
                             <div class="flex-1 text-center justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Mostra tutti i tecnici</div>
-                        </div>
+                        </a>
                         <div class="self-stretch px-[19px] pt-4 pb-[11px] border-t border-[#dfdfdf] inline-flex justify-between items-center overflow-hidden">
                             <div class="flex-1 text-center justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Mostra tutti i clienti</div>
                         </div>
@@ -79,3 +78,13 @@ export default component$(() => {
         </>
     )
 })
+
+export const head: DocumentHead = {
+    title: "Admin",
+    meta: [
+        {
+            name: "Pagina admin principale",
+            content: "Pagina admin principale dell'applicazione IPAM",
+        },
+    ],
+};
