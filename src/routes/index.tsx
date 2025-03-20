@@ -1,7 +1,7 @@
 import { DocumentHead, RequestHandler } from "@builder.io/qwik-city";
 
 export const onRequest: RequestHandler = async ({ redirect }) => {
-  throw redirect(301, "/login");
+  throw redirect(301, "/en/login");
 };
 
 export const head: DocumentHead = {

@@ -1,0 +1,16 @@
+{
+  "locale": "en",
+  "translations": {
+    "5207635742003539443":"Sign in",
+    "6077045869797750459":"By clicking continue, you agree to our",
+    "2029980907058777630":"Terms of Service",
+    "3929281485914893910":"and",
+    "2585958892463641363":"Privacy Policys",
+    "3772290441537700308":"Username too short",
+    "7383227514091429688":"Password too short",
+    "1677142486230902467":"Server error",
+    "7551070384507798224":"Login successful",
+    "8847661777635151729":"Wrong password",
+    "6941098502806709171":"Wrong username"
+  }
+}
