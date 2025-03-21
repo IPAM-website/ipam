@@ -7,7 +7,7 @@ export default component$(() => {
         <>
             <div class="size-full px-24 lg:px-40 bg-white overflow-hidden">
                 <Title haveReturn={true} url={"/dashboard"}>Admin Panel</Title>
-                <div class="w-[418px] h-[194px] left-[595px] top-[295px] absolute rounded-lg outline outline-1 outline-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
+                <div class="w-[418px] h-[194px] left-[595px] top-[295px] absolute rounded-lg outline-1 outline-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
                     <div class="flex-1 self-stretch inline-flex flex-col justify-start items-start">
                         <div class="self-stretch h-[46px] relative border-b border-[#f3f3f3] overflow-hidden">
                             <div class="left-[19px] top-[11px] absolute justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Operazioni</div>
@@ -23,7 +23,7 @@ export default component$(() => {
                         </div>
                     </div>
                 </div>
-                <div class="w-[909px] h-[344px] p-2 left-[104px] top-[701px] absolute rounded-lg outline outline-1 outline-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
+                <div class="w-[909px] h-[344px] p-2 left-[104px] top-[701px] absolute rounded-lg outline-1 outline-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
                     <div class="flex-1 self-stretch relative inline-flex flex-col justify-start items-start">
                         <div class="self-stretch h-[46px] relative border-b border-[#f3f3f3] overflow-hidden">
                             <div class="left-[19px] top-[11px] absolute justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Logs</div>
@@ -44,11 +44,11 @@ export default component$(() => {
                             <div class="flex-1 justify-start text-black text-base font-normal font-['Inter'] leading-normal">Aggiunto nuovo tecnico “Mario”</div>
                         </div>
                         <div data-size="48" class="w-6 h-6 left-[69px] top-[11px] absolute overflow-hidden">
-                            <div class="w-[18px] h-[18px] left-[3px] top-[3px] absolute outline outline-2 outline-offset-[-1px] outline-[#1e1e1e]" />
+                            <div class="w-[18px] h-[18px] left-[3px] top-[3px] absolute outline-2 outline-offset-[-1px] outline-[#1e1e1e]" />
                         </div>
                     </div>
                 </div>
-                <div class="w-[427px] px-5 py-3 left-[100px] top-[295px] absolute rounded-lg outline outline-1 outline-[#cdcdcd] inline-flex flex-col justify-start items-start gap-1 overflow-hidden">
+                <div class="w-[427px] px-5 py-3 left-[100px] top-[295px] absolute rounded-lg outline-1 outline-[#cdcdcd] inline-flex flex-col justify-start items-start gap-1 overflow-hidden">
                     <div class="self-stretch h-[50px] relative overflow-hidden">
                         <div class="left-0 top-[10px] absolute justify-start text-black text-xl font-semibold font-['Inter'] leading-[30px]">Informazioni Varie</div>
                     </div>
