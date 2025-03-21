@@ -6,6 +6,7 @@ import {
 } from "@builder.io/qwik-city";
 import { RouterHead } from "./components/router-head/router-head";
 import { isDev } from "@builder.io/qwik";
+// import setTheme from "../public/utils/spaghetti?raw"
 
 import "./global.css";
 

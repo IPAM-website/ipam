@@ -1,4 +1,4 @@
-import { component$, useSignal, useTask$, $, useStore, PropFunction } from '@builder.io/qwik';
+import { component$, useSignal, useTask$, $, useStore, PropFunction, getLocale } from '@builder.io/qwik';
 import type { DocumentHead } from '@builder.io/qwik-city';
 import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
@@ -127,7 +127,7 @@ export default component$<LoginData>((props) => {
                 body: JSON.stringify(cookie)
             })
 
-            nav("/dashboard");
+            nav("/"+getLocale("en")+"/dashboard");
 
         } else {
             console.log("Errore nella verifica dell'OTP");
