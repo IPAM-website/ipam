@@ -4,6 +4,20 @@ import jwt from "jsonwebtoken"
 import Title from "~/components/layout/Title";
 import sql from "~/../db";
 import LogsList from "~/components/utils/LogsList";
+import User from "~/routes/user";
+
+export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
+    if (cookie.has("jwt")) {
+        let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
+        sharedMap.set("user", user);
+    }
+    else
+        throw redirect(301, "/login");
+};
+
+export const useUser = routeLoader$(({ sharedMap }) => {
+    return sharedMap.get('user') as User;
+});
 
 interface infoProps {
     ntecnici: string,

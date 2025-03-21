@@ -2,7 +2,7 @@ import { component$, getLocale, useSignal, useTask$ } from "@builder.io/qwik";
 import { DocumentHead, server$, useLocation } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import Table from "~/components/table/Table";
-import sql from "../../../../../../db";
+import sql from "~/../db";
 
 export const useTecnici = server$(async () => {
   try {
