@@ -2,7 +2,7 @@ import { component$, useSignal, useTask$ } from "@builder.io/qwik";
 import { DocumentHead, RequestHandler, routeLoader$, server$ } from "@builder.io/qwik-city";
 import jwt from "jsonwebtoken"
 import Title from "~/components/layout/Title";
-import sql from "../../../../db";
+import sql from "~/../db";
 import LogsList from "~/components/utils/LogsList";
 
 interface infoProps {
@@ -69,31 +69,31 @@ export default component$(() => {
     return (
         <>
             <div class="size-full px-24 lg:px-40 bg-white overflow-hidden">
-                <Title haveReturn={true}>Admin Panel</Title>
+                <Title haveReturn={true}>{$localize`Admin Panel`}</Title>
                 <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
                     <div class="w-full md:w-72 flex-4 px-5 py-3  rounded-lg border-1 border-[#cdcdcd] inline-flex flex-col justify-start items-start gap-1">
                         <div class="h-[50px] w-full flex items-center overflow-hidden">
-                            <div class="text-black text-xl font-semibold">Informazioni Varie</div>
+                            <div class="text-black text-xl font-semibold">{$localize`Informazioni Varie`}</div>
                         </div>
                         <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">Numero tecnici</div>
+                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero tecnici`}</div>
                             <div class="justify-start text-black text-xl font-normal">{info.value?.ntecnici}</div>
                         </div>
                         <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">Numero clienti</div>
+                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero clienti`}</div>
                             <div class="justify-start text-black text-xl font-normal">{info.value?.nclienti}</div>
                         </div>
                         <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">Numero siti</div>
+                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero siti`}</div>
                             <div class="justify-start text-black text-xl font-normal">{info.value?.nsiti}</div>
                         </div>
                         <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">Numero medio di clienti per tecnico</div>
+                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero medio di clienti per tecnico`}</div>
                             <div class="justify-start text-black text-xl font-normal">{info.value?.rapct}</div>
                         </div>
                         <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">Numero medio di siti per tecnico</div>
+                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero medio di siti per tecnico`}</div>
                             <div class="justify-start text-black text-xl font-normal">{info.value?.rapst}</div>
                         </div>
                     </div>
@@ -101,16 +101,16 @@ export default component$(() => {
                     <div class="flex-initial rounded-lg border-1 border-[#cdcdcd]">
                         <div class="flex-1 flex flex-col *:p-2 cursor-pointer">
                             <div class="flex flex-1 border-b border-[#f3f3f3]">
-                                <div class="text-center w-full text-black text-base font-semibold font-['Inter']">Operazioni</div>
+                                <div class="text-center w-full text-black text-base font-semibold font-['Inter']">{$localize`Operazioni`}</div>
                             </div>
                             <div class="flex flex-1 border-b border-gray-100">
-                                <a href="/admin/panel/technicians" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">Mostra tutti i tecnici</a>
+                                <a href="/admin/panel/technicians" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i tecnici`}</a>
                             </div>
                             <div class="flex flex-1 border-b border-gray-100">
-                                <a href="/admin/panel/clients" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">Mostra tutti i clienti</a>
+                                <a href="/admin/panel/clients" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i clienti`}</a>
                             </div>
                             <div class="flex flex-1 border-b border-gray-100">
-                                <a href="/admin/panel/links" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">Gestisci rapporto tecnico - clienti</a>
+                                <a href="/admin/panel/links" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Gestisci rapporto tecnico - clienti`}</a>
                             </div>
                         </div>
                     </div>

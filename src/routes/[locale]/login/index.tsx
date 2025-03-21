@@ -3,18 +3,18 @@ import { DocumentHead, RequestEventAction, routeAction$, Form, zod$, z, RequestH
 import Textbox from '~/components/forms/Textbox';
 import FMButton from '~/components/forms/FMButton';
 import Password from '~/components/forms/Password';
-import sql from "../../../../db"
+import sql from "~/../db"
 import FA from "~/components/auth/FA";
 import jwt from "jsonwebtoken";
 
-export const onGet: RequestHandler = async ({ cookie, redirect, env }) => {
+export const onGet: RequestHandler = async ({ cookie, redirect, env, locale }) => {
   if (cookie.has("jwt")) {
     try {
       jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
     } catch {
       return;
     }
-    throw redirect(302, "/dashboard");
+    throw redirect(302, "/"+locale()+"/dashboard");
   }
 }
 
@@ -23,7 +23,7 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
   let type_message = 0;
   let userP = undefined;
   try {
-    const query = await sql`SELECT * FROM tecnici WHERE emailtecnico = ${sql(data.username)}`;
+    const query = await sql`SELECT * FROM tecnici WHERE emailtecnico = ${data.username}`;
 
     const user = query[0];
     if (user) {
@@ -78,7 +78,6 @@ export default component$(() => {
             <div class="w-[340px]  md:w-[400px] inline-flex flex-col justify-start items-center gap-6">
               <div class="flex flex-col justify-start items-center gap-1">
                 <div class="relative text-center justify-start text-black text-2xl font-semibold font-['Inter'] leading-9">{$localize`Sign in`}</div>
-                {/* <div class="relative text-center justify-start text-black text-base font-normal font-['Inter'] leading-normal">Proceed to sign in to use this app</div> */}
               </div>
               <div class="flex flex-col justify-start items-start gap-4">
                 <Textbox id="email" name='username' placeholder='Email'></Textbox>

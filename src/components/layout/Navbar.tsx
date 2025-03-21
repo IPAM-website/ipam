@@ -1,8 +1,7 @@
-import { $, component$, useSignal } from "@builder.io/qwik";
+import { $, component$, getLocale, useSignal, useTask$ } from "@builder.io/qwik";
 import { NavLink } from "../NavLink/NavLink";
-import { server$, useNavigate } from "@builder.io/qwik-city";
+import { RequestHandler, routeLoader$, server$, useLocation, useNavigate } from "@builder.io/qwik-city";
 import { toggleSidebar } from "./Sidebar";
-
 
 export default component$(() => {
     const clicked = useSignal(false);
@@ -10,9 +9,11 @@ export default component$(() => {
 
     const logout = $(async () => {
         await fetch("/api/cookie", { method: "DELETE" });
-        nav("/login");
+        nav("/" + getLocale() + "/login");
     })
 
+    const settingUrl = "/" + getLocale("en") + "/settings";
+    const detailsUrl = "/" + getLocale("en") + "/details";
     return (
         <>
             <div class="flex bg-white border-[#dfdfdf] border-b h-16 w-full *:h-full *:items-center mb-8">
@@ -37,9 +38,9 @@ export default component$(() => {
                     </svg>
                     <div class={"absolute top-14 w-28 bg-white rounded-md overflow-hidden transition-all *:cursor-pointer border-gray-300 " + (clicked.value ? "h-[88px] border border-gray-300" : "h-[0px]")}>
                         <div class="flex flex-col h-[88px] p-2 text-gray-500 text-xs *:hover:text-black *:py-1 pt-1">
-                            <NavLink href="/details" activeClass="text-black">Dettagli</NavLink>
-                            <NavLink href="/settings" activeClass="text-black">Impostazioni</NavLink>
-                            <button onClick$={logout} class="bg-gray-900 p-1 rounded-lg text-white cursor-pointer hover:bg-white hover:border mt-1 transition-all">Logout</button>
+                            <NavLink href={detailsUrl} activeClass="text-black">{$localize`Dettagli`}</NavLink>
+                            <NavLink href={settingUrl} activeClass="text-black">{$localize`Impostazioni`}</NavLink>
+                            <button onClick$={logout} class="bg-gray-900 p-1 rounded-lg text-white cursor-pointer hover:bg-white hover:border mt-1 transition-all">{$localize`Logout`}</button>
                         </div>
                     </div>
                 </div>
