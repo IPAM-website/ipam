@@ -7,5 +7,5 @@ export default component$(() => {
             date.value = new Date().toLocaleString();
         },1000)
     })
-    return (<div class="justify-start text-gray-400 text-sm font-normal font-['Inter'] leading-normal">Current Time: {date.value}</div>)
+    return (<div class="justify-start text-gray-400 text-sm font-normal font-['Inter'] leading-normal">{$localize`Current Time`}: {date.value}</div>)
 })

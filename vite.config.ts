@@ -50,8 +50,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
         "Cache-Control": "public, max-age=0",
       },
       watch: {
-        ignored: ['**/init.sql', '**/*.sql']  // Ignora i file SQL
-      }
+        ignored: ["**/init.sql", "**/*.sql"], // Ignora i file SQL
+      },
     },
     preview: {
       headers: {

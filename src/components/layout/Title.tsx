@@ -21,7 +21,7 @@ export default component$<TitleProps>(({ haveReturn = false, url }) => {
         <div class="flex flex-col md:flex-row w-full">
             <div class="flex-1">
                 <div class="flex flex-row items-center gap-6">
-                    <p class="text-black text-[32px] font-semibold font-['Inter'] leading-[48px]"> <Slot /> </p>
+                    <p class="text-black flex-none text-[32px] font-semibold font-['Inter'] leading-[48px]"> <Slot /> </p>
 
                     {
                         haveReturn &&
