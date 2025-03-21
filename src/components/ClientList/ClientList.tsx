@@ -12,7 +12,7 @@ export const useClients = server$(async () => {
     return query;
   }
   catch {
-    throw new Error("ciadi");
+    throw new Error("Error connecting to the DB");
   }
 
 })

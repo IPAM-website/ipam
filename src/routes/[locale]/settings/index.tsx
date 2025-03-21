@@ -22,7 +22,7 @@ export default component$(() => {
     const lang = useLang();
     return (
         <div class="px-16">
-            <Title haveReturn={true}>{$localize`Impostazioni`}</Title>
+            <Title haveReturn={true} url={"/"+lang.value+"/dashboard"}>{$localize`Impostazioni`}</Title>
             <div class="flex flex-col mt-8 border-gray-200 border rounded-2xl shadow p-8">
                 <div class="flex flex-row items-center gap-8 w-full md:w-11/12 lg:w-10/12 mx-auto  ">
                     <label for="cmbLanguage">{$localize`Lingua`}:</label>

@@ -4,6 +4,15 @@ import { NavLink } from "../NavLink/NavLink";
 import { server$, useNavigate } from "@builder.io/qwik-city";
 import User from "~/routes/user";
 
+export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
+    if (cookie.has("jwt")) {
+        let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
+        sharedMap.set("user", user);
+    }
+    else
+        throw redirect(301, "/login");
+};
+
 export const toggleSidebar = $(() => {
     const sidebar = document.getElementById('sidebar');
     const cover = document.getElementById('cover');

@@ -1,4 +1,4 @@
-import { component$, useSignal, useTask$ } from "@builder.io/qwik";
+import { component$, getLocale, useSignal, useTask$ } from "@builder.io/qwik";
 import { DocumentHead, RequestHandler, routeLoader$, server$ } from "@builder.io/qwik-city";
 import jwt from "jsonwebtoken"
 import Title from "~/components/layout/Title";
@@ -62,6 +62,7 @@ export const useInfo = server$(async () => {
 
 export default component$(() => {
     const info = useSignal<infoProps>();
+    const lang = getLocale("en");
 
     useTask$(async () => {
         info.value = await useInfo();
@@ -69,7 +70,7 @@ export default component$(() => {
     return (
         <>
             <div class="size-full px-24 lg:px-40 bg-white overflow-hidden">
-                <Title haveReturn={true}>{$localize`Admin Panel`}</Title>
+                <Title haveReturn={true} url={"/"+lang+"/dashboard"}>{$localize`Admin Panel`}</Title>
                 <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
                     <div class="w-full md:w-72 flex-4 px-5 py-3  rounded-lg border-1 border-[#cdcdcd] inline-flex flex-col justify-start items-start gap-1">
@@ -104,13 +105,13 @@ export default component$(() => {
                                 <div class="text-center w-full text-black text-base font-semibold font-['Inter']">{$localize`Operazioni`}</div>
                             </div>
                             <div class="flex flex-1 border-b border-gray-100">
-                                <a href="/admin/panel/technicians" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i tecnici`}</a>
+                                <a href={"/"+lang+"/admin/panel/tecnici"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i tecnici`}</a>
                             </div>
                             <div class="flex flex-1 border-b border-gray-100">
-                                <a href="/admin/panel/clients" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i clienti`}</a>
+                                <a href={"/"+lang+"/admin/panel/clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i clienti`}</a>
                             </div>
                             <div class="flex flex-1 border-b border-gray-100">
-                                <a href="/admin/panel/links" class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Gestisci rapporto tecnico - clienti`}</a>
+                                <a href={"/"+lang+"/admin/panel/links"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Gestisci rapporto tecnico - clienti`}</a>
                             </div>
                         </div>
                     </div>

@@ -4,6 +4,7 @@ CREATE TABLE Tecnici (
     IDTecnico INTEGER NOT NULL,
     nomeTecnico VARCHAR(50) NOT NULL,
     cognomeTecnico VARCHAR(50) NOT NULL,
+    ruolo VARCHAR(50),
     emailTecnico VARCHAR(50) NOT NULL,
     telefonoTecnico VARCHAR(50),
     pwdTecnico VARCHAR(50) NOT NULL,
@@ -11,6 +12,12 @@ CREATE TABLE Tecnici (
     FA VARCHAR(255),
     PRIMARY KEY (IDTecnico)
 );
+
+-- Inserimento Tecnici
+INSERT INTO Tecnici VALUES
+(1, 'Mario', 'Rossi', 'Firewall', 'mario.rossi@email.com', '333-1234567', 'tech123', FALSE),
+(2, 'Luca', 'Bianchi', 'PM', 'luca.bianchi@email.com', NULL, 'securePass', FALSE),
+(3, 'Admin', 'Super', 'admin', 'admin@network.it', '339-9876543', 'adminPass', TRUE);
 
 CREATE TABLE Paesi(
     IDPaese VARCHAR(15) NOT NULL,
@@ -107,12 +114,6 @@ CREATE TABLE Indirizzi(
 --(1, 'Cliente A'),
 --(2, 'Cliente B'),
 --(3, 'Cliente C');
-
--- Inserimento Tecnici
-INSERT INTO Tecnici VALUES
-(1, 'Mario', 'Rossi', 'mario.rossi@email.com', '333-1234567', 'tech123', FALSE),
-(2, 'Luca', 'Bianchi', 'luca.bianchi@email.com', NULL, 'securePass', FALSE),
-(3, 'Admin', 'Super', 'admin@network.it', '339-9876543', 'adminPass', TRUE);
 
 -- Inserimento Siti
 --INSERT INTO Siti (IDSito, nomeSito, IDCitta, IDCliente) VALUES
