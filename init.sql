@@ -91,22 +91,22 @@ CREATE TABLE Indirizzi(
 );
 
 -- Inserimento Paesi
-INSERT INTO Paesi (IDPaese, nomePaese) VALUES
-('IT', 'Italia'),
-('FR', 'Francia'),
-('DE', 'Germania');
+--INSERT INTO Paesi (IDPaese, nomePaese) VALUES
+--('IT', 'Italia'),
+--('FR', 'Francia'),
+--('DE', 'Germania');
 
 -- Inserimento Città (ID auto-generato)
-INSERT INTO Citta (nomeCitta, IDPaese) VALUES
-('Roma', 'IT'),
-('Parigi', 'FR'),
-('Berlino', 'DE');
+--INSERT INTO Citta (nomeCitta, IDPaese) VALUES
+--('Roma', 'IT'),
+--('Parigi', 'FR'),
+--('Berlino', 'DE');
 
 -- Inserimento Clienti
-INSERT INTO Clienti (IDCliente, nomeCliente) VALUES
-(1, 'Cliente A'),
-(2, 'Cliente B'),
-(3, 'Cliente C');
+--INSERT INTO Clienti (IDCliente, nomeCliente) VALUES
+--(1, 'Cliente A'),
+--(2, 'Cliente B'),
+--(3, 'Cliente C');
 
 -- Inserimento Tecnici
 INSERT INTO Tecnici VALUES
@@ -115,43 +115,43 @@ INSERT INTO Tecnici VALUES
 (3, 'Admin', 'Super', 'admin@network.it', '339-9876543', 'adminPass', TRUE);
 
 -- Inserimento Siti
-INSERT INTO Siti (IDSito, nomeSito, IDCitta, IDCliente) VALUES
-(101, 'Sede Centrale', 1, 1),
-(102, 'Filiale Paris', 2, 2),
-(103, 'HQ Berlin', 3, 3);
+--INSERT INTO Siti (IDSito, nomeSito, IDCitta, IDCliente) VALUES
+--(101, 'Sede Centrale', 1, 1),
+--(102, 'Filiale Paris', 2, 2),
+--(103, 'HQ Berlin', 3, 3);
 
 -- Inserimento Sotto-Siti
-INSERT INTO Sotto_Siti (IDSottoSito, nomeSottoSito, IDSito) VALUES
-(1001, 'Uffici Roma Nord', 101),
-(1002, 'DataCenter Paris', 102),
-(1003, 'Laboratorio Berlino', 103);
+--INSERT INTO Sotto_Siti (IDSottoSito, nomeSottoSito, IDSito) VALUES
+--(1001, 'Uffici Roma Nord', 101),
+--(1002, 'DataCenter Paris', 102),
+--(1003, 'Laboratorio Berlino', 103);
 
 -- Collegamento Clienti-Tecnici
-INSERT INTO Cliente_Tecnico VALUES
-(1, 1),
-(2, 1),
-(3, 2),
-(1, 3);
+--INSERT INTO Cliente_Tecnico VALUES
+--(1, 1),
+--(2, 1),
+--(3, 2),
+--(1, 3);
 
 -- Inserimento Reti
-INSERT INTO Rete (IDRete, nomeRete, descrizione) VALUES
-(1, 'LAN', 'Rete locale uffici'),
-(2, 'WAN', 'Rete geografica aziendale');
+--INSERT INTO Rete (IDRete, nomeRete, descrizione) VALUES
+--(1, 'LAN', 'Rete locale uffici'),
+--(2, 'WAN', 'Rete geografica aziendale');
 
 -- Collegamento SottoSiti-Rete
-INSERT INTO SottoSiti_Rete (IDSottoSito, IDRete) VALUES
-(1001, 1),
-(1002, 2),
-(1003, 1),
-(1003, 2);
+--INSERT INTO SottoSiti_Rete (IDSottoSito, IDRete) VALUES
+--(1001, 1),
+--(1002, 2),
+--(1003, 1),
+--(1003, 2);
 
 -- Inserimento VLAN
-INSERT INTO VLAN (IDV, nomeVLAN, descrizione) VALUES
-(10, 'VLAN_Uffici', 'Rete dedicata agli uffici'),
-(20, 'VLAN_Server', 'Rete dedicata ai server');
+--INSERT INTO VLAN (IDV, nomeVLAN, descrizione) VALUES
+--(10, 'VLAN_Uffici', 'Rete dedicata agli uffici'),
+--(20, 'VLAN_Server', 'Rete dedicata ai server');
 
 -- Inserimento Indirizzi IP
-INSERT INTO Indirizzi (IP, IDRete, N_Prefisso, IDV) VALUES
-('192.168.1.1', 1, 24, 10),
-('10.0.0.5', 2, 16, 20),
-('172.16.0.10', 1, 22, 10);
+--INSERT INTO Indirizzi (IP, IDRete, N_Prefisso, IDV) VALUES
+--('192.168.1.1', 1, 24, 10),
+--('10.0.0.5', 2, 16, 20),
+--('172.16.0.10', 1, 22, 10);
