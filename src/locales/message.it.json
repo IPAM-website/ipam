@@ -54,6 +54,13 @@
     "1724269317437510873": "Lingua",
     "8942984265029849841": "Salva",
     "3771027960737890103": "Aggiungi tecnico/i",
-    "4546556248593419968":"Lista clienti"
+    "4546556248593419968": "Lista clienti",
+    "6022624857290022182": "Non ci sono datacenter associati",
+    "8534068057455864001": "Immagine Datacenter",
+    "dbTitleDC": "Pagina selezione datacenter",
+    "dbTitleSite": "Pagina selezione sito",
+    "dbTitleSubSite" : "Pagina selezione sottosito",
+    "6438916741543475356": "Nessuna opzione disponibile. Selezionare un sito dalla dashboard per visualizzarle.",
+    "dbTitleNetworks":"Pagina selezione rete"
   }
 }

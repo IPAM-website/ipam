@@ -1,4 +1,5 @@
 export default interface User {
     mail:string,
-    admin:boolean
+    admin:boolean,
+    id: number
 }
