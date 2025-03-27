@@ -1,6 +1,6 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { DocumentHead, RequestEventAction, routeAction$, Form, zod$, z, RequestHandler, useNavigate, useDocumentHead } from "@builder.io/qwik-city";
-import Textbox from '~/components/forms/Textbox';
+import Textbox from '~/components/forms/TextboxLogin';
 import FMButton from '~/components/forms/FMButton';
 import Password from '~/components/forms/Password';
 import sql from "~/../db"

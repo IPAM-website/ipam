@@ -1,17 +1,19 @@
-import { $, component$, useTask$, useSignal } from "@builder.io/qwik";
+import { $, component$ } from "@builder.io/qwik";
 import TitoloTable from "~/components/table/TitoloTable";
 import Dati from "~/components/table/Dati_Headers";
 import ButtonAdd from "~/components/table/ButtonAdd";
+import Import from "~/components/table/ImportCSV";
 
-interface TableProps { title?: string, dati ?: any, nomeTabella: string, nomePulsante : string }
+interface TableProps { title?: string, dati ?: any, nomeTabella: string, nomePulsante : string, nomeImport : string }
 
-export default component$<TableProps>(({ title, dati, nomeTabella, nomePulsante }) => {
+export default component$<TableProps>(({ title, dati, nomeTabella, nomePulsante, nomeImport }) => {
 
     return (
         <div class="bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] border-1 border-offset-[-1px] border-neutral-200 mt-12">
             <TitoloTable nomeTitolo={title}></TitoloTable>
             <Dati dati={dati} nomeTabella={nomeTabella}></Dati>
             <ButtonAdd nomePulsante={nomePulsante}></ButtonAdd>
+            <Import nomeImport={nomeImport}></Import>
         </div>
     )
 })
