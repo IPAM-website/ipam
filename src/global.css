@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "flowbite/src/themes/default";
-@plugin "flowbite/plugin";
 
 @font-face {
     font-family: Inter;

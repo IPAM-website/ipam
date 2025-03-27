@@ -53,9 +53,7 @@
     "1462256584271263452": "Gestisci rapporto tecnico - clienti",
     "1724269317437510873": "Lingua",
     "8942984265029849841": "Salva",
-    "3771027960737890103": "Aggiungi tecnico/i",
     "4546556248593419968":"Lista clienti",
-    "2668314061365015019":"Aggiungi clienti",
     "2978800894875766871": "tecnici",
     "1810615696933133879": "Lista tecnici",
     "110645521988353731": "Importazione CSV",
@@ -68,6 +66,20 @@
     "2402846969362487836": "Elimina",
     "1817007949945200502": "Annulla",
     "2332180001770133395": "Nome",
-    "1697348953303393735": "Insersci il nome del tecnico"
+    "1697348953303393735": "Insersci il nome del tecnico",
+    "509817872103107438": "Inserimento tecnico",
+    "8726049579841576889": "Insersci il cognome del tecnico",
+    "2399459835032579191": "Cognome",
+    "5443454112258640529": "Inserisci il ruolo del tecnico",
+    "1003352312847772353": "Role",
+    "7582428738334340484": "Aggiugi tecnico",
+    "7763257744126412814": "Aggiugi tecnico",
+    "5958096689662486670": "Modifica tecnico",
+    "8628358431591395216": "Inserisci l'email del tecnico",
+    "4768749765465246664": "Email",
+    "7748997625565571654": "Inserisci il numero di telefono del tecnico",
+    "5782574739632277665": "Telefono",
+    "5061022419064708650": "Inserisci la password del tecnico",
+    "1431416938026210429": "Password"
   }
 }
