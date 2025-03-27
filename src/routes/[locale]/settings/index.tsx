@@ -1,5 +1,6 @@
 import { component$, Signal, withLocale,  } from "@builder.io/qwik";
 import { RequestHandler, routeLoader$, useNavigate } from "@builder.io/qwik-city";
+import { Select } from "@radix-ui/react-select";
 import Title from "~/components/layout/Title";
 import jwt from "jsonwebtoken"
 
@@ -26,7 +27,7 @@ export default component$(() => {
             <div class="flex flex-col mt-8 border-gray-200 border rounded-2xl shadow p-8">
                 <div class="flex flex-row items-center gap-8 w-full md:w-11/12 lg:w-10/12 mx-auto  ">
                     <label for="cmbLanguage">{$localize`Lingua`}:</label>
-                    <select name="cmbLanguage" id="cmbLanguage" class="border border-gray-400 p-3 rounded-lg">
+                    <select name="cmbLanguage" id="cmbLanguage" class="border border-gray-400 p-3 rounded-lg w-1/6 cursor-pointer">
                         <option value="it" {...{selected : (lang.value as String)=="it"?true:false}} >Italiano</option>
                         <option value="en" {...{selected : (lang.value=="en" as String)?true:false}}>English (default)</option>
                     </select>

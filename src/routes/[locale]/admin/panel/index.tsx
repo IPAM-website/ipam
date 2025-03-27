@@ -4,6 +4,20 @@ import jwt from "jsonwebtoken"
 import Title from "~/components/layout/Title";
 import sql from "~/../db";
 import LogsList from "~/components/utils/LogsList";
+import User from "~/routes/user";
+
+export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
+    if (cookie.has("jwt")) {
+        let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
+        sharedMap.set("user", user);
+    }
+    else
+        throw redirect(301, "/login");
+};
+
+export const useUser = routeLoader$(({ sharedMap }) => {
+    return sharedMap.get('user') as User;
+});
 
 interface infoProps {
     ntecnici: string,
@@ -49,14 +63,20 @@ export const useInfo = server$(async () => {
         const query3 = await sql`SELECT COUNT(*) FROM siti`
         info.nsiti = query3[0].count;
         const query4 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico GROUP BY idcliente )`
-        info.rapct = (query4[0].avg as string).substring(0, 4);
+        if(query4[0].avg == null)
+            info.rapct = '0';
+        else
+            info.rapct = (query4[0].avg as string).substring(0, 4);
         const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN siti ON cliente_tecnico.idcliente=siti.idcliente GROUP BY idsito )`
-        info.rapst = (query5[0].avg as string).substring(0, 4);
+        if(query5[0].avg == null)
+            info.rapst = '0';
+        else
+            info.rapst = (query5[0].avg as string).substring(0, 4);
     }
     catch (e) {
-        console.log(e);
+        console.log("Errore: ", e);
     }
-    console.log(info)
+    //console.log(info)
     return info;
 })
 
@@ -104,14 +124,14 @@ export default component$(() => {
                             <div class="flex flex-1 border-b border-[#f3f3f3]">
                                 <div class="text-center w-full text-black text-base font-semibold font-['Inter']">{$localize`Operazioni`}</div>
                             </div>
-                            <div class="flex flex-1 border-b border-gray-100">
-                                <a href={"/" + lang + "/admin/panel/tecnici"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i tecnici`}</a>
+                            <div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                <a href={"/"+lang+"/admin/panel/tecnici"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Mostra tutti i tecnici`}</a>
                             </div>
-                            <div class="flex flex-1 border-b border-gray-100">
-                                <a href={"/" + lang + "/admin/panel/clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Mostra tutti i clienti`}</a>
+                            <div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                <a href={"/"+lang+"/admin/panel/clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Mostra tutti i clienti`}</a>
                             </div>
-                            <div class="flex flex-1 border-b border-gray-100">
-                                <a href={"/" + lang + "/admin/panel/links"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 hover:underline ">{$localize`Gestisci rapporto tecnico - clienti`}</a>
+                            <div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                <a href={"/"+lang+"/admin/panel/links"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Gestisci rapporto tecnico - clienti`}</a>
                             </div>
                         </div>
                     </div>

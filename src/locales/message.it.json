@@ -61,6 +61,20 @@
     "dbTitleSite": "Pagina selezione sito",
     "dbTitleSubSite" : "Pagina selezione sottosito",
     "6438916741543475356": "Nessuna opzione disponibile. Selezionare un sito dalla dashboard per visualizzarle.",
-    "dbTitleNetworks":"Pagina selezione rete"
+    "dbTitleNetworks":"Pagina selezione rete",
+    "2668314061365015019":"Aggiungi clienti",
+    "2978800894875766871": "tecnici",
+    "1810615696933133879": "Lista tecnici",
+    "110645521988353731": "Importazione CSV",
+    "1101922694503919248": "clienti",
+    "3541650341008831558": "Non sono presenti {$PH} nella tabella",
+    "4899439619404416352": "Elimina questo elemento",
+    "7162968185725578567": "Modifica questo elemento",
+    "6295591387072053962": "Conferma",
+    "6957811332134635472": "Sei sicuro di voler procedere?",
+    "2402846969362487836": "Elimina",
+    "1817007949945200502": "Annulla",
+    "2332180001770133395": "Nome",
+    "1697348953303393735": "Insersci il nome del tecnico"
   }
 }

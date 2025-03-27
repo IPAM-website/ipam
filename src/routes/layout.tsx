@@ -4,7 +4,6 @@ import { selectSearchbar } from "~/components/forms/SearchBar";
 import Navbar from "~/components/layout/Navbar";
 import Sidebar, { toggleSidebar } from "~/components/layout/Sidebar";
 
-
 export const onGet: RequestHandler = async ({ cacheControl }) => {
   // Control caching for this request for best performance and to reduce hosting costs:
   // https://qwik.dev/docs/caching/

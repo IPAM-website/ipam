@@ -18,7 +18,6 @@ export default component$<p>((props)=>{
             onFocus$={() => { checked.value = true }} 
             onFocusOut$={(event) => { checked.value = (event.target as HTMLInputElement).value != ""}} />
             <span style="user-select:none" class={"text-[#828282] z-1 text-xl font-['Inter'] leading-[30px] bg-white absolute transition-all " + (checked.value ? "left-4 -top-4 text-xs" : "font-medium left-4 top-1")} onMouseDown$={(e) => e.preventDefault()}>{props.placeholder}</span>
-            
         </div>
             
         </>
