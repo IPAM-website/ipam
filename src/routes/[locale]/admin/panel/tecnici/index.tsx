@@ -1,4 +1,4 @@
-import { component$, getLocale, useSignal, useTask$, $ } from "@builder.io/qwik";
+import { component$, getLocale, useSignal, useTask$, $, useVisibleTask$ } from "@builder.io/qwik";
 import { DocumentHead, server$, Form, routeAction$, RequestEventAction } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import Table from "~/components/table/Table";
@@ -19,7 +19,25 @@ export const useTecnici = server$(async () => {
 })
 
 export const addTecnico = routeAction$(async (data, requestEvent : RequestEventAction) => {
-  console.log(data)
+  //console.log(data)
+  let success = false;
+  let type_message = 0;
+
+  try{
+    const query = await sql`INSERT INTO tecnici (nometecnico, cognometecnico, ruolo, emailtecnico, telefonotecnico, pwdtecnico, admin) VALUES (${data.nome.toString()}, ${data.cognome.toString()}, ${data.ruolo.toString()}, ${data.mail.toString()}, ${data.telefono.toString()}, ${data.password.toString()}, false)`;
+    console.log(query);
+    return {
+      success: true,
+      type_message: 1
+    };
+  }
+  catch(e){
+    console.log(e)
+    return {
+      success: false,
+      type_message: 2
+    }
+  }
 });
 
 export default component$(() => {
@@ -27,9 +45,10 @@ export default component$(() => {
   const dati = useSignal();
   const lang = getLocale("en");
   const formConf = addTecnico()
+  
       useTask$(async ()=>{
-          const query = await useTecnici();
-          dati.value = query;
+        const query = await useTecnici();
+        dati.value = query;
       })
 
   const openTeniciDialog = $(() => {
@@ -38,7 +57,14 @@ export default component$(() => {
 
   const confirmModifyT = $(async (nome: string, cognome: string, ruolo:string, mail:string, telefono:string, password:string) => {
       const result = formConf.submit({nome, cognome, ruolo, mail, telefono, password});
-      console.log("Conferma");
+      if ((await result).value.success) {
+          showDialog.value = false;
+          const query = useTecnici();
+          dati.value = query;
+      }
+      else{
+          console.log("Errore");
+      }
   })
 
   const cancelModifyT = $(() => {
@@ -50,7 +76,7 @@ export default component$(() => {
         <>
             <div class="size-full sm:px-24 lg:px-40 bg-white overflow-hidden">
               <Title haveReturn={true} url={"/"+lang+"/admin/panel"}>{$localize`Admin Panel`}</Title>
-              <Table title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} dati={dati.value} nomePulsante={$localize`Aggiungi tecnico/i`} nomeImport="tecnici">
+              <Table title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} dati={dati.value} nomeImport="tecnici">
                 <ButtonAdd nomePulsante={$localize`Inserisci tecnico`} onClick$={openTeniciDialog}></ButtonAdd>
               </Table>
             </div>

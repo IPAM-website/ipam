@@ -1,7 +1,7 @@
 -- SQLBook: Code
 -- Creazione della tabella Tecnici
 CREATE TABLE Tecnici (
-    IDTecnico INTEGER NOT NULL,
+    IDTecnico SERIAL,
     nomeTecnico VARCHAR(50) NOT NULL,
     cognomeTecnico VARCHAR(50) NOT NULL,
     ruolo VARCHAR(50),
@@ -14,10 +14,10 @@ CREATE TABLE Tecnici (
 );
 
 -- Inserimento Tecnici
-INSERT INTO Tecnici VALUES
-(1, 'Mario', 'Rossi', 'Firewall', 'mario.rossi@email.com', '333-1234567', 'tech123', FALSE),
-(2, 'Luca', 'Bianchi', 'PM', 'luca.bianchi@email.com', NULL, 'securePass', FALSE),
-(3, 'Admin', 'Super', 'admin', 'admin@network.it', '339-9876543', 'adminPass', TRUE);
+INSERT INTO Tecnici (nomeTecnico, cognomeTecnico, ruolo, emailTecnico, telefonoTecnico, pwdTecnico, "admin") VALUES
+('Mario', 'Rossi', 'Firewall', 'mario.rossi@email.com', '333-1234567', 'tech123', FALSE),
+('Luca', 'Bianchi', 'PM', 'luca.bianchi@email.com', NULL, 'securePass', FALSE),
+('Admin', 'Super', 'admin', 'admin@network.it', '339-9876543', 'adminPass', TRUE);
 
 CREATE TABLE Paesi(
     IDPaese VARCHAR(15) NOT NULL,

@@ -27,6 +27,7 @@ export default component$<ConfirmDialogProps>(({
     const mail = useSignal('');
     const telefono = useSignal('');
     const password = useSignal('');
+    const admin = useSignal<boolean>(false);
 
     const conferma = $(async (event: Event) => {
         event.preventDefault();

@@ -10,7 +10,7 @@ export default component$<ButtonProps>(({ nomePulsante, onClick$ }) => {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 <div class="text-white text-base font-medium font-['Inter'] leading-normal">
-                    { nomePulsante}
+                    { nomePulsante }
                 </div>
             </div>
         </div>
