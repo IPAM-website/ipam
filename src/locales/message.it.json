@@ -71,7 +71,7 @@
     "8726049579841576889": "Insersci il cognome del tecnico",
     "2399459835032579191": "Cognome",
     "5443454112258640529": "Inserisci il ruolo del tecnico",
-    "1003352312847772353": "Role",
+    "1003352312847772353": "Ruolo",
     "7582428738334340484": "Aggiugi tecnico",
     "7763257744126412814": "Aggiugi tecnico",
     "5958096689662486670": "Modifica tecnico",
@@ -80,6 +80,11 @@
     "7748997625565571654": "Inserisci il numero di telefono del tecnico",
     "5782574739632277665": "Telefono",
     "5061022419064708650": "Inserisci la password del tecnico",
-    "1431416938026210429": "Password"
+    "1431416938026210429": "Password",
+    "2668314061365015019": "Aggiugi cliente/i",
+    "9222501301114320323": "relazioni",
+    "8853287383907512935": "Lista relazioni",
+    "7867996546581119939": "Aggiugni relazione/i",
+    "8420120704863719556": "Ricarica"
   }
 }

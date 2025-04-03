@@ -80,6 +80,15 @@
     "7748997625565571654": "Input the technician's phone number",
     "5782574739632277665": "Phone",
     "5061022419064708650": "Input the technician's password",
-    "1431416938026210429": "Password"
+    "1431416938026210429": "Password",
+    "8134910004061559161": "Name not valid",
+    "2016650362060962788": "Surname not valid",
+    "9147129595183819647": "Role not valid",
+    "7323383525558515383": "Email not valid",
+    "2668314061365015019": "Add client/s",
+    "9222501301114320323": "relations",
+    "8853287383907512935": "Relations list",
+    "7867996546581119939": "Add relation/s",
+    "8420120704863719556": "Refresh"
   }
 }
