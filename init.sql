@@ -1,7 +1,7 @@
 -- SQLBook: Code
 -- Creazione della tabella Tecnici
 CREATE TABLE Tecnici (
-    IDTecnico INTEGER NOT NULL,
+    IDTecnico SERIAL,
     nomeTecnico VARCHAR(50) NOT NULL,
     cognomeTecnico VARCHAR(50) NOT NULL,
     ruolo VARCHAR(50),
@@ -13,10 +13,10 @@ CREATE TABLE Tecnici (
     PRIMARY KEY (IDTecnico)
 );
 -- Inserimento Tecnici
-INSERT INTO Tecnici VALUES
-(1, 'Mario', 'Rossi', 'Firewall', 'mario.rossi@email.com', '333-1234567', 'tech123', FALSE),
-(2, 'Luca', 'Bianchi', 'PM', 'luca.bianchi@email.com', NULL, 'securePass', FALSE),
-(3, 'Admin', 'Super', 'admin', 'admin@network.it', '339-9876543', 'adminPass', TRUE);
+INSERT INTO Tecnici (nomeTecnico, cognomeTecnico, ruolo, emailTecnico, telefonoTecnico, pwdTecnico, "admin") VALUES
+('Mario', 'Rossi', 'Firewall', 'mario.rossi@email.com', '333-1234567', 'tech123', 'FALSE'),
+('Luca', 'Bianchi', 'PM', 'luca.bianchi@email.com', NULL, 'securePass', 'FALSE'),
+('Admin', 'Super', 'admin', 'admin@network.it', '339-9876543', 'adminPass', 'TRUE');
 
 CREATE TABLE Paesi(
     IDPaese VARCHAR(15) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE Citta(
 );
 
 CREATE TABLE Clienti(
-    IDCliente INTEGER NOT NULL,
+    IDCliente SERIAL,
     nomeCliente VARCHAR(50) NOT NULL,
     PRIMARY KEY (IDCliente)
 );
@@ -47,7 +47,7 @@ CREATE TABLE Datacenter(
 );
 
 CREATE TABLE Siti(
-    IDSito INTEGER NOT NULL,
+    IDSito SERIAL,
     nomeSito VARCHAR(50) NOT NULL,
     IDCitta INTEGER NOT NULL,
     idDC INTEGER NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE Siti(
 );
 
 CREATE TABLE Sotto_Siti(
-    IDSottoSito INTEGER NOT NULL,
+    IDSottoSito SERIAL,
     nomeSottoSito VARCHAR(50) NOT NULL,
     IDSito INTEGER NOT NULL,
     PRIMARY KEY (IDSottoSito),
@@ -73,14 +73,14 @@ CREATE TABLE Cliente_Tecnico(
 );
 
 CREATE TABLE Rete(
-    IDRete INTEGER NOT NULL,
+    IDRete SERIAL,
     nomeRete VARCHAR(50) NOT NULL,
     descrizione VARCHAR(255),
     PRIMARY KEY (IDRete)
 );
 
 CREATE TABLE SottoSiti_Rete(
-    IDSottoSito INTEGER NOT NULL,
+    IDSottoSito SERIAL,
     IDRete INTEGER NOT NULL,
     PRIMARY KEY (IDSottoSito,IDRete),
     CONSTRAINT fk_idSottoSito_Rete FOREIGN KEY (IDSottoSito) REFERENCES Sotto_Siti(IDSottoSito),
@@ -88,7 +88,7 @@ CREATE TABLE SottoSiti_Rete(
 );
 
 CREATE TABLE VLAN(
-    IDV INTEGER NOT NULL,
+    IDV SERIAL,
     nomeVLAN VARCHAR(50) NOT NULL,
     descrizione VARCHAR(255),
     PRIMARY KEY (IDV)

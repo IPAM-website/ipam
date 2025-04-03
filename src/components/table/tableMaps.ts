@@ -3,6 +3,10 @@ interface TableMap {
     keys: string[];
 }
 
+export type DBTableMap = {
+    keys: string[]
+  };
+
 interface LanguageMap{
     it: string[];
     en: string[];
@@ -71,6 +75,24 @@ const TableMaps: { [key: string]: TableMap } = {
             "nomecliente"
         ]
     },
+    "cliente_tecnico":{
+        headers: {
+            it:[
+                "Nome Cliente",
+                "Nome Tecnico",
+                ""
+            ],
+            en:[
+                "Client name",
+                "Technician Name",
+                ""
+            ]                      
+        },
+        keys: [
+            "idtecnico",
+            "idcliente"
+        ]
+    },
     "indirizzi":{
         headers:{
             it:[
@@ -94,4 +116,17 @@ const TableMaps: { [key: string]: TableMap } = {
     }
 }
 
-export default TableMaps;
+export const DBTableMaps: { [key: string]: DBTableMap } = {
+    "tecnici": {
+      keys: ['nometecnico', 'cognometecnico', 'ruolo', 'emailtecnico', 'telefonotecnico', 'pwdtecnico', 'admin']
+    },
+    "clienti": {
+      keys: ["nomecliente"]
+    },
+    "cliente_tecnico": {
+      keys: ["idcliente", "idtecnico"]
+    }
+  };
+
+
+export default TableMaps

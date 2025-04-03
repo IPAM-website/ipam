@@ -11,6 +11,7 @@ import ButtonAddLink from "~/components/table/ButtonAddLink";
 import Table from "~/components/table/Table";
 import Subsite from "~/components/ListUtilities/SubSiteList/subsiteModel";
 import Dati from "~/components/table/Dati_Headers";
+import ImportCSV from "~/components/table/ImportCSV";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
     if (!['view', 'insert', 'update'].includes(params.mode)) {
@@ -45,6 +46,11 @@ export interface RowAddress {
     nomerete?: string,
     nomesottosito?: string
 }
+
+type Notification = {
+    message: string;
+    type: 'success' | 'error';
+};
 
 
 export const useAddresses = server$(async function (this, filter = { type: "", value: "" }) {
@@ -161,6 +167,7 @@ export const useSubSite = server$(async function (idSito: number) {
 })
 
 export default component$(() => {
+    const lang = getLocale("en");
     const addressList = useSignal<AddressModel[]>([]);
     const networks = useSignal<Network[]>([]);
     const subsites = useSignal<Subsite[]>([]);
@@ -170,6 +177,7 @@ export default component$(() => {
     const sitename = useSiteName();
     const filter = useStore({ active: false, network: '', subsite: '' });
     const mode = loc.params.mode ?? "view";
+    const notifications = useSignal<Notification[]>([]);
 
     useTask$(async () => {
         addressList.value = await useAddresses();
@@ -188,6 +196,32 @@ export default component$(() => {
         if (subsite)
             networks.value = await useNetwork(parseInt(subsite))
     })
+
+    const addNotification = $((message: string, type: 'success' | 'error') => {
+        notifications.value = [...notifications.value, { message, type }];
+        // Rimuovi la notifica dopo 3 secondi
+        setTimeout(() => {
+            notifications.value = notifications.value.filter(n => n.message !== message);
+        }, 3000);
+    });
+
+    const handleError = $((error: any) => {
+        console.log(error);
+        addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
+    })
+
+    const handleOk = $(async () => {
+        addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
+    })
+
+    const handleModify = $((row: any) => {
+        console.log(row);
+        Object.assign(address, row as RowAddress);
+        nav(loc.url.href.replace("view", "update"));
+    })
+
+
+    const handleDelete = $(()=>{});
 
     return (
         <>
@@ -244,21 +278,16 @@ export default component$(() => {
                             </div>
                         </div>
 
-                        <Table dati={addressList} nomeImport={$localize`indirizzi`} title={$localize`Lista indirizzi IP`} nomePulsante={$localize`Aggiungi indirizzo`} nomeTabella="indirizzi" onUpdate$={(row) => {
-                            Object.assign(address, row as RowAddress);
-                            nav(loc.url.href.replace("view", "update"));
-                        }}>
-                            <button class="cursor-pointer p-1 absolute top-5 left-36 rounded-md bg-black hover:bg-gray-700" onClick$={() => filter.active = !filter.active}>
+                        <Table>
+                            <button class="cursor-pointer p-1 absolute top-5 left-38 rounded-md bg-black hover:bg-gray-700" onClick$={() => filter.active = !filter.active}>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 text-white">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
                                 </svg>
                             </button>
 
-                            <Dati dati={addressList.value} nomeTabella={"indirizzi"} onUpdate$={(row) => {
-                                Object.assign(address, row as RowAddress);
-                                nav(loc.url.href.replace("view", "update"));
-                            }} onDelete$={() => { }}></Dati>
+                            <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete}></Dati>
                             <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
+                            <ImportCSV OnError={handleError} OnOk={handleOk} nomeImport="indirizzi" />
                         </Table>
                     </div>
                     :
@@ -328,8 +357,8 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
                         <option value="Firewall">Firewall</option>
                         <option value="Other">{$localize`Altro`}</option>
                     </SelectForm>
-                    <TextboxForm id="txtName" name={$localize`Nome Dispositivo`} placeholder="Es. Server1" />
-                    <TextboxForm id="txtModel" name={$localize`Marca Dispositivo`} placeholder="Es. Dell" />
+                    <TextboxForm id="txtName" title={$localize`Nome Dispositivo`} placeholder="Es. Server1" />
+                    <TextboxForm id="txtModel" title={$localize`Marca Dispositivo`} placeholder="Es. Dell" />
                     <DatePicker id="dpData" name={$localize`Data inserimento`} />
                 </FormBox>
                 <FormBox title="Dettagli">
@@ -374,7 +403,7 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
                         </div>
                     }
 
-                    <TextboxForm id="txtName" value={prefix.value} name={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { prefix.value = (e.target as HTMLInputElement).value }} />
+                    <TextboxForm id="txtName" value={prefix.value} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { prefix.value = (e.target as HTMLInputElement).value }} />
                     {attempted.value && !prefix.value && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
                     <SelectForm id="cmbRete" name={$localize`Rete Associata`} value={rete.value?.toString() || ""} OnClick$={(e) => { rete.value = parseInt((e.target as HTMLOptionElement).value); }} listName="">

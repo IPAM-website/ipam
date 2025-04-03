@@ -32,3 +32,20 @@
 .has-tooltip:hover .tooltip {
     opacity: 1;
 }
+
+input[type="checkbox"] {
+  @apply appearance-none h-6 w-6 border border-gray-400 rounded-md cursor-pointer;
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+input[type="checkbox"]:checked {
+  @apply bg-gray-500 border-transparent;
+  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+}
+
+input[type="checkbox"]:checked::before {
+  content: '✔';
+  display: block;
+  text-align: center;
+  color: white;
+}
