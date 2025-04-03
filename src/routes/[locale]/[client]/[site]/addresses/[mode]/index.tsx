@@ -221,8 +221,7 @@ export default component$(() => {
                             <div class="flex w-full mt-2">
                                 <div class="flex-auto"></div>
                                 <button class=" flex gap-1 items-center p-2 px-4 border-gray-300 hover:bg-gray-100 border cursor-pointer disabled:cursor-default text-gray-900 rounded-lg mx-2" disabled={filter.subsite == ''} onClick$={() => {
-                                    filter.network = '';
-                                    filter.subsite = '';
+                                    window.location.href = loc.url.pathname;
                                 }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                                     </svg>
