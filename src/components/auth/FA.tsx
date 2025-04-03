@@ -78,7 +78,8 @@ export default component$<LoginData>((props) => {
     const cookie = useStore({
         mail: "",
         admin: false,
-        expire: ""
+        expire: "",
+        id : 0
     })
 
 
@@ -88,6 +89,7 @@ export default component$<LoginData>((props) => {
             // console.log(user);
             cookie.mail = user.emailtecnico;
             cookie.admin = user.admin;
+            cookie.id = user.idtecnico;
             const expires = new Date();
             expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000));
             cookie.expire = expires.toUTCString();
@@ -126,7 +128,6 @@ export default component$<LoginData>((props) => {
                 },
                 body: JSON.stringify(cookie)
             })
-
             nav("/"+getLocale("en")+"/dashboard");
 
         } else {

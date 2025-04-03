@@ -1,14 +1,34 @@
 @import "tailwindcss";
 
-@import "tailwindcss";
-
-@import "tailwindcss";
+@font-face {
+    font-family: Inter;
+    src: url("/fonts/Inter-VariableFont_opsz,wght.ttf");
+}
 
 * {
     font-family: Inter;
 }
 
-@font-face {
-    font-family: Inter;
-    src: url("/fonts/Inter-VariableFont_opsz,wght.ttf");
+.has-tooltip {
+    position: relative;
+}
+
+.tooltip {
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.has-tooltip:hover .tooltip {
+    opacity: 1;
 }

@@ -1,27 +1,97 @@
 interface TableMap {
-    headers: string[];
+    headers: LanguageMap;
     keys: string[];
+}
+
+interface LanguageMap{
+    it: string[];
+    en: string[];
+    [key: string]: string[];
+}
+
+const LanguageMapTecnici: { [key: string]: LanguageMap } = {
+    "headers":{
+        it:[
+            "ID",
+            "Nome",
+            "Cognome",
+            "Ruolo",
+            ""
+        ],
+        en:[
+            "ID",
+            "Name",
+            "Surname",
+            "Role",
+            ""
+        ]
+    }
 }
 
 const TableMaps: { [key: string]: TableMap } = {
     "tecnici": {
-        headers: [
-            "ID",
-            "Nome",
-            "Cognome",
-            "Ruolo"                                                      
-        ],
+        headers: {
+            it:[
+                "ID",
+                "Nome",
+                "Cognome",
+                "Ruolo",
+                ""
+            ],
+            en:[
+                "ID",
+                "Name",
+                "Surname",
+                "Role",
+                ""
+            ]                      
+        },
         keys: [
             "idtecnico",
             "nometecnico",
             "cognometecnico",
             "ruolo"
         ]
+    },
+    "clienti": {
+        headers: {
+            it:[
+                "ID",
+                "Nome",
+                ""
+            ],
+            en:[
+                "ID",
+                "Name",
+                ""
+            ]                               
+        },
+        keys: [
+            "idcliente",
+            "nomecliente"
+        ]
+    },
+    "indirizzi":{
+        headers:{
+            it:[
+                "Indirizzo",
+                "Prefisso",
+                "VLAN",
+                ""
+            ],
+            en:[
+                "Address",
+                "Prefix",
+                "VLAN",
+                ""
+            ]
+        },
+        keys:[
+            "ip",
+            "n_prefisso",
+            "idv"
+        ]
     }
 }
 
 export default TableMaps;
-
-// Esempio di utilizzo di .map al di fuori dell'oggetto TableMaps
-//const headers = TableMaps["tecnici"].headers.map(header => header.toUpperCase());
-//console.log(headers);

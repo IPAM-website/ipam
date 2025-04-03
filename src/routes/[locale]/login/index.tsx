@@ -1,8 +1,8 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { DocumentHead, RequestEventAction, routeAction$, Form, zod$, z, RequestHandler, useNavigate, useDocumentHead } from "@builder.io/qwik-city";
-import Textbox from '~/components/forms/Textbox';
-import FMButton from '~/components/forms/FMButton';
-import Password from '~/components/forms/Password';
+import Textbox from '~/components/forms/formsComponents/TextboxLogin';
+import FMButton from '~/components/forms/formsComponents/FMButton';
+import Password from '~/components/forms/formsComponents/Password';
 import sql from "~/../db"
 import FA from "~/components/auth/FA";
 import jwt from "jsonwebtoken";
@@ -40,7 +40,8 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
       else
       type_message = 2 // $localize`Password errata`
     }
-    type_message = 3 // $localize`Username errato`
+    else
+      type_message = 3 // $localize`Username errato`
   }
   catch (e) {
     type_message = 4  // $localize`Errore del server. Attendere.`;
@@ -61,15 +62,17 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
 export default component$(() => {
   const action = useLogin();
   const successful = useSignal(false);
+  const showMessage = useSignal(false);
 
   const revert = $(async (val: string) => {
+    showMessage.value=false;
     if (val == "back")
       successful.value = false;
   })
   return (<>
     {
       !action.value?.success || !successful.value ?
-        <Form action={action} onSubmit$={() => { successful.value = true }} class="h-[100vh] flex flex-col justify-center items-center gap-[40px]">
+        <Form action={action} onSubmit$={() => { successful.value = true; showMessage.value=true; }} class="h-[100vh] flex flex-col justify-center items-center gap-[40px]">
           <img src="/images/datacenter1.png" alt="" class="fixed size-full -top-1 md:top-0" />
           <div class="border-1 z-10 shadow-2xl border-gray-100 rounded-3xl px-4 py-8 md:px-6 md:py-12 bg-white">
             <div class="relative text-center justify-center text-black text-[32px] font-semibold font-['Inter'] leading-[48px]">
@@ -93,10 +96,21 @@ export default component$(() => {
                 <span class="text-black text-base font-normal font-['Inter'] leading-normal">{$localize`Privacy Policys`}</span>
               </div>
             </div>
-            {action.value && action.value.type_message==1 && <p class="bg-green-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Login effettuato con successo`} </p> }
-            {action.value && action.value.type_message==2 && <p class="bg-red-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Password errata`} </p>}
-            {action.value && action.value.type_message==3 && <p class="bg-red-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Username errato`} </p> }
-            {action.value && action.value.type_message==4 && <p class="bg-red-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Server error`}    </p> }
+            {(()=>{
+              if(action.value && showMessage.value){
+                switch(action.value.type_message)
+                {
+                  case 1:
+                    return (<p class="bg-green-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Login effettuato con successo`} </p>)
+                  case 2:
+                    return (<p class="bg-red-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Password errata`} </p>)
+                  case 3:
+                    return (<p class="bg-red-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Username errato`} </p> )
+                  case 4:
+                    return (<p class="bg-red-500 mt-2 p-3 rounded-md text-gray-100"> {$localize`Server error`}    </p>)
+                }
+              }
+            })()}
           </div>
         </Form>
         :

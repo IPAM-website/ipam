@@ -1,14 +1,18 @@
-import { component$, useSignal, useTask$ } from '@builder.io/qwik';
+import { component$, getLocale, Signal, useContext, useSignal, useTask$ } from '@builder.io/qwik';
 import ClientInfo from './clientinfo';
-import { server$ } from '@builder.io/qwik-city';
+import { server$, useNavigate } from '@builder.io/qwik-city';
 import sql from "~/../db";
-export interface ClientListProps {
+import { setClientName } from '../../layout/Sidebar';
+import { getBaseURL } from '~/fnUtils';
 
+export interface ClientListProps {
+  client : Signal<number>,
+  currentTec : number
 }
 
-export const useClients = server$(async () => {
+export const useClients = server$(async (idTecnico) => {
   try {
-    const query = await sql`SELECT * FROM clienti`
+    const query = await sql`SELECT clienti.* FROM clienti INNER JOIN cliente_tecnico ON cliente_tecnico.idcliente = clienti.idcliente AND cliente_tecnico.idtecnico = ${idTecnico}`
     return query;
   }
   catch {
@@ -17,11 +21,12 @@ export const useClients = server$(async () => {
 
 })
 
-export const ClientList = component$<ClientListProps>((props) => {
+export default component$(({currentTec} : {currentTec:number}) => {
   const clientList = useSignal<ClientInfo[] | null>(null);
+  const nav = useNavigate();
 
   useTask$(async () => {
-    clientList.value = await useClients() as any;
+    clientList.value = await useClients(currentTec) as any;
   });
 
   return (
@@ -31,9 +36,12 @@ export const ClientList = component$<ClientListProps>((props) => {
           <div
             key={x.idcliente}
             class="cursor-pointer hover:-translate-y-1 hover:outline-gray-300 hover:shadow-lg transition-all p-6 bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] outline-1 outline-offset-[-1px] outline-[#dfdfdf]"
+            onClick$={()=>{
+              nav(getBaseURL()+x.idcliente);
+            }}
           >
             <img src="" alt={$localize`Immagine Cliente`} />
-            <p class="font-semibold">{x.nomecliente}</p>
+            <p class="font-semibold">{x.nomecliente}</p>  
           </div>
         ))
         :
