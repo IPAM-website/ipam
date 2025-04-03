@@ -12,7 +12,6 @@ CREATE TABLE Tecnici (
     FA VARCHAR(255),
     PRIMARY KEY (IDTecnico)
 );
-
 -- Inserimento Tecnici
 INSERT INTO Tecnici (nomeTecnico, cognomeTecnico, ruolo, emailTecnico, telefonoTecnico, pwdTecnico, "admin") VALUES
 ('Mario', 'Rossi', 'Firewall', 'mario.rossi@email.com', '333-1234567', 'tech123', 'FALSE'),
@@ -39,14 +38,22 @@ CREATE TABLE Clienti(
     PRIMARY KEY (IDCliente)
 );
 
+CREATE TABLE Datacenter(
+    idDC SERIAL NOT NULL,
+    nomeDC VARCHAR(50) NOT NULL,
+    IDCliente INTEGER NOT NULL,
+    PRIMARY KEY (idDC),
+    CONSTRAINT fk_idCliente_DC FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+);
+
 CREATE TABLE Siti(
     IDSito SERIAL,
     nomeSito VARCHAR(50) NOT NULL,
     IDCitta INTEGER NOT NULL,
-    IDCliente INTEGER NOT NULL,
+    idDC INTEGER NOT NULL,
     PRIMARY KEY (IDSito),
     CONSTRAINT fk_idCitta FOREIGN KEY (IDCitta) REFERENCES Citta(IDCitta),
-    CONSTRAINT fk_idPaese_Sito FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+    CONSTRAINT fk_idDC_Siti FOREIGN KEY (idDC) REFERENCES DataCenter(idDC)
 );
 
 CREATE TABLE Sotto_Siti(
@@ -98,61 +105,68 @@ CREATE TABLE Indirizzi(
 );
 
 -- Inserimento Paesi
---INSERT INTO Paesi (IDPaese, nomePaese) VALUES
---('IT', 'Italia'),
---('FR', 'Francia'),
---('DE', 'Germania');
+INSERT INTO Paesi (IDPaese, nomePaese) VALUES
+('IT', 'Italia'),
+('FR', 'Francia'),
+('DE', 'Germania');
 
 -- Inserimento Città (ID auto-generato)
---INSERT INTO Citta (nomeCitta, IDPaese) VALUES
---('Roma', 'IT'),
---('Parigi', 'FR'),
---('Berlino', 'DE');
+INSERT INTO Citta (nomeCitta, IDPaese) VALUES
+('Roma', 'IT'),
+('Parigi', 'FR'),
+('Berlino', 'DE');
 
 -- Inserimento Clienti
---INSERT INTO Clienti (IDCliente, nomeCliente) VALUES
---(1, 'Cliente A'),
---(2, 'Cliente B'),
---(3, 'Cliente C');
+INSERT INTO Clienti (IDCliente, nomeCliente) VALUES
+(1, 'Cliente A'),
+(2, 'Cliente B'),
+(3, 'Cliente C');
+
+
+-- Inserimento Clienti
+INSERT INTO Datacenter (idDC, nomeDC, IDCliente) VALUES
+(1, 'Datacenter A', 3),
+(2, 'Datacenter B', 2),
+(3, 'Datacenter C', 1);
 
 -- Inserimento Siti
---INSERT INTO Siti (IDSito, nomeSito, IDCitta, IDCliente) VALUES
---(101, 'Sede Centrale', 1, 1),
---(102, 'Filiale Paris', 2, 2),
---(103, 'HQ Berlin', 3, 3);
+INSERT INTO Siti (IDSito, nomeSito, IDCitta, idDC) VALUES
+(101, 'Sede Centrale', 1, 1),
+(102, 'Filiale Paris', 2, 2),
+(103, 'HQ Berlin', 3, 3);
 
 -- Inserimento Sotto-Siti
---INSERT INTO Sotto_Siti (IDSottoSito, nomeSottoSito, IDSito) VALUES
---(1001, 'Uffici Roma Nord', 101),
---(1002, 'DataCenter Paris', 102),
---(1003, 'Laboratorio Berlino', 103);
+INSERT INTO Sotto_Siti (IDSottoSito, nomeSottoSito, IDSito) VALUES
+(1001, 'Uffici Roma Nord', 101),
+(1002, 'DataCenter Paris', 102),
+(1003, 'Laboratorio Berlino', 103);
 
 -- Collegamento Clienti-Tecnici
---INSERT INTO Cliente_Tecnico VALUES
---(1, 1),
---(2, 1),
---(3, 2),
---(1, 3);
+INSERT INTO Cliente_Tecnico VALUES
+(1, 1),
+(2, 1),
+(3, 2),
+(1, 3);
 
 -- Inserimento Reti
---INSERT INTO Rete (IDRete, nomeRete, descrizione) VALUES
---(1, 'LAN', 'Rete locale uffici'),
---(2, 'WAN', 'Rete geografica aziendale');
+INSERT INTO Rete (IDRete, nomeRete, descrizione) VALUES
+(1, 'LAN', 'Rete locale uffici'),
+(2, 'WAN', 'Rete geografica aziendale');
 
 -- Collegamento SottoSiti-Rete
---INSERT INTO SottoSiti_Rete (IDSottoSito, IDRete) VALUES
---(1001, 1),
---(1002, 2),
---(1003, 1),
---(1003, 2);
+INSERT INTO SottoSiti_Rete (IDSottoSito, IDRete) VALUES
+(1001, 1),
+(1002, 2),
+(1003, 1),
+(1003, 2);
 
 -- Inserimento VLAN
---INSERT INTO VLAN (IDV, nomeVLAN, descrizione) VALUES
---(10, 'VLAN_Uffici', 'Rete dedicata agli uffici'),
---(20, 'VLAN_Server', 'Rete dedicata ai server');
+INSERT INTO VLAN (IDV, nomeVLAN, descrizione) VALUES
+(10, 'VLAN_Uffici', 'Rete dedicata agli uffici'),
+(20, 'VLAN_Server', 'Rete dedicata ai server');
 
 -- Inserimento Indirizzi IP
---INSERT INTO Indirizzi (IP, IDRete, N_Prefisso, IDV) VALUES
---('192.168.1.1', 1, 24, 10),
---('10.0.0.5', 2, 16, 20),
---('172.16.0.10', 1, 22, 10);
+INSERT INTO Indirizzi (IP, IDRete, N_Prefisso, IDV) VALUES
+('192.168.1.1', 1, 24, 10),
+('10.0.0.5', 2, 16, 20),
+('172.16.0.10', 1, 22, 10);

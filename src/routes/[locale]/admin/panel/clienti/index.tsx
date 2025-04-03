@@ -5,7 +5,7 @@ import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 import ButtonAdd from "~/components/table/ButtonAdd";
 import styles from "../dialog.css?inline";
-import TextBoxForm from '~/components/forms/TextBoxForm';
+import TextBoxForm from '~/components/forms/formsComponents/TextboxForm';
 import Import from "~/components/table/ImportCSV";
 import sql from "~/../db";
 
@@ -166,7 +166,7 @@ export default component$(() => {
       
     return (
         <>
-            <div class="size-full sm:px-24 lg:px-40 bg-white overflow-hidden">
+            <div class="size-full bg-white overflow-hidden">
               {/* Aggiungi questo div per le notifiche */}
               <div class="fixed top-4 right-4 z-50 space-y-2">
                 {notifications.value.map((notification, index) => (
@@ -202,7 +202,7 @@ export default component$(() => {
                                                       <div class="w-11/12">
                                                           <input class="opacity-0" id="idC" type="text" name="idcliente" value={currentId.value} />
                                                           <br />
-                                                          <TextBoxForm error={formAction.value.value} id="NomeC" placeholder={$localize`Inserire il nome del cliente`} nameT="nome" titolo={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
+                                                          <TextBoxForm error={formAction.value.value} id="NomeC" placeholder={$localize`Inserire il nome del cliente`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
                                                           {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
                                                       </div>
                                               </div>

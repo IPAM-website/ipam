@@ -3,7 +3,7 @@ import { DocumentHead, server$, Form, routeAction$, RequestEventAction, zod$, z 
 import Title from "~/components/layout/Title";
 import Table from "~/components/table/Table";
 import ButtonAdd from "~/components/table/ButtonAdd";
-import TextBoxForm from '~/components/forms/TextBoxForm';
+import TextBoxForm from "~/components/forms/formsComponents/TextboxForm";
 import styles from "../dialog.css?inline";
 import sql from "~/../db";
 import Dati from "~/components/table/Dati_Headers";
@@ -206,7 +206,7 @@ export default component$(() => {
       
     return (
         <>
-            <div class="size-full sm:px-24 lg:px-40 bg-white overflow-hidden">
+            <div class="size-full bg-white overflow-hidden">
             {/* Aggiungi questo div per le notifiche */}
             <div class="fixed top-4 right-4 z-50 space-y-2">
                 {notifications.value.map((notification, index) => (
@@ -243,16 +243,16 @@ export default component$(() => {
                                               <input class="opacity-0" id="idT" type="text" name="idtecnico" value={currentId.value} />
                                               <CHKForms id="chkT" name="admin" value={admin.value} nameCHK="Admin"></CHKForms>
                                               <br />
-                                              <TextBoxForm error={formAction.value.value} id="NomeT" placeholder={$localize`Inserire il nome del tecnico`} nameT="nome" titolo={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
+                                              <TextBoxForm error={formAction.value.value} id="NomeT" placeholder={$localize`Inserire il nome del tecnico`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
                                               {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
-                                              <TextBoxForm error={formAction.value.value} id="CognomeT" placeholder={$localize`Inserire il cognome del tecnico`} nameT="cognome" titolo={$localize`Cognome` + "*"} value={cognome.value}></TextBoxForm>
+                                              <TextBoxForm error={formAction.value.value} id="CognomeT" placeholder={$localize`Inserire il cognome del tecnico`} nameT="cognome" title={$localize`Cognome` + "*"} value={cognome.value}></TextBoxForm>
                                               {formAction.value.value?.failed && formAction.value.value?.fieldErrors.cognome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Surname not valid" : "Cognome non valido"}</div>)}
-                                              <TextBoxForm error={formAction.value.value} id="RuoloT" placeholder={$localize`Inserire il ruolo del tecnico`} nameT="ruolo" titolo={$localize`Ruolo` + "*"} value={ruolo.value}></TextBoxForm>
+                                              <TextBoxForm error={formAction.value.value} id="RuoloT" placeholder={$localize`Inserire il ruolo del tecnico`} nameT="ruolo" title={$localize`Ruolo` + "*"} value={ruolo.value}></TextBoxForm>
                                               {formAction.value.value?.failed && formAction.value.value?.fieldErrors.ruolo && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Role not valid" : "Ruolo non valido"}</div>)}
-                                              <TextBoxForm error={formAction.value.value} id="EmailT" placeholder={$localize`Inserire la mail del tecnico`} nameT="email" titolo={$localize`Email` + "*"} value={mail.value}></TextBoxForm>
+                                              <TextBoxForm error={formAction.value.value} id="EmailT" placeholder={$localize`Inserire la mail del tecnico`} nameT="email" title={$localize`Email` + "*"} value={mail.value}></TextBoxForm>
                                               {formAction.value.value?.failed && formAction.value.value?.fieldErrors.email && (<div class="text-sm text-red-600 font-semibold ms-32">{formAction.value.value?.fieldErrors.email}</div>)}
-                                              <TextBoxForm id="TelefonoT" placeholder={$localize`Inserire il telefono del tecnico`} nameT="telefono" titolo={$localize`Telefono`} value={telefono.value}></TextBoxForm>
-                                              <TextBoxForm error={formAction.value.value} id="PwdT" placeholder={$localize`Inserire la password del tecnico`} nameT="pwd" titolo={$localize`Password` + "*"} value={password.value}></TextBoxForm>
+                                              <TextBoxForm id="TelefonoT" placeholder={$localize`Inserire il telefono del tecnico`} nameT="telefono" title={$localize`Telefono`} value={telefono.value}></TextBoxForm>
+                                              <TextBoxForm error={formAction.value.value} id="PwdT" placeholder={$localize`Inserire la password del tecnico`} nameT="pwd" title={$localize`Password` + "*"} value={password.value}></TextBoxForm>
                                               {formAction.value.value?.failed && formAction.value.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Password not valid" : "Password non valido"}</div>)}
                                           </div>
                                   </div>

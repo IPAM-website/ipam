@@ -29,7 +29,6 @@ export default component$(() => {
           />
         )}
         <RouterHead />
-        <script dangerouslySetInnerHTML="../node_modules/flowbite/dist/flowbite.min.js"></script>
       </head>
       <body lang="en">
         <RouterOutlet />

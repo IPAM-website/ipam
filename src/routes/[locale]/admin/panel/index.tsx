@@ -30,7 +30,7 @@ interface infoProps {
 interface logsProps {
     data: string,
     ora: string,
-    descrizione : string
+    descrizione: string
 }
 
 export const onGet: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
@@ -67,7 +67,7 @@ export const useInfo = server$(async () => {
             info.rapct = '0';
         else
             info.rapct = (query4[0].avg as string).substring(0, 4);
-        const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN siti ON cliente_tecnico.idcliente=siti.idcliente GROUP BY idsito )`
+        const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN datacenter ON cliente_tecnico.idcliente=datacenter.idcliente INNER JOIN siti ON datacenter.iddc = siti.iddc GROUP BY idsito )`
         if(query5[0].avg == null)
             info.rapst = '0';
         else
@@ -89,8 +89,8 @@ export default component$(() => {
     })
     return (
         <>
-            <div class="size-full px-24 lg:px-40 bg-white overflow-hidden">
-                <Title haveReturn={true} url={"/"+lang+"/dashboard"}>{$localize`Admin Panel`}</Title>
+            <div class="size-full bg-white overflow-hidden">
+                <Title haveReturn={true} url={"/" + lang + "/dashboard"}>{$localize`Admin Panel`}</Title>
                 <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
                     <div class="w-full md:w-72 flex-4 px-5 py-3  rounded-lg border-1 border-[#cdcdcd] inline-flex flex-col justify-start items-start gap-1">
@@ -138,13 +138,13 @@ export default component$(() => {
                 </div>
                 <div class="w-full flex mt-8">
 
-                <div class="p-2 rounded-lg border-1 w-full md:w-3/4  border-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
-                    <div class="flex-1 inline-flex flex-col justify-start items-start">
-                        <div class="border-b border-[#f3f3f3]">
-                            <div class="justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Logs</div>
-                        </div>
-                        <LogsList />
-                        {/* <div class="self-stretch px-[19px] pt-4 pb-[11px] inline-flex justify-start items-center gap-[60px] overflow-hidden">
+                    <div class="p-2 rounded-lg border-1 w-full md:w-3/4  border-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
+                        <div class="flex-1 inline-flex flex-col justify-start items-start">
+                            <div class="border-b border-[#f3f3f3]">
+                                <div class="justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Logs</div>
+                            </div>
+                            <LogsList />
+                            {/* <div class="self-stretch px-[19px] pt-4 pb-[11px] inline-flex justify-start items-center gap-[60px] overflow-hidden">
                             <div class="w-[100px] justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Data</div>
                             <div class="w-12 justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Ora</div>
                             <div class="flex-1 justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Descrizione</div>
@@ -159,9 +159,9 @@ export default component$(() => {
                             <div class="w-12 justify-start text-black text-base font-normal font-['Inter'] leading-normal">12:05</div>
                             <div class="flex-1 justify-start text-black text-base font-normal font-['Inter'] leading-normal">Aggiunto nuovo tecnico “Mario”</div>
                         </div> */}
-                        
+
+                        </div>
                     </div>
-                </div>
                 </div>
 
 

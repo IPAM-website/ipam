@@ -92,6 +92,27 @@ const TableMaps: { [key: string]: TableMap } = {
             "idtecnico",
             "idcliente"
         ]
+    },
+    "indirizzi":{
+        headers:{
+            it:[
+                "Indirizzo",
+                "Prefisso",
+                "VLAN",
+                ""
+            ],
+            en:[
+                "Address",
+                "Prefix",
+                "VLAN",
+                ""
+            ]
+        },
+        keys:[
+            "ip",
+            "n_prefisso",
+            "idv"
+        ]
     }
 }
 
@@ -105,7 +126,7 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     "cliente_tecnico": {
       keys: ["idcliente", "idtecnico"]
     }
-  } as const;
+  };
 
 
 export default TableMaps
