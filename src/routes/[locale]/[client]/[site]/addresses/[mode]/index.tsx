@@ -168,19 +168,19 @@ export default component$(() => {
     const nav = useNavigate();
     const address = useStore<RowAddress>({});
     const sitename = useSiteName();
-    const filter = useStore({ network: '', subsite: '' });
+    const filter = useStore({ active: false, network: '', subsite: '' });
     const mode = loc.params.mode ?? "view";
 
     useTask$(async () => {
         addressList.value = await useAddresses();
         subsites.value = await useSubSite(parseInt(loc.params.site));
 
-        if(loc.url.searchParams.has("subsite"))
+        if (loc.url.searchParams.has("subsite"))
             filter.subsite = loc.url.searchParams.get("subsite") as string;
-        if(loc.url.searchParams.has("network"))
+        if (loc.url.searchParams.has("network"))
             filter.network = loc.url.searchParams.get("network") as string;
 
-        console.log(filter);
+        filter.active = (filter.network != '' || filter.subsite != '');
     })
 
     useTask$(async ({ track }) => {
@@ -195,37 +195,70 @@ export default component$(() => {
             {
                 mode == "view"
                     ? <div>
-                        <SelectForm OnClick$={(e) => { filter.subsite = (e.target as HTMLOptionElement).value; }} value={filter.subsite} id="filter-subsite" name="">
-                            {subsites.value.map((x: Subsite) => <option value={x.idsottosito}>{x.nomesottosito}</option>)}
-                        </SelectForm>
-                        {
-                            filter.subsite &&
-                            <SelectForm OnClick$={(e) => { filter.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.network}>
-                                {networks.value.map((x: Network) => <option value={x.idrete}>{x.nomerete}</option>)}
-                            </SelectForm>
-                        }
-                        <button class="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 cursor-pointer disabled:cursor-default text-white rounded-md" disabled={filter.subsite == ''} onClick$={() => {
-                            // window.location.href = loc.url.pathname + (filter.network == '' ? ("?subsite=" + filter.subsite) : ("?network=" + filter.network));
-                            let url = loc.url.pathname + "?";
-                            let searchParams = new URLSearchParams();
-                            if(filter.subsite!='')
-                                searchParams.append("subsite",filter.subsite);
-                            if(filter.network!='')
-                                searchParams.append("network",filter.network);
-                            window.location.href = url + searchParams;
-                        }}>Filter</button>
-                        <button class="p-2 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 cursor-pointer disabled:cursor-default text-white rounded-md ms-2" disabled={filter.subsite == ''} onClick$={() => {
-                            filter.network = '';
-                            filter.subsite = '';
-                        }}>Reset</button>
+                        <div style={{ display: filter.active ? "block" : "none" }} class="filter border border-gray-200 p-4 w-1/2 mx-auto shadow-lg ">
+                            <div class="flex">
+                                <h1 class="font-semibold mb-2 w-full">Filters</h1>
+                                <button class="cursor-pointer" onClick$={() => { filter.active = false; }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="flex">
+                                <div class="w-full">
+                                    <span class="ms-2">Subsite</span>
+                                    <SelectForm OnClick$={(e) => { filter.subsite = (e.target as HTMLOptionElement).value; }} value={filter.subsite} id="filter-subsite" name="" listName="Sottositi">
+                                        {subsites.value.map((x: Subsite) => <option value={x.idsottosito}>{x.nomesottosito}</option>)}
+                                    </SelectForm>
+                                </div>
+                                <div class="w-full">
+                                    <span class="ms-2">Network</span>
+                                    <SelectForm disabled={filter.subsite == ''} OnClick$={(e) => { filter.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.network} listName="Reti">
+                                        {networks.value.map((x: Network) => <option value={x.idrete}>{x.nomerete}</option>)}
+                                    </SelectForm>
+                                </div>
+                            </div>
+                            <div class="flex w-full mt-2">
+                                <div class="flex-auto"></div>
+                                <button class=" flex gap-1 items-center p-2 px-4 border-gray-300 hover:bg-gray-100 border cursor-pointer disabled:cursor-default text-gray-900 rounded-lg mx-2" disabled={filter.subsite == ''} onClick$={() => {
+                                    filter.network = '';
+                                    filter.subsite = '';
+                                }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg>
+                                    Reset</button>
+
+                                <button class="p-2 flex items-center gap-1 px-4 bg-black hover:bg-gray-800 disabled:bg-gray-400 cursor-pointer disabled:cursor-default text-white rounded-md" disabled={filter.subsite == ''} onClick$={() => {
+                                    // window.location.href = loc.url.pathname + (filter.network == '' ? ("?subsite=" + filter.subsite) : ("?network=" + filter.network));
+                                    let url = loc.url.pathname + "?";
+                                    let searchParams = new URLSearchParams();
+                                    if (filter.subsite != '')
+                                        searchParams.append("subsite", filter.subsite);
+                                    if (filter.network != '')
+                                        searchParams.append("network", filter.network);
+                                    window.location.href = url + searchParams;
+                                }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                    </svg>
+                                    Search</button>
+
+                            </div>
+                        </div>
+
                         <Table dati={addressList} nomeImport={$localize`indirizzi`} title={$localize`Lista indirizzi IP`} nomePulsante={$localize`Aggiungi indirizzo`} nomeTabella="indirizzi" onUpdate$={(row) => {
                             Object.assign(address, row as RowAddress);
                             nav(loc.url.href.replace("view", "update"));
                         }}>
+                            <button class="cursor-pointer p-1 absolute top-5 left-36 rounded-md bg-black hover:bg-gray-700" onClick$={() => filter.active = !filter.active}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 text-white">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                                </svg>
+                            </button>
+
                             <Dati dati={addressList.value} nomeTabella={"indirizzi"} onUpdate$={(row) => {
                                 Object.assign(address, row as RowAddress);
                                 nav(loc.url.href.replace("view", "update"));
-                            }} onDelete$={() => {}}></Dati>
+                            }} onDelete$={() => { }}></Dati>
                             <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
                         </Table>
                     </div>
@@ -289,7 +322,7 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
 
             <div class="m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative">
                 <FormBox title="Informazioni">
-                    <SelectForm id="cmbType" name="Tipo Dispositivo" value="" OnClick$={(e) => { type.value = (e.target as HTMLOptionElement).value; }}>
+                    <SelectForm id="cmbType" name="Tipo Dispositivo" value="" OnClick$={(e) => { type.value = (e.target as HTMLOptionElement).value; }} listName="">
                         <option value="Server">Server</option>
                         <option value="Controller">Controller</option>
                         <option value="Router">Router</option>
@@ -345,12 +378,12 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
                     <TextboxForm id="txtName" value={prefix.value} name={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { prefix.value = (e.target as HTMLInputElement).value }} />
                     {attempted.value && !prefix.value && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" name={$localize`Rete Associata`} value={rete.value?.toString() || ""} OnClick$={(e) => { rete.value = parseInt((e.target as HTMLOptionElement).value); }}>
+                    <SelectForm id="cmbRete" name={$localize`Rete Associata`} value={rete.value?.toString() || ""} OnClick$={(e) => { rete.value = parseInt((e.target as HTMLOptionElement).value); }} listName="">
                         {networks.value.map((x: Network) => <option value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !rete.value && <span class="text-red-600">{$localize`Please select a network`}</span>}
 
-                    <SelectForm id="cmbVLAN" name="VLAN" value={vlan.value?.toString() || ""} OnClick$={(e) => { vlan.value = parseInt((e.target as HTMLOptionElement).value); }}>
+                    <SelectForm id="cmbVLAN" name="VLAN" value={vlan.value?.toString() || ""} OnClick$={(e) => { vlan.value = parseInt((e.target as HTMLOptionElement).value); }} listName="">
                         {vlans.value.map((x: VLAN) => <option value={x.idv}>{x.nomevlan}</option>)}
                     </SelectForm>
                     {attempted.value && !vlan.value && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}

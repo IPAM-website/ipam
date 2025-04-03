@@ -9,7 +9,7 @@ interface TableProps { title?: string, dati ?: any, nomeTabella: string, nomePul
 export default component$<TableProps>(({ title, nomeTabella, nomePulsante, nomeImport, onUpdate$=$(()=>{}), onDelete$=$(()=>{}) }) => {
 
     return (
-        <div class="bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] border-1 border-offset-[-1px] border-neutral-200 mt-12">
+        <div class="bg-white rounded-lg relative shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] border-1 border-offset-[-1px] border-neutral-200 mt-12">
             <TitoloTable nomeTitolo={title}></TitoloTable>
             <Slot></Slot>
             <Import nomeImport={nomeImport}></Import>
