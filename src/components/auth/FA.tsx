@@ -164,7 +164,7 @@ export default component$<LoginData>((props) => {
                         <p class="text-gray-600 mb-4">Inserisci il codice generato dall'app di autenticazione.</p>
                         <input
                             type="text"
-                            class="w-full border p-2 rounded mb-4"
+                            class="w-full rounded-md border-neutral-300 border p-2 focus:border-gray-800 focus:outline-none transition-all duration-500 mb-4"
                             placeholder="Inserisci codice OTP"
                             bind:value={otpCode}
                         />

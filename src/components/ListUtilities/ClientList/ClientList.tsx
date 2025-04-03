@@ -15,8 +15,8 @@ export const useClients = server$(async (idTecnico) => {
     const query = await sql`SELECT clienti.* FROM clienti INNER JOIN cliente_tecnico ON cliente_tecnico.idcliente = clienti.idcliente AND cliente_tecnico.idtecnico = ${idTecnico}`
     return query;
   }
-  catch {
-    throw new Error("Error connecting to the DB");
+  catch(e:any) {
+    throw new Error(e);
   }
 
 })

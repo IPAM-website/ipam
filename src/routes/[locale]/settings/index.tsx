@@ -1,6 +1,5 @@
 import { component$, Signal, withLocale,  } from "@builder.io/qwik";
 import { RequestHandler, routeLoader$, useNavigate } from "@builder.io/qwik-city";
-import { Select } from "@radix-ui/react-select";
 import Title from "~/components/layout/Title";
 import jwt from "jsonwebtoken"
 
