@@ -1,8 +1,9 @@
-import { component$, Signal, useSignal, useTask$ } from '@builder.io/qwik';
+import { component$, getLocale, Signal, useContext, useSignal, useTask$ } from '@builder.io/qwik';
 import ClientInfo from './clientinfo';
 import { server$, useNavigate } from '@builder.io/qwik-city';
 import sql from "~/../db";
 import { setClientName } from '../../layout/Sidebar';
+import { getBaseURL } from '~/fnUtils';
 
 export interface ClientListProps {
   client : Signal<number>,
@@ -20,7 +21,7 @@ export const useClients = server$(async (idTecnico) => {
 
 })
 
-export default component$(({currentTec, client} : {currentTec:number, client:{id:number,name:string}}) => {
+export default component$(({currentTec} : {currentTec:number}) => {
   const clientList = useSignal<ClientInfo[] | null>(null);
   const nav = useNavigate();
 
@@ -36,10 +37,7 @@ export default component$(({currentTec, client} : {currentTec:number, client:{id
             key={x.idcliente}
             class="cursor-pointer hover:-translate-y-1 hover:outline-gray-300 hover:shadow-lg transition-all p-6 bg-white rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] outline-1 outline-offset-[-1px] outline-[#dfdfdf]"
             onClick$={()=>{
-                client.id = x.idcliente
-                client.name = x.nomecliente
-                setClientName(x.nomecliente);
-                nav("?client="+x.idcliente);
+              nav(getBaseURL()+x.idcliente);
             }}
           >
             <img src="" alt={$localize`Immagine Cliente`} />

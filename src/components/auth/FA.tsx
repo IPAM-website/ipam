@@ -128,7 +128,6 @@ export default component$<LoginData>((props) => {
                 },
                 body: JSON.stringify(cookie)
             })
-
             nav("/"+getLocale("en")+"/dashboard");
 
         } else {

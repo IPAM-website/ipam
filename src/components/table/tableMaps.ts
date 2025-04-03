@@ -70,6 +70,27 @@ const TableMaps: { [key: string]: TableMap } = {
             "idcliente",
             "nomecliente"
         ]
+    },
+    "indirizzi":{
+        headers:{
+            it:[
+                "Indirizzo",
+                "Prefisso",
+                "VLAN",
+                ""
+            ],
+            en:[
+                "Address",
+                "Prefix",
+                "VLAN",
+                ""
+            ]
+        },
+        keys:[
+            "ip",
+            "n_prefisso",
+            "idv"
+        ]
     }
 }
 

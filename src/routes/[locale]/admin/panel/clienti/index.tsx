@@ -27,7 +27,7 @@ export default component$(() => {
       
     return (
         <>
-            <div class="size-full sm:px-24 lg:px-40 bg-white overflow-hidden">
+            <div class="size-full bg-white overflow-hidden">
               <Title haveReturn={true} url={"/"+lang+"/admin/panel"}>{$localize`Admin Panel`}</Title>
               <Table title={$localize`Lista clienti`} nomeTabella={$localize`clients`} dati={dati.value} nomePulsante={$localize`Aggiungi cliente/i`} nomeImport="clienti"></Table>
             </div>

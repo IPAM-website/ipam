@@ -1,7 +1,7 @@
 import { component$, Slot } from "@builder.io/qwik";
 import TimeDiv from "../utils/TimeDiv";
 import { Form, routeAction$ } from "@builder.io/qwik-city";
-import SearchBar from "../forms/SearchBar";
+import SearchBar from "../forms/formsComponents/SearchBar";
 
 export const useAction = routeAction$(async () => {
     return {

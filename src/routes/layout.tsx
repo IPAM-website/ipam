@@ -1,10 +1,11 @@
-import { component$, Slot, useVisibleTask$ } from "@builder.io/qwik";
+import { component$, Slot, useContextProvider, useStore, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$, useLocation, type RequestHandler } from "@builder.io/qwik-city";
-import { selectSearchbar } from "~/components/forms/SearchBar";
+import { selectSearchbar } from "~/components/forms/formsComponents/SearchBar";
 import Navbar from "~/components/layout/Navbar";
 import Sidebar, { toggleSidebar } from "~/components/layout/Sidebar";
+import jwt from "jsonwebtoken";
 
-export const onGet: RequestHandler = async ({ cacheControl }) => {
+export const onGet: RequestHandler = async ({ cacheControl, cookie, sharedMap, env }) => {
   // Control caching for this request for best performance and to reduce hosting costs:
   // https://qwik.dev/docs/caching/
   cacheControl({
@@ -13,9 +14,8 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
     // Max once every 5 seconds, revalidate on the server to get a fresh version of this page
     maxAge: 5,
   });
+
 };
-
-
 
 export default component$(() => {
 
@@ -41,7 +41,9 @@ export default component$(() => {
     <>
       {!location.url.pathname.includes('/login/') && <Sidebar />}
       {!location.url.pathname.includes('/login/') && <Navbar />}
-      <Slot />
+      <div class="lg:px-40 md:px-24">
+        <Slot />
+      </div>
     </>
   );
 });
