@@ -41,7 +41,7 @@ export default component$(() => {
     <>
       {!location.url.pathname.includes('/login/') && <Sidebar />}
       {!location.url.pathname.includes('/login/') && <Navbar />}
-      <div class="lg:px-40 md:px-24">
+      <div>
         <Slot />
       </div>
     </>

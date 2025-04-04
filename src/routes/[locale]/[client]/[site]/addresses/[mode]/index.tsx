@@ -1,4 +1,4 @@
-import { $, component$, getLocale, Signal, Slot, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, getLocale, Signal, Slot, UseSignal, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { RequestHandler, routeAction$, routeLoader$, server$, useContent, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
 import sql from "~/../db"
 import AddressBox from "~/components/forms/formsComponents/AddressBox";
@@ -178,6 +178,7 @@ export default component$(() => {
     const filter = useStore({ active: false, network: '', subsite: '' });
     const mode = loc.params.mode ?? "view";
     const notifications = useSignal<Notification[]>([]);
+    const reloadFN = useSignal<(() => void) | null>(null);
 
     useTask$(async () => {
         addressList.value = await useAddresses();
@@ -189,6 +190,7 @@ export default component$(() => {
             filter.network = loc.url.searchParams.get("network") as string;
 
         filter.active = (filter.network != '' || filter.subsite != '');
+        console.log(filter.active);
     })
 
     useTask$(async ({ track }) => {
@@ -220,12 +222,17 @@ export default component$(() => {
         nav(loc.url.href.replace("view", "update"));
     })
 
+    const handleDelete = $(() => { });
 
-    const handleDelete = $(()=>{});
+    const reloadData = $(async () => {
+        return await useAddresses({ type: filter.network != '' ? "network" : "subsite", value: filter.network != '' ? filter.network : filter.subsite });
+    })
+
+    const getREF = $((reloadFunc:()=>void) => { reloadFN.value = reloadFunc;})
 
     return (
         <>
-            <Title> {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title>
+            <Title haveReturn={true} url={loc.url.pathname.split("addresses")[0]} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title>
             {
                 mode == "view"
                     ? <div>
@@ -261,15 +268,19 @@ export default component$(() => {
                                     </svg>
                                     Reset</button>
 
-                                <button class="p-2 flex items-center gap-1 px-4 bg-black hover:bg-gray-800 disabled:bg-gray-400 cursor-pointer disabled:cursor-default text-white rounded-md" disabled={filter.subsite == ''} onClick$={() => {
-                                    // window.location.href = loc.url.pathname + (filter.network == '' ? ("?subsite=" + filter.subsite) : ("?network=" + filter.network));
+                                <button class="p-2 flex items-center gap-1 px-4 bg-black hover:bg-gray-800 disabled:bg-gray-400 cursor-pointer disabled:cursor-default text-white rounded-md" disabled={filter.subsite == ''} onClick$={async () => {
+
                                     let url = loc.url.pathname + "?";
                                     let searchParams = new URLSearchParams();
                                     if (filter.subsite != '')
                                         searchParams.append("subsite", filter.subsite);
                                     if (filter.network != '')
                                         searchParams.append("network", filter.network);
-                                    window.location.href = url + searchParams;
+                                    nav(url + searchParams);
+                                    filter.active = (filter.network != '' || filter.subsite != '');
+
+                                    if (reloadFN)
+                                        reloadFN.value?.();
                                 }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                                     </svg>
@@ -285,7 +296,7 @@ export default component$(() => {
                                 </svg>
                             </button>
 
-                            <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete}></Dati>
+                            <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={filter.active ? reloadData : undefined} onReloadRef={getREF}></Dati>
                             <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
                             <ImportCSV OnError={handleError} OnOk={handleOk} nomeImport="indirizzi" />
                         </Table>

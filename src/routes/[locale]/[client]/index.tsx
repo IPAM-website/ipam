@@ -61,7 +61,7 @@ export default component$(() => {
 
     return (
         <>
-            <Title>{client.value?.nomecliente}</Title>
+            <Title haveReturn={true} url={loc.url.origin}>{client.value?.nomecliente}</Title>
             <br />
             <div class="flex">
                 <div class="w-1/4 h-[60vh] flex flex-col shadow p-3 rounded-md border border-gray-200">

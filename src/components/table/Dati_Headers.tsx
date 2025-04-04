@@ -4,11 +4,13 @@ import { server$ } from "@builder.io/qwik-city";
 import sql from "~/../db";
 import tableStyle from "./tableStyle.css?inline";
 import ConfirmDialog from "~/components/ui/confirmDialog";
+import postgres from "postgres";
 
 interface LoaderState { [key: string]: boolean; }
-interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; }
+interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; funcReloadData?: () => any, onReloadRef?: (reloadFunc : ()=>void)=>void }
 
-export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella }) => {
+
+export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella, funcReloadData, onReloadRef }) => {
     const modificaIT_EN = ["Modifica", "Edit"];
     const showDialog = useSignal(false);
     const rowToDelete = useSignal<any>(null);
@@ -26,11 +28,15 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
         store.globalLoading = true;
         try {
             console.log("Reloading data for table:", nT.value);
-            const freshData = await server$(async () => {
+            const freshData = funcReloadData ? await funcReloadData() : await server$(async () => {
                 const result = await sql`SELECT * FROM ${sql(nT.value)}`;
                 return Array.isArray(result) ? result : [];
             })();
 
+            // if (funcReloadData) {
+            //     console.log("Personalized reload function");
+            //     console.log("Data: ",await funcReloadData())
+            // }
             store.dati = freshData;
         } catch (error) {
             showError(lang === 'it'
@@ -53,6 +59,8 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
     useVisibleTask$(async () => {
         //await new Promise(resolve => setTimeout(resolve, 1500)); --> timer qwik
         initialLoad.value = false;
+        if(onReloadRef)
+            onReloadRef(reloadData);
     });
 
     const showError = $((message: string) => {
@@ -121,6 +129,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                     {title}
                 </div>
                 <button
+                    id="btnReload"
                     onClick$={reloadData}
                     disabled={store.globalLoading}
                     class={`flex items-center px-4 py-2 rounded-md 
