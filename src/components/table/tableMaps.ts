@@ -13,25 +13,6 @@ interface LanguageMap{
     [key: string]: string[];
 }
 
-const LanguageMapTecnici: { [key: string]: LanguageMap } = {
-    "headers":{
-        it:[
-            "ID",
-            "Nome",
-            "Cognome",
-            "Ruolo",
-            ""
-        ],
-        en:[
-            "ID",
-            "Name",
-            "Surname",
-            "Role",
-            ""
-        ]
-    }
-}
-
 const TableMaps: { [key: string]: TableMap } = {
     "tecnici": {
         headers: {
@@ -78,19 +59,22 @@ const TableMaps: { [key: string]: TableMap } = {
     "cliente_tecnico":{
         headers: {
             it:[
-                "Nome Cliente",
+                "Data Assegnazione",
                 "Nome Tecnico",
+                "Nome Cliente",
                 ""
             ],
-            en:[
-                "Client name",
+            en:[               
+                "Assignment Date",
                 "Technician Name",
+                "Client name",
                 ""
             ]                      
         },
-        keys: [
-            "idtecnico",
-            "idcliente"
+        keys: [            
+            "data_assegnazione",
+            "nometecnico",
+            "nomecliente"
         ]
     },
     "indirizzi":{
