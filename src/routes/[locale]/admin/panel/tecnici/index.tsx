@@ -189,7 +189,7 @@ export default component$(() => {
 
   const Delete =$(async (row:any)=>{
     if(await deleteRow(extractRow(row)))
-      console.log("DELETE RIUSCITO");
+      addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
     else
       console.log("DE")
   })
@@ -206,7 +206,7 @@ export default component$(() => {
       
     return (
         <>
-            <div class="size-full bg-white overflow-hidden  lg:px-40 px-24">
+            <div class="size-full bg-white overflow-hidden">
             {/* Aggiungi questo div per le notifiche */}
             <div class="fixed top-4 right-4 z-50 space-y-2">
                 {notifications.value.map((notification, index) => (

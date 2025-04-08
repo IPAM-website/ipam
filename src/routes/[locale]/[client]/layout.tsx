@@ -24,7 +24,7 @@ export default component$(() => {
     useVisibleTask$(async () => {
         setClientName(await getClientName());
     })
-    return <div  class="lg:px-40 px-24">
-        <Slot />;
+    return <div  class="lg:px-40 md:px-24">
+        <Slot />
     </div>
 });

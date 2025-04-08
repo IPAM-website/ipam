@@ -89,7 +89,7 @@ export default component$(() => {
     })
     return (
         <>
-            <div class="size-full bg-white overflow-hidden  lg:px-40 px-24">
+            <div class="size-full bg-white overflow-hidden ">
                 <Title haveReturn={true} url={"/" + lang + "/dashboard"}>{$localize`Admin Panel`}</Title>
                 <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
