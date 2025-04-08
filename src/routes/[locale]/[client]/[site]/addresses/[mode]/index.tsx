@@ -1,5 +1,5 @@
-import { $, component$, getLocale, Signal, Slot, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
-import { RequestHandler, routeAction$, routeLoader$, server$, useContent, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
+import { $, component$, getLocale, Signal, Slot, UseSignal, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
+import { Form, RequestHandler, routeAction$, routeLoader$, server$, useContent, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
 import sql from "~/../db"
 import AddressBox from "~/components/forms/formsComponents/AddressBox";
 import DatePicker from "~/components/forms/formsComponents/DatePicker";
@@ -12,6 +12,9 @@ import Table from "~/components/table/Table";
 import Subsite from "~/components/ListUtilities/SubSiteList/subsiteModel";
 import Dati from "~/components/table/Dati_Headers";
 import ImportCSV from "~/components/table/ImportCSV";
+import PopupModal from "~/components/ui/PopupModal";
+import FMButton from "~/components/forms/formsComponents/FMButton";
+import SelectTextboxForm from "~/components/forms/formsComponents/SelectTextboxForm";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
     if (!['view', 'insert', 'update'].includes(params.mode)) {
@@ -44,30 +47,79 @@ export interface RowAddress {
     ip?: string,
     n_prefisso?: number,
     nomerete?: string,
-    nomesottosito?: string
+    nomesottosito?: string,
+    nome_dispositivo?: string,
+    brand_dispositivo?: string,
+    data_inserimento?: string,
+    tipo_dispositivo?: string
 }
 
-type Notification = {
+export type Notification = {
     message: string;
     type: 'success' | 'error';
 };
 
-
-export const useAddresses = server$(async function (this, filter = { type: "", value: "" }) {
-    let addresses: AddressModel[] = [];
-    if (this.query.has("network") || filter.type == "network") {
-        const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.value}`;
-        addresses = queryResult as unknown as AddressModel[];
+export interface FilterObject {
+    active: boolean;
+    visible: boolean;
+    params: {
+        [key: string]: string;
     }
-    else if (this.query.has("subsite") || filter.type == "subsite") {
-        const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete
-                                      AND sottositi_rete.idsottosito=${this.query.get("subsite") ?? filter.value}`;
+}
+
+
+export const useAddresses = server$(async function (this, filter = { empty: 1 }) {
+    filter.query = filter.query ? filter.query + '%' : filter.query = "%";
+    filter.query = (filter.query as string).trim();
+    let addresses: AddressModel[] = [];
+
+    if (filter.empty == 1) {
+        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
+            INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito AND sotto_siti.idsito=${this.params.site}`;
         addresses = queryResult as unknown as AddressModel[];
+        return addresses;
+    }
+
+    if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
+
+
+        if (isNaN(parseInt(filter.query))) {
+            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
+            addresses = queryResult as unknown as AddressModel[];
+        }
+        else {
+            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
+            addresses = queryResult as unknown as AddressModel[];
+        }
+
+    }
+    else if (this.query.has("subsite") || (filter.subsite != undefined && filter.subsite != '')) {
+
+
+        if (isNaN(parseInt(filter.query))) {
+            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete WHERE indirizzi.nome_dispositivo LIKE ${filter.query}
+                                      AND sottositi_rete.idsottosito=${this.query.get("subsite") ?? filter.subsite}`;
+            addresses = queryResult as unknown as AddressModel[];
+        }
+        else {
+            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete WHERE indirizzi.ip LIKE ${filter.query}
+            AND sottositi_rete.idsottosito=${this.query.get("subsite") ?? filter.subsite}`;
+            addresses = queryResult as unknown as AddressModel[];
+        }
     }
     else {
-        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
-                                      INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito AND sotto_siti.idsito=${this.params.site};`;
-        addresses = queryResult as unknown as AddressModel[];
+
+
+        if (isNaN(parseInt(filter.query))) {
+            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
+                                      INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito AND sotto_siti.idsito=${this.params.site} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
+            addresses = queryResult as unknown as AddressModel[];
+        }
+        else {
+            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
+            INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito AND sotto_siti.idsito=${this.params.site} WHERE indirizzi.ip LIKE ${filter.query}`;
+            addresses = queryResult as unknown as AddressModel[];
+        }
     }
 
     return addresses;
@@ -82,12 +134,13 @@ export const useSiteName = routeLoader$(async ({ params }) => {
 export const useAction = routeAction$(async (data) => {
     let success = false;
     let type_message = 0;
+    console.log(data.data_inserimento);
     try {
         if (data.mode == "update") {
-            await sql`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, idv=${data.idv}, n_prefisso=${data.n_prefisso} WHERE ip=${data.ip}`;
+            await sql`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, idv=${data.idv}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
             type_message = 2;
         } else {
-            await sql`INSERT INTO indirizzi(ip,idrete,idv,n_prefisso) VALUES (${data.ip},${data.idrete},${data.idv},${data.n_prefisso})`;
+            await sql`INSERT INTO indirizzi(ip,idrete,idv,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.idv},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
             type_message = 1;
         }
         success = true;
@@ -109,7 +162,11 @@ export const useAction = routeAction$(async (data) => {
         idv: z.number().positive(),
         n_prefisso: z.number().positive().max(31).min(0),
         to_ip: z.string(),
-        mode: z.string()
+        mode: z.string(),
+        tipo_dispositivo: z.string(),
+        brand_dispositivo: z.string(),
+        nome_dispositivo: z.string(),
+        data_inserimento: z.any()
     }))
 
 
@@ -166,6 +223,17 @@ export const useSubSite = server$(async function (idSito: number) {
     return siteList;
 })
 
+export const deleteIP = server$(async function (this, data) {
+    try {
+        await sql`DELETE FROM indirizzi WHERE ip=${data.address}`;
+        return true;
+    }
+    catch (e) {
+        console.log(e);
+        return false;
+    }
+})
+
 export default component$(() => {
     const lang = getLocale("en");
     const addressList = useSignal<AddressModel[]>([]);
@@ -175,24 +243,25 @@ export default component$(() => {
     const nav = useNavigate();
     const address = useStore<RowAddress>({});
     const sitename = useSiteName();
-    const filter = useStore({ active: false, network: '', subsite: '' });
+    const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', subsite: '', query: '' } });
     const mode = loc.params.mode ?? "view";
     const notifications = useSignal<Notification[]>([]);
+    const txtQuickSearch = useSignal<HTMLInputElement>();
+    const reloadFN = useSignal<(() => void) | null>(null);
 
     useTask$(async () => {
         addressList.value = await useAddresses();
         subsites.value = await useSubSite(parseInt(loc.params.site));
 
-        if (loc.url.searchParams.has("subsite"))
-            filter.subsite = loc.url.searchParams.get("subsite") as string;
-        if (loc.url.searchParams.has("network"))
-            filter.network = loc.url.searchParams.get("network") as string;
+        for (const [key, value] of loc.url.searchParams.entries()) {
+            filter.params[key] = value;
+            filter.active = true;
+        }
 
-        filter.active = (filter.network != '' || filter.subsite != '');
     })
 
     useTask$(async ({ track }) => {
-        let subsite = track(() => filter.subsite);
+        let subsite = track(() => filter.params.subsite);
         if (subsite)
             networks.value = await useNetwork(parseInt(subsite))
     })
@@ -215,83 +284,121 @@ export default component$(() => {
     })
 
     const handleModify = $((row: any) => {
-        console.log(row);
         Object.assign(address, row as RowAddress);
         nav(loc.url.href.replace("view", "update"));
     })
 
+    const handleDelete = $(async (row: any) => {
+        if (await deleteIP({ address: row.ip }))
+            addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
+        else
+            addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione", 'error');
 
-    const handleDelete = $(()=>{});
+    });
+
+    const reloadData = $(async () => {
+        if (filter.active)
+            return await useAddresses(filter.params);
+        else
+            return await useAddresses();
+    })
+
+    const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
 
     return (
         <>
-            <Title> {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title>
+            <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("addresses")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title>
             {
                 mode == "view"
-                    ? <div>
-                        <div style={{ display: filter.active ? "block" : "none" }} class="filter border border-gray-200 p-4 w-1/2 mx-auto shadow-lg ">
-                            <div class="flex">
-                                <h1 class="font-semibold mb-2 w-full">Filters</h1>
-                                <button class="cursor-pointer" onClick$={() => { filter.active = false; }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="flex">
-                                <div class="w-full">
-                                    <span class="ms-2">Subsite</span>
-                                    <SelectForm OnClick$={(e) => { filter.subsite = (e.target as HTMLOptionElement).value; }} value={filter.subsite} id="filter-subsite" name="" listName="Sottositi">
-                                        {subsites.value.map((x: Subsite) => <option value={x.idsottosito}>{x.nomesottosito}</option>)}
-                                    </SelectForm>
+                    ? (
+                        <div>
+                            <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
+                                <div class="flex">
+                                    <div class="w-full">
+                                        <span class="ms-2">Subsite</span>
+                                        <SelectForm OnClick$={(e) => { filter.params.subsite = (e.target as HTMLOptionElement).value; }} value={filter.params.subsite} id="filter-subsite" name="" listName="Sottositi">
+                                            {subsites.value.map((x: Subsite) => <option value={x.idsottosito}>{x.nomesottosito}</option>)}
+                                        </SelectForm>
+                                    </div>
+                                    <div class="w-full">
+                                        <span class="ms-2">Network</span>
+                                        <SelectForm disabled={filter.params.subsite == ''} OnClick$={(e) => { filter.params.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.params.network} listName="Reti">
+                                            {networks.value.map((x: Network) => <option value={x.idrete}>{x.nomerete}</option>)}
+                                        </SelectForm>
+                                    </div>
                                 </div>
-                                <div class="w-full">
-                                    <span class="ms-2">Network</span>
-                                    <SelectForm disabled={filter.subsite == ''} OnClick$={(e) => { filter.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.network} listName="Reti">
-                                        {networks.value.map((x: Network) => <option value={x.idrete}>{x.nomerete}</option>)}
-                                    </SelectForm>
+                                <div class="flex w-full mt-2">
+                                    <div class="flex-auto"></div>
+                                    <button class=" flex gap-1 items-center p-2 px-4 border-gray-300 hover:bg-gray-100 disabled:bg-gray-100 disabled:text-gray-500 border cursor-pointer disabled:cursor-default text-gray-900 rounded-lg mx-2" disabled={filter.params.subsite == ''} onClick$={() => {
+                                        window.location.href = loc.url.pathname;
+                                    }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                        Reset</button>
+
+                                    <button class="p-2 flex items-center gap-1 px-4 bg-black hover:bg-gray-800 disabled:bg-gray-400 cursor-pointer disabled:cursor-default text-white rounded-md" disabled={filter.params.subsite == ''} onClick$={async () => {
+                                        let url = loc.url.pathname + "?";
+                                        let searchParams = new URLSearchParams();
+                                        for (let key in filter.params)
+                                            if (filter.params[key] != '') {
+                                                searchParams.append(key, filter.params[key])
+                                                filter.active = true;
+                                            }
+
+                                        nav(url + searchParams);
+
+                                        if (reloadFN) {
+                                            reloadFN.value?.();
+                                            filter.visible = false;
+                                        }
+                                    }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                        </svg>
+                                        Search</button>
+
                                 </div>
-                            </div>
-                            <div class="flex w-full mt-2">
-                                <div class="flex-auto"></div>
-                                <button class=" flex gap-1 items-center p-2 px-4 border-gray-300 hover:bg-gray-100 border cursor-pointer disabled:cursor-default text-gray-900 rounded-lg mx-2" disabled={filter.subsite == ''} onClick$={() => {
-                                    window.location.href = loc.url.pathname;
-                                }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                    </svg>
-                                    Reset</button>
+                            </PopupModal>
 
-                                <button class="p-2 flex items-center gap-1 px-4 bg-black hover:bg-gray-800 disabled:bg-gray-400 cursor-pointer disabled:cursor-default text-white rounded-md" disabled={filter.subsite == ''} onClick$={() => {
-                                    // window.location.href = loc.url.pathname + (filter.network == '' ? ("?subsite=" + filter.subsite) : ("?network=" + filter.network));
-                                    let url = loc.url.pathname + "?";
-                                    let searchParams = new URLSearchParams();
-                                    if (filter.subsite != '')
-                                        searchParams.append("subsite", filter.subsite);
-                                    if (filter.network != '')
-                                        searchParams.append("network", filter.network);
-                                    window.location.href = url + searchParams;
-                                }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                                    </svg>
-                                    Search</button>
+                            <Table>
+                                <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
+                                    <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
+                                        filter.params.query = (e.target as HTMLInputElement).value;
+                                        filter.active = false;
+                                        for (let item in filter.params) {
+                                            if (filter.params[item] && filter.params[item] != '') {
+                                                filter.active = true;
+                                                break;
+                                            }
+                                        }
+                                        if (reloadFN)
+                                            reloadFN.value?.();
+                                    }} />
+                                    <div class="has-tooltip">
+                                        <button class="cursor-pointer p-1 rounded-md bg-black hover:bg-gray-700 text-white size-[32px] flex items-center justify-center" onClick$={() => filter.visible = true} >
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                                            </svg>
+                                        </button>
+                                        <span class="tooltip">
+                                            {$localize`Filters`}
+                                        </span>
+                                    </div>
+                                    {filter.active && <div class="has-tooltip"><button class="size-[24px] bg-red-500 cursor-pointer hover:bg-red-400 text-white flex justify-center items-center rounded ms-2" onClick$={() => { filter.active = false; for (const key in filter.params) filter.params[key] = ''; nav(loc.url.pathname); if (txtQuickSearch.value) txtQuickSearch.value.value = ""; reloadFN.value?.() }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                        <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
+                                    </button></div>}
+                                </Dati>
+                                <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
+                                <ImportCSV OnError={handleError} OnOk={handleOk} nomeImport="indirizzi" />
+                            </Table>
 
-                            </div>
-                        </div>
 
-                        <Table>
-                            <button class="cursor-pointer p-1 absolute top-5 left-38 rounded-md bg-black hover:bg-gray-700" onClick$={() => filter.active = !filter.active}>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 text-white">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
-                                </svg>
-                            </button>
 
-                            <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete}></Dati>
-                            <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
-                            <ImportCSV OnError={handleError} OnOk={handleOk} nomeImport="indirizzi" />
-                        </Table>
-                    </div>
+                        </div>)
                     :
-                    <CRUDForm data={address} />
+                    <CRUDForm data={address} reload={reloadFN.value} />
             }
         </>);
 })
@@ -313,35 +420,96 @@ export const FormBox = component$(({ title }: { title?: string }) => {
     </>)
 })
 
+export const useNetAction = routeAction$(async (data, e) => {
 
-export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
+    try {
+        await sql`INSERT INTO rete(nomerete,descrizione) VALUES (${data.nomeRete},${data.descrizioneRete})`;
+        const queryRete = await sql`SELECT idrete FROM rete ORDER BY idrete DESC LIMIT 1`;
+        const idrete = queryRete[0].idrete;
+        let lastID = data.idSottosito;
+        if (lastID == "") {
+
+            const queryLastID = await sql`SELECT * FROM sotto_siti ORDER BY idsottosito DESC LIMIT 1`;
+            lastID = queryLastID[0].idsottosito + 1;
+            await sql`INSERT INTO sotto_siti(idsottosito,nomesottosito,idsito) VALUES (${lastID},${data.nomeSottosito},${e.params.site})`
+        }
+
+        await sql`INSERT INTO sottositi_rete(idsottosito,idrete) VALUES (${lastID},${idrete})`
+        return {
+            success: true
+        }
+    }
+    catch (e) {
+        console.log(e);
+        return {
+            success: false
+        }
+    }
+}, zod$({
+    nomeRete: z.string().min(3),
+    descrizioneRete: z.string().nullable(),
+    nomeSottosito: z.string().min(3),
+    idSottosito: z.string().nullable()
+}))
+
+export const getSottositi = server$(async function () {
+    return (await sql`SELECT * FROM sotto_siti WHERE idsito=${this.params.site}`) as unknown as Subsite[];
+})
+
+
+export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reload?: (() => void) | null }) => {
     const lang = getLocale("en")
     const loc = useLocation();
     const nav = useNavigate();
     const action = useAction();
 
-    const type = useSignal<string>("");
-    const prefix = useSignal<string>("");
-    const ip = useSignal<string>("");
-    const ipDest = useSignal<string>("");
+    const formData = useStore<RowAddress & { ipDest: string, prefix: string }>({
+        tipo_dispositivo: 'Other',
+        prefix: '',
+        ip: '',
+        ipDest: '',
+        idv: undefined,
+        idrete: undefined,
+        nome_dispositivo: '',
+        brand_dispositivo: '',
+        data_inserimento: '',
+    });
+
     const ipErrors = useSignal<string[]>([]);
     const ipDestErrors = useSignal<string[]>([]);
-    const rete = useSignal<number>();
-    const vlan = useSignal<number>();
+
     const attempted = useSignal<boolean>(false);
     const changeIP = useSignal<boolean>(false);
 
     const networks = useSignal<Network[]>([]);
     const vlans = useSignal<VLAN[]>([]);
+
+    const addNetworkTempoMenu = useSignal<boolean>(false);
+    const networkInfoTemp = useSignal<Network & { idsottosito: number; nomesottosito: string }>({
+        descrizione: "",
+        idrete: -1,
+        idsottosito: -1,
+        nomerete: "",
+        nomesottosito: ""
+    });
+    const addNetworkTempAction = useNetAction();
+    const sottositoTextbox = useSignal<HTMLInputElement>();
+    const sottositoNomeTextbox = useSignal<HTMLInputElement>();
+    const sottositi = useSignal<Subsite[]>();
+
     useTask$(async () => {
 
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
         vlans.value = await getAllVLAN();
+        sottositi.value = await getSottositi();
 
         if (loc.params.mode == "update") {
-            if (data?.n_prefisso) prefix.value = data?.n_prefisso?.toString();
-            if (data?.idv) vlan.value = data.idv;
-            if (data?.idrete) rete.value = data.idrete;
+            Object.assign(formData, data);
+            if (formData.n_prefisso)
+                formData.prefix = formData.n_prefisso.toString();
+            if (data?.tipo_dispositivo == undefined)
+                formData.tipo_dispositivo = 'Other'
+            console.log(formData);
         }
     })
 
@@ -350,20 +518,20 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
 
             <div class="m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative">
                 <FormBox title="Informazioni">
-                    <SelectForm id="cmbType" name="Tipo Dispositivo" value="" OnClick$={(e) => { type.value = (e.target as HTMLOptionElement).value; }} listName="">
-                        <option value="Server">Server</option>
-                        <option value="Controller">Controller</option>
-                        <option value="Router">Router</option>
-                        <option value="Firewall">Firewall</option>
-                        <option value="Other">{$localize`Altro`}</option>
+                    <SelectForm id="cmbType" name="Tipo Dispositivo" value={formData.tipo_dispositivo} OnClick$={(e) => { formData.tipo_dispositivo = (e.target as HTMLOptionElement).value; }} listName="">
+                        <option value="Server" key="Server">Server</option>
+                        <option value="Controller" key="Controller">Controller</option>
+                        <option value="Router" key="Router">Router</option>
+                        <option value="Firewall" key="Firewall">Firewall</option>
+                        <option value="Other" key="Other">{$localize`Altro`}</option>
                     </SelectForm>
-                    <TextboxForm id="txtName" title={$localize`Nome Dispositivo`} placeholder="Es. Server1" />
-                    <TextboxForm id="txtModel" title={$localize`Marca Dispositivo`} placeholder="Es. Dell" />
-                    <DatePicker id="dpData" name={$localize`Data inserimento`} />
+                    <TextboxForm id="txtName" title={$localize`Nome Dispositivo`} value={formData.nome_dispositivo} placeholder="Es. Server1" OnInput$={(e) => formData.nome_dispositivo = (e.target as HTMLInputElement).value} />
+                    <TextboxForm id="txtModel" title={$localize`Marca Dispositivo`} value={formData.brand_dispositivo} placeholder="Es. Dell" OnInput$={(e) => formData.brand_dispositivo = (e.target as HTMLInputElement).value} />
+                    <DatePicker id="dpData" name={$localize`Data inserimento`} value={formData.data_inserimento} OnInput$={(e) => formData.data_inserimento = (e.target as HTMLInputElement).value} />
                 </FormBox>
                 <FormBox title="Dettagli">
 
-                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} currentIPNetwork={rete.value ?? -1} value={data?.ip} prefix={prefix.value} OnInput$={(e) => {
+                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
 
 
                         if (e.complete) {
@@ -372,18 +540,19 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
                             else if (loc.params.mode == "insert" && e.exists)
                                 e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
                             else
-                                ip.value = e.ip;
+                                formData.ip = e.ip;
                         }
-                        if (prefix.value == "")
-                            prefix.value = e.prefix;
+                        if (formData.prefix == "")
+                            formData.prefix = e.prefix;
 
                         ipErrors.value = e.errors;
                     }} />
-                    {attempted.value && !ip.value && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
+                    {attempted.value && !formData.ip && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
 
                     {ipErrors.value && <span class="text-red-600">{ipErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
 
                     {
+                        //#region ChangeIP
                         loc.params.mode === "update"
                         &&
                         changeIP.value
@@ -392,29 +561,32 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 lg:ms-8 md:ms-6 sm:ms-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
                             </svg>
-                            <AddressBox title="IP Dest" value={ip.value} prefix={prefix.value} currentIPNetwork={rete.value ?? -1} OnInput$={(e) => {
+                            <AddressBox title="IP Dest" value={formData.ip} prefix={formData.prefix} currentIPNetwork={formData.idrete ?? -1} OnInput$={(e) => {
                                 if (e.complete && e.errors.length == 0)
-                                    ipDest.value = e.ip;
-                                if (prefix.value == "")
-                                    prefix.value = e.prefix;
+                                    formData.ipDest = e.ip;
+                                if (formData.prefix == "")
+                                    formData.prefix = e.prefix;
 
                                 ipDestErrors.value = e.errors;
                             }} />
                         </div>
+                        //#endregion
                     }
 
-                    <TextboxForm id="txtName" value={prefix.value} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { prefix.value = (e.target as HTMLInputElement).value }} />
-                    {attempted.value && !prefix.value && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
+                    <TextboxForm id="txtName" value={formData.prefix} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
+                    {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" name={$localize`Rete Associata`} value={rete.value?.toString() || ""} OnClick$={(e) => { rete.value = parseInt((e.target as HTMLOptionElement).value); }} listName="">
-                        {networks.value.map((x: Network) => <option value={x.idrete}>{x.nomerete}</option>)}
+                    <SelectForm id="cmbRete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} noElementsText="Aggiungi" noElementsHandler={$(() => {
+                        addNetworkTempoMenu.value = true;
+                    })} OnClick$={(e) => { formData.idrete = parseInt((e.target as any).value); }} listName="">
+                        {networks.value.map((x: Network) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
-                    {attempted.value && !rete.value && <span class="text-red-600">{$localize`Please select a network`}</span>}
+                    {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
 
-                    <SelectForm id="cmbVLAN" name="VLAN" value={vlan.value?.toString() || ""} OnClick$={(e) => { vlan.value = parseInt((e.target as HTMLOptionElement).value); }} listName="">
-                        {vlans.value.map((x: VLAN) => <option value={x.idv}>{x.nomevlan}</option>)}
+                    <SelectForm id="cmbVLAN" name="VLAN" value={formData.idv?.toString() || ""} OnClick$={(e) => { formData.idv = parseInt((e.target as any).value); }} listName="">
+                        {vlans.value.map((x: VLAN) => <option key={x.idv} value={x.idv}>{x.nomevlan}</option>)}
                     </SelectForm>
-                    {attempted.value && !vlan.value && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
+                    {attempted.value && !formData.idv && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
 
 
                 </FormBox>
@@ -438,13 +610,13 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
             </div>
             <button onClick$={async (e) => {
                 e.preventDefault();
-                if (!prefix.value || !ip.value || !rete.value || !vlan.value) {
+                if (!formData.prefix || !formData.ip || !formData.idrete || !formData.idv) {
                     attempted.value = true;
-                    if (isNaN(parseInt(prefix.value)))
-                        prefix.value = "";
+                    if (isNaN(parseInt(formData.prefix)))
+                        formData.prefix = "";
                     return;
                 }
-                await action.submit({ n_prefisso: parseInt(prefix.value), ip: ip.value, idrete: rete.value, idv: vlan.value, to_ip: changeIP.value ? ipDest.value : ip.value, mode: loc.params.mode });
+                await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, idv: formData.idv, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
                 if (action.value && action.value.success) {
                     await new Promise((resolve) => { setTimeout(resolve, 2000) });
                     nav(loc.url.href.replace("insert", "view").replace("update", "view"));
@@ -453,10 +625,10 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
             }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
                 ipErrors.value.length > 0 ||
                 ipDestErrors.value.length > 0 ||
-                ip.value == "" ||
-                !rete.value ||
-                !vlan.value ||
-                prefix.value == ""
+                formData.ip == "" ||
+                !formData.idrete ||
+                !formData.idv ||
+                formData.prefix == ""
             }>{$localize`Conferma`}</button>
             <a class="bg-red-500 hover:bg-red-600 transition-all rounded-md text-white p-2 inline-block mx-1" href={loc.url.href.replace("insert", "view").replace("update", "view")}>{$localize`Annulla`}</a>
             {action.submitted && action.value &&
@@ -467,6 +639,35 @@ export const CRUDForm = component$(({ data }: { data?: RowAddress }) => {
                     {action.value.type_message == 4 && <span>{$localize`Errore durante la modifica`}</span>}
                 </div>
             }
+
+            <PopupModal visible={addNetworkTempoMenu.value} title="Menù temporaneo aggiunti reti" onClosing$={() => addNetworkTempoMenu.value = false}>
+                <Form action={addNetworkTempAction} onSubmit$={async () => {
+                    if (addNetworkTempAction.value?.success) {
+                        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
+                        addNetworkTempoMenu.value = false;
+                    }
+                }}>
+                    <div class="flex flex-col">
+                        <TextboxForm id="nomeRete" nameT="nomeRete" title="Nome Rete" placeholder="Nome" OnInput$={e => { if (networkInfoTemp.value) networkInfoTemp.value.nomerete = (e.target as HTMLInputElement).value }} />
+                        <TextboxForm id="descrizioneRete" nameT="descrizioneRete" title="Descrizione Rete" placeholder="Descrizione" OnInput$={e => { if (networkInfoTemp.value) networkInfoTemp.value.descrizione = (e.target as HTMLInputElement).value }} />
+                        <input class="hidden" type="text" name="idSottosito" ref={sottositoTextbox}></input>
+                        <input class="hidden" type="text" name="nomeSottosito" ref={sottositoNomeTextbox}></input>
+                        <SelectTextboxForm values={sottositi.value?.map(x => { return { value: x.idsottosito, text: x.nomesottosito } })} id="cmbSottosito" name="nomeSottosito" OnSelectedValue$={e => {
+                            console.log(networkInfoTemp.value == undefined);
+                            if (!networkInfoTemp.value)
+                                return;
+                            networkInfoTemp.value.idsottosito = e.value;
+                            networkInfoTemp.value.nomesottosito = e.text;
+                            if (sottositoTextbox.value)
+                                sottositoTextbox.value.value = e.value;
+                            if (sottositoNomeTextbox.value)
+                                sottositoNomeTextbox.value.value = e.text;
+                            console.log(e.text);
+                        }} />
+                        <FMButton>Aggiungi</FMButton>
+                    </div>
+                </Form>
+            </PopupModal>
         </>
     )
 })

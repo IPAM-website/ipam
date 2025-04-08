@@ -189,7 +189,7 @@ export default component$(() => {
 
   const Delete =$(async (row:any)=>{
     if(await deleteRow(extractRow(row)))
-      console.log("DELETE RIUSCITO");
+      addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
     else
       console.log("DE")
   })

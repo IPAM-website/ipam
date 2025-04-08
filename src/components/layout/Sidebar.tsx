@@ -60,6 +60,9 @@ export default component$(() => {
                         {
                             insideSS ?
                                 <div>
+
+                                    <h1 class="h1 font-semibold w-full text-center m-0 p-0">Viste</h1>
+
                                     <Accordion title={$localize`Indirizzi IP`}>
                                         <NavLink href={baseSiteUrl + "addresses/view"} activeClass="text-black" class="block hover:text-black text-[#827d7d] text-sm font-semibold font-['Inter'] leading-6" onClick$={toggleSidebar}>{$localize`Tutti gli indirizzi IP`}</NavLink>
                                         <NavLink href={baseSiteUrl + "addresses/insert"} activeClass="text-black" class="block hover:text-black text-[#827d7d] text-sm font-semibold font-['Inter'] leading-6" onClick$={toggleSidebar}>{$localize`Assegna un indirizzo IP`}</NavLink>
@@ -108,7 +111,14 @@ export default component$(() => {
                                 loc.params.client &&
                                 <a href={baseSiteUrl.replace(loc.params.site + "/", "")} class="block cursor-pointer my-1 text-center p-1 bg-[#d506ff] hover:bg-[#c405ee] rounded-lg text-white text-base font-['Inter'] leading-normal">
                                     {$localize`Change site`}
-                                </a>
+                                </a>                                
+                            }
+
+                            {
+                                loc.params.site &&
+                                <a href={baseSiteUrl} class="block cursor-pointer my-1 text-center p-1 bg-[#1ada3a] hover:bg-[#10d030] rounded-lg text-white text-base font-['Inter'] leading-normal">
+                                    {$localize`Go to site`}
+                                </a>  
                             }
 
                             {

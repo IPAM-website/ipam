@@ -5,9 +5,9 @@ interface TableMap {
 
 export type DBTableMap = {
     keys: string[]
-  };
+};
 
-interface LanguageMap{
+interface LanguageMap {
     it: string[];
     en: string[];
     [key: string]: string[];
@@ -16,20 +16,20 @@ interface LanguageMap{
 const TableMaps: { [key: string]: TableMap } = {
     "tecnici": {
         headers: {
-            it:[
+            it: [
                 "ID",
                 "Nome",
                 "Cognome",
                 "Ruolo",
                 ""
             ],
-            en:[
+            en: [
                 "ID",
                 "Name",
                 "Surname",
                 "Role",
                 ""
-            ]                      
+            ]
         },
         keys: [
             "idtecnico",
@@ -40,23 +40,23 @@ const TableMaps: { [key: string]: TableMap } = {
     },
     "clienti": {
         headers: {
-            it:[
+            it: [
                 "ID",
                 "Nome",
                 ""
             ],
-            en:[
+            en: [
                 "ID",
                 "Name",
                 ""
-            ]                               
+            ]
         },
         keys: [
             "idcliente",
             "nomecliente"
         ]
     },
-    "cliente_tecnico":{
+    "cliente_tecnico": {
         headers: {
             it:[
                 "Data Assegnazione",
@@ -69,7 +69,7 @@ const TableMaps: { [key: string]: TableMap } = {
                 "Technician Name",
                 "Client name",
                 ""
-            ]                      
+            ]
         },
         keys: [            
             "data_assegnazione",
@@ -77,23 +77,35 @@ const TableMaps: { [key: string]: TableMap } = {
             "nomecliente"
         ]
     },
-    "indirizzi":{
-        headers:{
-            it:[
+    "indirizzi": {
+        headers: {
+            it: [
                 "Indirizzo",
+                "Nome",
+                "Modello",
+                "Data Inserimento",
+                "Tipo",
                 "Prefisso",
                 "VLAN",
                 ""
             ],
-            en:[
+            en: [
                 "Address",
+                "Name",
+                "Brand",
+                "Insert Date",
+                "Type",
                 "Prefix",
                 "VLAN",
                 ""
             ]
         },
-        keys:[
+        keys: [
             "ip",
+            "nome_dispositivo",
+            "brand_dispositivo",
+            "data_inserimento",
+            "tipo_dispositivo",
             "n_prefisso",
             "idv"
         ]
@@ -102,15 +114,18 @@ const TableMaps: { [key: string]: TableMap } = {
 
 export const DBTableMaps: { [key: string]: DBTableMap } = {
     "tecnici": {
-      keys: ['nometecnico', 'cognometecnico', 'ruolo', 'emailtecnico', 'telefonotecnico', 'pwdtecnico', 'admin']
+        keys: ['nometecnico', 'cognometecnico', 'ruolo', 'emailtecnico', 'telefonotecnico', 'pwdtecnico', 'admin']
     },
     "clienti": {
-      keys: ["nomecliente"]
+        keys: ["nomecliente"]
     },
     "cliente_tecnico": {
-      keys: ["idcliente", "idtecnico"]
+        keys: ["idcliente", "idtecnico"]
+    },
+    "indirizzi": {
+        keys: [ "ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "idv" ]
     }
-  };
+};
 
 
 export default TableMaps

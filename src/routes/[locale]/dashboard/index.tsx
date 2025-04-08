@@ -28,7 +28,7 @@ export default component$(() => {
     const user: User = useUser().value;
 
     return (
-        <div class="size-full">
+        <div class="size-full lg:px-40 px-24">
             <Title>{$localize`: @@dbTitle:Client Selection Page`}</Title>
             <ClientList currentTec={user.id} />
 

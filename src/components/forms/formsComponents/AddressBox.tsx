@@ -157,7 +157,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", loc
     return (
         <div class="flex items-center px-2 py-1">
             <p class="font-semibold">{title}</p>
-            <div class="w-full flex *:w-[48px] gap-1 *:border *:border-gray-200 *:rounded-md *:outline-0 *:p-0.5 *:px-2 *:hover:border-black">
+            <div class="w-full flex *:w-[48px] gap-1 *:border *:border-gray-300 *:rounded-md *:outline-0 *:p-0.5 *:px-2 *:hover:border-black *:focus:border-black">
                 <input type="text" ref={input1} class="only-numbers address" onInput$={assembleIP} />
                 .
                 <input type="text" ref={input2} class="only-numbers address" onInput$={assembleIP} />

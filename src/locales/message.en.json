@@ -18,7 +18,7 @@
     "8854094932942190741": "Search...",
     "4857007125237124143": "Details",
     "8502305771103286072": "Settings",
-    "2023757293541475620": "Change Client",
+    "2023757293541475620": "Go to dashboard",
     "6145505426535127267": "Change Site",
     "2584323826211532325": "Admin Panel",
     "3797778920049399855": "Log Out",
@@ -125,6 +125,18 @@
     "2914347126661099346": "Insertion Date",
     "2135600766166335971": "Prefix",
     "7598570752510560643": "Associated Network",
-    "7782414862794449457": "Select an option"
+    "7782414862794449457": "Select an option",
+    "6410849430457658147": "Go to site",
+    "7149449434359012116": "Quick search",
+    "4163272119298020373": "Filters",
+    "2744281258890389613": "Erase filters",
+    "1800650263088666755": "Table settings",
+    "5702026714042728391": "Table settings",
+    "4012949553363420901": "Click on the column name to move it to the other list. After clicking save, this will change the view of the table.",
+    "5049942805023552359": "Hidden Columns",
+    "4841906902665828476": "Switch All",
+    "6171800019221993676": "Viewed Columns",
+    "2159130950882492111": "Cancel",
+    "3768927257183755959": "Save"
   }
 }
