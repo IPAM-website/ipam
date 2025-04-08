@@ -67,6 +67,7 @@ CREATE TABLE Sotto_Siti(
 CREATE TABLE Cliente_Tecnico(
     IDCliente INTEGER NOT NULL,
     IDTecnico INTEGER NOT NULL,
+    data_assegnazione VARCHAR(50) NOT NULL,
     PRIMARY KEY (IDCliente,IDTecnico),
     CONSTRAINT fk_idCliente FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente),
     CONSTRAINT fk_idTecnico FOREIGN KEY (IDTecnico) REFERENCES Tecnici(IDTecnico)
@@ -140,13 +141,6 @@ INSERT INTO Sotto_Siti (IDSottoSito, nomeSottoSito, IDSito) VALUES
 (1001, 'Uffici Roma Nord', 101),
 (1002, 'DataCenter Paris', 102),
 (1003, 'Laboratorio Berlino', 103);
-
--- Collegamento Clienti-Tecnici
-INSERT INTO Cliente_Tecnico VALUES
-(1, 1),
-(2, 1),
-(3, 2),
-(1, 3);
 
 -- Inserimento Reti
 INSERT INTO Rete (IDRete, nomeRete, descrizione) VALUES

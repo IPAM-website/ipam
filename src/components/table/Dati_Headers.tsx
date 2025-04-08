@@ -6,9 +6,10 @@ import tableStyle from "./tableStyle.css?inline";
 import ConfirmDialog from "~/components/ui/confirmDialog";
 
 interface LoaderState { [key: string]: boolean; }
-interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; }
+interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; funcReloadData?: () => any, onReloadRef?: (reloadFunc : ()=>void)=>void, noModify?:string }
 
-export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella }) => {
+
+export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella, funcReloadData, onReloadRef, noModify = ""}) => {
     const modificaIT_EN = ["Modifica", "Edit"];
     const showDialog = useSignal(false);
     const rowToDelete = useSignal<any>(null);
@@ -26,11 +27,15 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
         store.globalLoading = true;
         try {
             console.log("Reloading data for table:", nT.value);
-            const freshData = await server$(async () => {
+            const freshData = funcReloadData ? await funcReloadData() : await server$(async () => {
                 const result = await sql`SELECT * FROM ${sql(nT.value)}`;
                 return Array.isArray(result) ? result : [];
             })();
 
+            // if (funcReloadData) {
+            //     console.log("Personalized reload function");
+            //     console.log("Data: ",await funcReloadData())
+            // }
             store.dati = freshData;
         } catch (error) {
             showError(lang === 'it'
@@ -53,6 +58,8 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
     useVisibleTask$(async () => {
         //await new Promise(resolve => setTimeout(resolve, 1500)); --> timer qwik
         initialLoad.value = false;
+        if(onReloadRef)
+            onReloadRef(reloadData);
     });
 
     const showError = $((message: string) => {
@@ -121,6 +128,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                     {title}
                 </div>
                 <button
+                    id="btnReload"
                     onClick$={reloadData}
                     disabled={store.globalLoading}
                     class={`flex items-center px-4 py-2 rounded-md 
@@ -195,14 +203,13 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                                             </div>
                                         ))}
                                         <div class="text-black text-base font-medium font-['Inter'] leading-normal p-4 flex-1">
-                                            {/* Pulsante Modifica */}
-                                            <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
+                                            {noModify == "" &&                                             <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
                                                 onClick$={() => OnModify?.(row)}>
                                                 <span class="tooltip">{lang === 'it' ? modificaIT_EN[0] : modificaIT_EN[1]}</span>
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-5 h-5">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                                 </svg>
-                                            </button>
+                                            </button>}
 
 
 
