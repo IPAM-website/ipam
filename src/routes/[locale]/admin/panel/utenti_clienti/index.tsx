@@ -46,7 +46,7 @@ export const clientList = server$(async function (this, idTecnico?: number) {
 
 export const useTecnici = server$(async () => {
   try {
-    const query = await sql`SELECT * FROM usercliente`
+    const query = await sql`SELECT * FROM user`
     //console.log(query);
     return query;
   }

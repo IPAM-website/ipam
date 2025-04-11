@@ -62,16 +62,16 @@ export const useInfo = server$(async () => {
         info.nclienti = query2[0].count;
         const query3 = await sql`SELECT COUNT(*) FROM siti`
         info.nsiti = query3[0].count;
-        const query4 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico GROUP BY idcliente )`
-        if(query4[0].avg == null)
-            info.rapct = '0';
-        else
-            info.rapct = (query4[0].avg as string).substring(0, 4);
-        const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN datacenter ON cliente_tecnico.idcliente=datacenter.idcliente INNER JOIN siti ON datacenter.iddc = siti.iddc GROUP BY idsito )`
-        if(query5[0].avg == null)
-            info.rapst = '0';
-        else
-            info.rapst = (query5[0].avg as string).substring(0, 4);
+        //const query4 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico GROUP BY idcliente )`
+        //if(query4[0].avg == null)
+            //info.rapct = '0';
+        //else
+            //info.rapct = (query4[0].avg as string).substring(0, 4);
+        //const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN datacenter ON cliente_tecnico.idcliente=datacenter.idcliente INNER JOIN siti ON datacenter.iddc = siti.iddc GROUP BY idsito )`
+        //if(query5[0].avg == null)
+            //info.rapst = '0';
+        //else
+            //info.rapst = (query5[0].avg as string).substring(0, 4);
     }
     catch (e) {
         console.log("Errore: ", e);

@@ -76,8 +76,8 @@ export const addCliente = routeAction$(async (data, requestEvent : RequestEventA
   try
   {
     await sql`
-      INSERT INTO clienti (nomecliente, pwdcliente)
-      VALUES (${data.nome}, ${data.pwd})
+      INSERT INTO clienti (nomecliente)
+      VALUES (${data.nome})
     `;
     return {
       success: true,
@@ -92,8 +92,7 @@ export const addCliente = routeAction$(async (data, requestEvent : RequestEventA
     }
   }
 },zod$({
-  nome: z.string().min(2),
-  pwd: z.string().min(2),
+  nome: z.string().min(2)
 }))
 
 
@@ -206,8 +205,6 @@ export default component$(() => {
                                                           <br />
                                                           <TextBoxForm error={formAction.value.value} id="NomeC" placeholder={$localize`Inserire il nome del cliente`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
                                                           {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
-                                                          <TextBoxForm error={formAction.value.value} id="PwdC" placeholder={$localize`Inserire la password del cliente`} nameT="pwd" title="Password*" value={pwd.value}></TextBoxForm>
-                                                          {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Password not valid" : "Password non valido"}</div>)}
                                                       </div>
                                               </div>
                                               <div class="dialog-actionsAdmin">
@@ -219,7 +216,7 @@ export default component$(() => {
                                                       {$localize`Annulla`}
                                                   </button>
                                                   <button 
-                                                      class="dialog-buttonAdmin text-white bg-green-500 hover:bg-green-600 cursor-pointer"
+                                                      class="dialog-buttonAdmin text-white bg-green-500 hover:bg-green-600 cursor-pointer focus:ring-green-500"
                                                       type='submit'
                                                   >
                                                       {$localize`Conferma`}

@@ -12,8 +12,8 @@ export interface ClientListProps {
 
 export const useClients = server$(async (idTecnico) => {
   try {
-    const query = await sql`SELECT clienti.* FROM clienti INNER JOIN cliente_tecnico ON cliente_tecnico.idcliente = clienti.idcliente AND cliente_tecnico.idtecnico = ${idTecnico}`
-    return query;
+    //const query = await sql`SELECT clienti.* FROM clienti INNER JOIN cliente_tecnico ON cliente_tecnico.idcliente = clienti.idcliente AND cliente_tecnico.idtecnico = ${idTecnico}`
+    //return query;
   }
   catch(e:any) {
     throw new Error(e);
