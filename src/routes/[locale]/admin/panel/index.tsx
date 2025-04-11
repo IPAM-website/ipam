@@ -4,8 +4,7 @@ import jwt from "jsonwebtoken"
 import Title from "~/components/layout/Title";
 import sql from "~/../db";
 import LogsList from "~/components/utils/LogsList";
-import User from "~/routes/user";
-
+import { UtenteModel } from "~/dbModels";
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
     if (cookie.has("jwt")) {
         let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
@@ -16,7 +15,7 @@ export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, e
 };
 
 export const useUser = routeLoader$(({ sharedMap }) => {
-    return sharedMap.get('user') as User;
+    return sharedMap.get('user') as UtenteModel;
 });
 
 interface infoProps {
@@ -89,7 +88,7 @@ export default component$(() => {
     })
     return (
         <>
-            <div class="size-full bg-white overflow-hidden ">
+            <div class="size-full bg-white overflow-hidden  ">
                 <Title haveReturn={true} url={"/" + lang + "/dashboard"}>{$localize`Admin Panel`}</Title>
                 <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
