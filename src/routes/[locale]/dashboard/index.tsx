@@ -1,10 +1,9 @@
 import { component$, getLocale, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { RequestHandler, useNavigate, routeLoader$, DocumentHead } from "@builder.io/qwik-city";
-import User from "../../user"
 import ClientList from "~/components/ListUtilities/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 import { getBaseURL, getUser } from "~/fnUtils";
-
+import { TecnicoModel } from "~/dbModels";
 
 
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap }) => {
@@ -20,17 +19,17 @@ export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap })
 };
 
 export const useUser = routeLoader$(({ sharedMap }) => {
-    return sharedMap.get('user') as User;
+    return sharedMap.get('user') as TecnicoModel;
 });
 
 export default component$(() => {
 
-    const user: User = useUser().value;
+    const user: TecnicoModel = useUser().value;
 
     return (
         <div class="size-full lg:px-40 px-24">
             <Title>{$localize`: @@dbTitle:Client Selection Page`}</Title>
-            <ClientList currentTec={user.id} />
+            {/* <ClientList  /> */}
 
 
             {user.admin && (
