@@ -1,4 +1,4 @@
-import { $, component$, getLocale, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
+{/*import { $, component$, getLocale, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 import { DocumentHead, Form, RequestEventAction, routeAction$, server$, useLocation, z, zod$ } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import Table from "~/components/table/Table";
@@ -38,9 +38,9 @@ export const extractRow = (row: any) => {
 export const useReload = server$(async function () {
   //.log("Reloading data...");
   try {
-    const query = await sql`SELECT cliente_tecnico.idcliente, cliente_tecnico.data_assegnazione, cliente_tecnico.idtecnico, tecnici.nometecnico, clienti.nomecliente FROM Cliente_Tecnico, tecnici, clienti WHERE Cliente_Tecnico.idtecnico = tecnici.idtecnico AND Cliente_Tecnico.idcliente = clienti.idcliente ORDER BY cliente_tecnico.idtecnico`;
+    //const query = await sql`SELECT cliente_tecnico.idcliente, cliente_tecnico.data_assegnazione, cliente_tecnico.idtecnico, tecnici.nometecnico, clienti.nomecliente FROM Cliente_Tecnico, tecnici, clienti WHERE Cliente_Tecnico.idtecnico = tecnici.idtecnico AND Cliente_Tecnico.idcliente = clienti.idcliente ORDER BY cliente_tecnico.idtecnico`;
     //console.log(query);
-    return query;
+    //return query;
   }
   catch {
     return {
@@ -52,7 +52,7 @@ export const useReload = server$(async function () {
 export const deleteRow = server$(async function(this,data){
   try{
     console.log(data);
-    await sql`DELETE FROM cliente_tecnico WHERE cliente_tecnico.idtecnico = ${data.idtecnico} AND cliente_tecnico.idcliente = ${data.idcliente}`;
+    //await sql`DELETE FROM cliente_tecnico WHERE cliente_tecnico.idtecnico = ${data.idtecnico} AND cliente_tecnico.idcliente = ${data.idcliente}`;
     return true;
   }catch(e)
   {
@@ -63,9 +63,9 @@ export const deleteRow = server$(async function(this,data){
 
 export const useTecnici = server$(async () => {
   try {
-    const query = await sql`SELECT cliente_tecnico.idcliente, cliente_tecnico.data_assegnazione, cliente_tecnico.idtecnico, tecnici.nometecnico, clienti.nomecliente FROM Cliente_Tecnico, tecnici, clienti WHERE Cliente_Tecnico.idtecnico = tecnici.idtecnico AND Cliente_Tecnico.idcliente = clienti.idcliente ORDER BY cliente_tecnico.idtecnico`;
+    //const query = await sql`SELECT cliente_tecnico.idcliente, cliente_tecnico.data_assegnazione, cliente_tecnico.idtecnico, tecnici.nometecnico, clienti.nomecliente FROM Cliente_Tecnico, tecnici, clienti WHERE Cliente_Tecnico.idtecnico = tecnici.idtecnico AND Cliente_Tecnico.idcliente = clienti.idcliente ORDER BY cliente_tecnico.idtecnico`;
     //console.log(query);
-    return query;
+    //return query;
   }
   catch {
     return {
@@ -104,10 +104,10 @@ export const addCliente = routeAction$(async (data, requestEvent : RequestEventA
   try
   {
     console.log(data);
-    await sql`
-      INSERT INTO cliente_tecnico (idcliente, idtecnico, data_assegnazione)
-      VALUES (${data.idcliente}, ${data.idtecnico}, ${new Date().toISOString()})
-    `;
+    //await sql`
+      //INSERT INTO cliente_tecnico (idcliente, idtecnico, data_assegnazione)
+      //VALUES (${data.idcliente}, ${data.idtecnico}, ${new Date().toISOString()})
+    //`;
     return {
       success: true,
       message: "Cliente inserito con successo"
@@ -129,7 +129,7 @@ export const clientList = server$(async function (this, idTecnico?: number) {
   try {
     // If idTecnico is provided, get clients not associated with this technician
     if (idTecnico) {
-      const query = await sql`
+     /* const query = await sql`
         SELECT * FROM clienti 
         WHERE idcliente NOT IN (
           SELECT idcliente FROM cliente_tecnico 
@@ -169,7 +169,7 @@ export const addRelazione = routeAction$(async (data) => {
   try {
     console.log("Aggiunta relazione:", data);
     // Inserisci la nuova relazione tra tecnico e cliente
-    await sql`
+    /*await sql`
       INSERT INTO cliente_tecnico (idtecnico, idcliente, data_assegnazione)
       VALUES (${data.idtecnico}, ${data.idcliente}, NOW())
     `;
@@ -308,7 +308,7 @@ export default component$(() => {
   return (
     <>
       <div class="size-full bg-white overflow-hidden">
-        {/* Aggiungi questo div per le notifiche */}
+        {/* Aggiungi questo div per le notifiche }
         <div class="fixed top-4 right-4 z-50 space-y-2">
           {notifications.value.map((notification, index) => (
             <div 
@@ -347,10 +347,10 @@ export default component$(() => {
                 <div class="w-11/12">
                   <input class="opacity-0" id="idC" type="text" name="idcliente" value={currentId.value} />
                   <input class="opacity-0" id="idT" type="text" name="idtecnico" value={currentTecnico.value} />
-                  {/* Campo nascosto per passare il nome del tecnico al form */}
+                  {/* Campo nascosto per passare il nome del tecnico al form }
                   <input class="opacity-0" id="nomeHidden" type="text" name="nome" value={nome.value} />
                   <br />
-                  {/* Mostra il selettore tecnici solo in modalità aggiunta, non in modalità modifica */}
+                  {/* Mostra il selettore tecnici solo in modalità aggiunta, non in modalità modifica}
                   {isEditing.value ? (
                     <TextBoxForm error={formAction.value.value} id="NomeT" disabled='si' nameT="nome" title={$localize`Tecnico`} value={nome.value}></TextBoxForm>
                   ) : (
@@ -361,7 +361,7 @@ export default component$(() => {
                       OnClick$={tecnicoSelezionato} 
                       listName={$localize`Lista Tecnici`}
                     >
-                      {/* Genera le opzioni dai dati di listSelectTecnici */}
+                      {/* Genera le opzioni dai dati di listSelectTecnici }
                       {listSelectTecnici.value && listSelectTecnici.value.length > 0 ? (
                         listSelectTecnici.value.map((tecnico: any) => (
                           <option key={tecnico.idtecnico} value={tecnico.idtecnico}>{tecnico.nometecnico}</option>
@@ -378,7 +378,7 @@ export default component$(() => {
                     OnClick$={clienteSelezionato} 
                     listName={$localize`Lista Clienti`}
                   >
-                    {/* Genera le opzioni dai dati di listSelect */}
+                    {/* Genera le opzioni dai dati di listSelect }
                     {listSelect.value && listSelect.value.length > 0 ? (
                       listSelect.value.map((client: any) => (
                         <option key={client.idcliente} value={client.idcliente}>{client.nomecliente}</option>
@@ -420,4 +420,4 @@ export const head: DocumentHead = {
       content: "Pagina dell'admin per la gestione dei clienti e tecnici",
     },
   ],
-};
+};*/}

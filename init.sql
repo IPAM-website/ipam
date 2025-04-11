@@ -14,6 +14,15 @@
 INSERT INTO Tecnici(nomeTecnico,cognomeTecnico,ruolo,emailTecnico,telefonoTecnico,pwdTecnico,"admin") VALUES (
     'Luigi', 'Pirandello', 'Amministratore', 'admin@network.it', '3938216657', 'adminPass','true'
 );
+  CREATE TABLE UserCliente (
+     IDUCliente SERIAL,
+     nomeUCliente VARCHAR(50) NOT NULL,
+     cognomeUCliente VARCHAR(50) NOT NULL,
+     emailUCliente VARCHAR(50) NOT NULL,
+     pwdUCliente VARCHAR(50) NOT NULL,
+     FA VARCHAR(255),
+     PRIMARY KEY (IDUCliente)
+ );
 
 CREATE TABLE Paesi(
     IDPaese VARCHAR(15) NOT NULL,
@@ -32,10 +41,10 @@ CREATE TABLE Citta(
 CREATE TABLE Clienti(
     IDCliente SERIAL,
     nomeCliente VARCHAR(50) NOT NULL,
-    mailcliente VARCHAR(50) NOT NULL,
-    telefonoCliente VARCHAR(50),
-    pwdcliente VARCHAR(50) NOT NULL,
-    PRIMARY KEY (IDCliente)
+    telefono VARCHAR(50),
+    IDutente INTEGER,
+    PRIMARY KEY (IDCliente),
+    CONSTRAINT fk_idUCliente FOREIGN KEY (IDutente) REFERENCES UserCliente(IDUCliente)
 );
 
 CREATE TABLE Siti(
@@ -46,15 +55,6 @@ CREATE TABLE Siti(
     tipologia VARCHAR(50) NOT NULL,
     PRIMARY KEY (IDSito),
     CONSTRAINT fk_idCitta FOREIGN KEY (IDCitta) REFERENCES Citta(IDCitta)
-);
-
-CREATE TABLE Cliente_Tecnico(
-    IDCliente INTEGER NOT NULL,
-    IDTecnico INTEGER NOT NULL,
-    data_assegnazione VARCHAR(50) NOT NULL,
-    PRIMARY KEY (IDCliente,IDTecnico),
-    CONSTRAINT fk_idCliente FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente),
-    CONSTRAINT fk_idTecnico FOREIGN KEY (IDTecnico) REFERENCES Tecnici(IDTecnico)
 );
 
 CREATE TABLE Rete(
