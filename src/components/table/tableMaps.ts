@@ -109,6 +109,31 @@ const TableMaps: { [key: string]: TableMap } = {
             "n_prefisso",
             "idv"
         ]
+    },
+    "usercliente": {
+        headers: {
+            it: [
+                "ID",
+                "Nome",
+                "Cognome",
+                "Email",
+                ""
+            ],
+            en: [
+                "ID",
+                "Name",
+                "Surname",
+                "Email",
+                ""
+            ]
+        },
+        keys: [
+            "iducliente",
+            "nomeucliente",
+            "cognomeucliente",
+            "emailucliente",
+            "pwducliente"
+        ]
     }
 }
 
@@ -124,6 +149,9 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     },
     "indirizzi": {
         keys: [ "ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "idv" ]
+    },
+    "usercliente": {
+        keys: [ "iducliente", "nomeucliente", "cognomeucliente", "emailucliente", "pwducliente" ]
     }
 };
 

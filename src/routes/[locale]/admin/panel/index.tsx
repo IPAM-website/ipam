@@ -131,8 +131,11 @@ export default component$(() => {
                                 <a href={"/"+lang+"/admin/panel/clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Mostra tutti i clienti`}</a>
                             </div>
                             <div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                                <a href={"/"+lang+"/admin/panel/tecnici_clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Gestisci rapporto tecnico - clienti`}</a>
+                                <a href={"/"+lang+"/admin/panel/utenti_clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Mostra tutti gli utenti dei clienti`}</a>
                             </div>
+                            {/*<div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                <a href={"/"+lang+"/admin/panel/tecnici_clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Gestisci rapporto tecnico - clienti`}</a>
+                            </div>*/}
                         </div>
                     </div>
                 </div>
