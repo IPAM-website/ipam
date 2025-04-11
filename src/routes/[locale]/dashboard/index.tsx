@@ -3,7 +3,7 @@ import { RequestHandler, useNavigate, routeLoader$, DocumentHead } from "@builde
 import ClientList from "~/components/ListUtilities/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 import { getBaseURL, getUser } from "~/fnUtils";
-import { ClienteModel } from "~/dbModels";
+import { ClienteModel, TecnicoModel, UtenteModel } from "~/dbModels";
 
 
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap }) => {
@@ -19,12 +19,12 @@ export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap })
 };
 
 export const useUser = routeLoader$(({ sharedMap }) => {
-    return sharedMap.get('user') as UserModel;
+    return sharedMap.get('user') as TecnicoModel;
 });
 
 export default component$(() => {
 
-    const user: UserModel = useUser().value;
+    const user: TecnicoModel = useUser().value;
 
     return (
         <div class="size-full lg:px-40 px-24">
