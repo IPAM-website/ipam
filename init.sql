@@ -44,8 +44,10 @@ CREATE TABLE Siti(
     IDCitta INTEGER NOT NULL,
     datacenter BOOLEAN NOT NULL,
     tipologia VARCHAR(50) NOT NULL,
+    IDCliente INTEGER NOT NULL,
     PRIMARY KEY (IDSito),
-    CONSTRAINT fk_idCitta FOREIGN KEY (IDCitta) REFERENCES Citta(IDCitta)
+    CONSTRAINT fk_idCitta FOREIGN KEY (IDCitta) REFERENCES Citta(IDCitta).
+    CONSTRAINT fk_idCliente_Sito FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
 );
 
 CREATE TABLE Cliente_Tecnico(

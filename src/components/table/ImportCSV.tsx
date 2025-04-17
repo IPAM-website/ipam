@@ -1,7 +1,7 @@
 import { component$, useSignal, $ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 import sql from "~/../db";
-import { DBTableMaps } from "./tableMaps";
+import { DBTableMaps } from "~/tableMaps";
 
 interface ButtonProps { nomeImport : string, OnError : ( error : any ) => void, OnOk : () => void }
 

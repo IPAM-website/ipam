@@ -1,10 +1,9 @@
 import { component$, getLocale, useSignal, useTask$, useStore, $, useStyles$, useVisibleTask$, Slot, noSerialize } from "@builder.io/qwik";
-import TableMaps from "./tableMaps";
+import TableMaps from "~/tableMaps";
 import { server$ } from "@builder.io/qwik-city";
+import tableStyle from "./tableStyle.css?inline"
 import sql from "~/../db";
-import tableStyle from "./tableStyle.css?inline";
 import ConfirmDialog from "~/components/ui/confirmDialog";
-import postgres from "postgres";
 import PopupModal from "../ui/PopupModal";
 
 interface LoaderState { [key: string]: boolean; }
@@ -13,7 +12,7 @@ interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?:
 
 export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella, funcReloadData, onReloadRef, noModify = ""}) => {
     const modificaIT_EN = ["Modifica", "Edit"];
-
+    useStyles$(tableStyle);
     const showDialog = useSignal(false);
     const rowToDelete = useSignal<any>(null);
     const nT = useSignal(DBTabella);
@@ -143,7 +142,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
     const settings = useStore({
         visible: false,
         tableColumnsKey: [TableMaps[nT.value].keys[0], TableMaps[nT.value].keys[1]],
-        tableColumnsHeader: [TableMaps[nT.value].headers[lang][0], TableMaps[nT.value].headers[lang][1]],
+        tableColumnsHeader: [TableMaps[nT.value].headers[lang][0], TableMaps[nT.value].headers[lang][1],''],
         previewTableColumnsKey: [TableMaps[nT.value].keys[0], TableMaps[nT.value].keys[1]],
         previewTableColumnsHeader: [TableMaps[nT.value].headers[lang][0], TableMaps[nT.value].headers[lang][1]]
     })
@@ -272,8 +271,8 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                                                 {row[key] instanceof Date ? row[key].toLocaleString().split(',')[0] : row[key] || "N/A"}
                                             </div>
                                         ))}
-                                        <div class="text-black text-base font-medium font-['Inter'] leading-normal p-4 flex-1">
-                                            {noModify == "" &&                                             <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
+                                        <div class="text-black text-base font-medium font-['Inter'] leading-normal flex justify-end p-4 flex-1">
+                                            {noModify == "" &&  <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
                                                 onClick$={() => OnModify?.(row)}>
                                                 <span class="tooltip">{lang === 'it' ? modificaIT_EN[0] : modificaIT_EN[1]}</span>
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-5 h-5">
@@ -399,7 +398,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                 <div class="w-full mt-3 gap-1 flex justify-end">
                     <button class="bg-red-500 text-gray-50 rounded-sm p-0.5 px-2 cursor-pointer transition-all hover:bg-red-400" onClick$={() => {
                         settings.previewTableColumnsHeader = [];
-                        settings.tableColumnsHeader.map(x => settings.previewTableColumnsHeader.push(x));
+                        settings.tableColumnsHeader.map(x => {if(x=='') return; settings.previewTableColumnsHeader.push(x)});
                         settings.previewTableColumnsKey = [];
                         settings.tableColumnsKey.map(x => settings.previewTableColumnsKey.push(x));
                         settings.visible = false;
@@ -407,6 +406,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                     <button class="bg-green-500 flex items-center gap-1 text-gray-50 rounded-sm p-0.5 px-2 cursor-pointer transition-all hover:bg-green-400" onClick$={() => {
                         settings.tableColumnsHeader = [];
                         settings.previewTableColumnsHeader.map(x => settings.tableColumnsHeader.push(x));
+                        settings.tableColumnsHeader.push("");
                         settings.tableColumnsKey = [];
                         settings.previewTableColumnsKey.map(x => settings.tableColumnsKey.push(x));
                         settings.visible = false;

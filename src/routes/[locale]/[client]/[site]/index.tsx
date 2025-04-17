@@ -1,18 +1,18 @@
 import { component$, getLocale, useSignal, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { server$, useLocation } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
-import ClientInfo from "~/components/ListUtilities/ClientList/clientinfo";
-import SiteModel from "~/components/ListUtilities/SiteList/siteModel";
 import { getBaseURL } from "~/fnUtils";
 import sql from "../../../../../db";
 import { setClientName, setSiteName } from "~/components/layout/Sidebar";
-import DC from "~/components/ListUtilities/DCList/dcModel";
-import { getAllDC, getAllSite } from "..";
-import SubsiteModel from "~/components/ListUtilities/SubSiteList/subsiteModel";
-import Network from "~/components/ListUtilities/NetworkList/networkModel";
+import { getAllSite } from "..";
+import { ClienteModel, ReteModel, SiteModel } from "~/dbModels";
+import Table from "~/components/table/Table";
+import Dati_Headers from "~/components/table/Dati_Headers";
+import ButtonAdd from "~/components/table/ButtonAdd";
+import PopupModal from "~/components/ui/PopupModal";
 
 export const getSite = server$(async function (idsito: number) {
-    let site: SiteModel = { idsito: -1, nomesito: '' };
+    let site: SiteModel = { idsito: -1, nomesito: '', datacenter: false, idcitta: 0, tipologia: '' };
     try {
         const query = await sql`SELECT * FROM siti WHERE siti.idsito=${idsito}`
         site = query[0] as SiteModel;
@@ -25,10 +25,10 @@ export const getSite = server$(async function (idsito: number) {
 })
 
 export const getClient = server$(async function (idclient: number) {
-    let client: ClientInfo = { idcliente: -1, nomecliente: '' };
+    let client: ClienteModel = { idcliente: -1, nomecliente: '', telefonocliente: '' };
     try {
         const query = await sql`SELECT * FROM clienti WHERE clienti.idcliente=${idclient}`
-        client = query[0] as ClientInfo;
+        client = query[0] as ClienteModel;
     }
     catch (e) {
         console.log(e);
@@ -38,11 +38,11 @@ export const getClient = server$(async function (idclient: number) {
 })
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
-    let networks: Network[] = [];
+    let networks: ReteModel[] = [];
     try {
-        const query = await sql`SELECT rete.* FROM rete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
-                                INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito WHERE sotto_siti.idsito=${idsito}`
-        networks = query as unknown as Network[];
+        const query = await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
+                                WHERE siti_rete.idsito=${idsito}`
+        networks = query as unknown as ReteModel[];
     }
     catch (e) {
         console.log(e);
@@ -51,34 +51,19 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
     return networks;
 })
 
-
-export const getAllSubSites = server$(async function (idsite: number) {
-    let subsites: SubsiteModel[] = [];
-    try {
-        const query = await sql`SELECT * FROM sotto_siti WHERE sotto_siti.idsito=${idsite}`
-        subsites = query as unknown as SubsiteModel[];
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    return subsites;
-})
-
-
 export default component$(() => {
 
     const loc = useLocation();
     const lang = getLocale("en");
     const site = useSignal<SiteModel>();
-    const client = useSignal<ClientInfo>();
-    const subsites = useSignal<SubsiteModel[]>([]);
-    const networks = useSignal<Network[]>([]);
+    const client = useSignal<ClienteModel>();
+    const networks = useSignal<ReteModel[]>([]);
+    
+    const addNet = useSignal<boolean>(false);
 
     useTask$(async () => {
         client.value = await getClient(parseInt(loc.params.client));
         site.value = await getSite(parseInt(loc.params.site));
-        subsites.value = await getAllSubSites(parseInt(loc.params.site));
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
     })
 
@@ -92,6 +77,12 @@ export default component$(() => {
     return (<>
         <div class="size-full bg-white overflow-hidden">
             <Title haveReturn={true} url={loc.url.origin + "/" + lang + "/" + client.value?.idcliente} >{client.value?.nomecliente + " - " + site.value?.nomesito}</Title>
+            <div>
+                <Table title="Networks">
+                    <Dati_Headers DBTabella="rete" dati={networks.value} nomeTabella="rete" />
+                    <ButtonAdd nomePulsante={$localize`Aggiungi indirizzo`} onClick$={()=>{}} ></ButtonAdd>
+                </Table>
+            </div>
             <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
                 <div class="flex-1 px-5 py-3  rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
@@ -105,10 +96,6 @@ export default component$(() => {
                     <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
                         <div class="justify-start text-black text-lg font-normal">{$localize`Posizione`}</div>
                         <div class="justify-start text-black text-lg font-normal">DA AGGIUNGERE!!!</div>
-                    </div>
-                    <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
-                        <div class="justify-start text-black text-lg font-normal">{$localize`Numero sottositi`}</div>
-                        <div class="justify-start text-black text-lg font-normal">{subsites.value.length}</div>
                     </div>
                     <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
                         <div class="justify-start text-black text-lg font-normal">{$localize`Reti presenti`}</div>
@@ -142,24 +129,10 @@ export default component$(() => {
                     </div>
                 </div>
             </div>
-            <div class="flex  flex-col md:flex-row gap-8 mt-8">
-                <div class="w-1/5 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
-                    <div class="h-[40px] w-full flex items-center border-b border-b-gray-300 overflow-hidden">
-                        <div class="text-black text-lg ml-3 font-semibold">{$localize`Sottositi`}</div>
-                    </div>
-                    <div class="ml-5 mt-2 pb-4 gap-1.5 flex flex-col">
-                        {subsites.value.map(x => <a>{x.nomesottosito}</a>)}
-                    </div>
-                </div>
-                <div class="w-1/5 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
-                    <div class="h-[40px] w-full flex items-center border-b border-b-gray-300 overflow-hidden">
-                        <div class="text-black text-lg ml-3 font-semibold">{$localize`Reti`}</div>
-                    </div>
-                    <div class="ml-5 mt-2 pb-4 gap-1.5 flex flex-col">
-                        {networks.value.map(x => <a>{x.nomerete}</a>)}
-                    </div>
-                </div>
-            </div>
         </div>
+
+        <PopupModal visible={addNet.value} title={$localize`Aggiunta network`}>
+
+        </PopupModal>
     </>)
 })

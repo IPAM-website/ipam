@@ -66,11 +66,6 @@ export const useInfo = server$(async () => {
             info.rapct = '0';
         else
             info.rapct = (query4[0].avg as string).substring(0, 4);
-        const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN datacenter ON cliente_tecnico.idcliente=datacenter.idcliente INNER JOIN siti ON datacenter.iddc = siti.iddc GROUP BY idsito )`
-        if(query5[0].avg == null)
-            info.rapst = '0';
-        else
-            info.rapst = (query5[0].avg as string).substring(0, 4);
     }
     catch (e) {
         console.log("Errore: ", e);
@@ -88,7 +83,7 @@ export default component$(() => {
     })
     return (
         <>
-            <div class="size-full bg-white overflow-hidden  ">
+            <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0 ">
                 <Title haveReturn={true} url={"/" + lang + "/dashboard"}>{$localize`Admin Panel`}</Title>
                 <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
@@ -111,10 +106,6 @@ export default component$(() => {
                         <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
                             <div class="justify-start text-black text-xl font-normal">{$localize`Numero medio di clienti per tecnico`}</div>
                             <div class="justify-start text-black text-xl font-normal">{info.value?.rapct}</div>
-                        </div>
-                        <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero medio di siti per tecnico`}</div>
-                            <div class="justify-start text-black text-xl font-normal">{info.value?.rapst}</div>
                         </div>
                     </div>
 

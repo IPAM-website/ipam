@@ -205,9 +205,9 @@ export default component$(() => {
   // Aggiungi questo stato per le notifiche
   const notifications = useSignal<Notification[]>([]);
   const reloadFN = useSignal<(() => void) | null>(null);
-  const listSelect = useSignal([]);
+  const listSelect = useSignal<any>([]);
   const currentTecnico = useSignal<number | null>(null);
-  const listSelectTecnici = useSignal([]);
+  const listSelectTecnici = useSignal<any>([]);
   const addRelazioneAction = addRelazione();
 
   useTask$(async ({ track })=>{
@@ -307,7 +307,7 @@ export default component$(() => {
       
   return (
     <>
-      <div class="size-full bg-white overflow-hidden">
+      <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0">
         {/* Aggiungi questo div per le notifiche */}
         <div class="fixed top-4 right-4 z-50 space-y-2">
           {notifications.value.map((notification, index) => (
@@ -352,12 +352,12 @@ export default component$(() => {
                   <br />
                   {/* Mostra il selettore tecnici solo in modalità aggiunta, non in modalità modifica */}
                   {isEditing.value ? (
-                    <TextBoxForm error={formAction.value.value} id="NomeT" disabled='si' nameT="nome" title={$localize`Tecnico`} value={nome.value}></TextBoxForm>
+                    <TextBoxForm placeholder="" error={formAction.value.value} id="NomeT" disabled='si' nameT="nome" title={$localize`Tecnico`} value={nome.value}></TextBoxForm>
                   ) : (
                     <AdminSelect 
                       id="idT" 
                       name={$localize`Tecnico`} 
-                      value={currentTecnico.value} 
+                      value={currentTecnico.value?.toString() || ""} 
                       OnClick$={tecnicoSelezionato} 
                       listName={$localize`Lista Tecnici`}
                     >
@@ -374,7 +374,7 @@ export default component$(() => {
                   <AdminSelect 
                     id="idC" 
                     name={$localize`Cliente`} 
-                    value={currentId.value} 
+                    value={currentId.value?.toString() || ""} 
                     OnClick$={clienteSelezionato} 
                     listName={$localize`Lista Clienti`}
                   >

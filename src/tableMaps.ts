@@ -109,6 +109,30 @@ const TableMaps: { [key: string]: TableMap } = {
             "n_prefisso",
             "idv"
         ]
+    },
+    "rete":{
+        headers: {
+            it:[
+                "ID",
+                "Nome",
+                "Descrizione",
+                "VRF",
+                ""
+            ],
+            en:[
+                "ID",
+                "Name",
+                "Description",
+                "VRF",
+                ""
+            ]
+        },
+        keys: [
+            'idrete',
+            'nomerete',
+            'descrizione',
+            'vrf'
+        ]
     }
 }
 
@@ -124,6 +148,9 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     },
     "indirizzi": {
         keys: [ "ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "idv" ]
+    },
+    "rete":{
+        keys: ['idrete','nomerete','descrizione','vrf']
     }
 };
 

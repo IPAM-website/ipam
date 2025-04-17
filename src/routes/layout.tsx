@@ -1,9 +1,10 @@
-import { component$, Slot, useContextProvider, useStore, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, Slot, useContextProvider, useSignal, useStore, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$, useLocation, type RequestHandler } from "@builder.io/qwik-city";
 import { selectSearchbar } from "~/components/forms/formsComponents/SearchBar";
 import Navbar from "~/components/layout/Navbar";
 import Sidebar, { toggleSidebar } from "~/components/layout/Sidebar";
 import jwt from "jsonwebtoken";
+import Notifications, { NotificationType } from "~/components/utils/notifications";
 
 export const onGet: RequestHandler = async ({ cacheControl, cookie, sharedMap, env }) => {
   // Control caching for this request for best performance and to reduce hosting costs:
@@ -17,9 +18,31 @@ export const onGet: RequestHandler = async ({ cacheControl, cookie, sharedMap, e
 
 };
 
-export default component$(() => {
+// export const useNotifications = () => {
+//   const state = useStore({
+//     notifications: [] as NotificationType[],
+//   });
 
+//   const add = $((message: string, type: 'success' | 'error') => {
+//     const id = Math.random().toString(36).substring(2, 9);
+//     state.notifications = [...state.notifications, { id, message, type }];
+//     console.log('Current notifications:', state.notifications);
+//   });
+
+//   const remove = $((id: string) => {
+//     state.notifications = state.notifications.filter(n => n.id !== id);
+//   });
+
+//   return {
+//     notifications: state.notifications,
+//     addNotification: add,
+//     removeNotification: remove,
+//   };
+// };
+
+export default component$(() => {
   const location = useLocation();
+  // const fcv = useSignal<NotificationType[]>([]);
 
   useVisibleTask$(({ cleanup }) => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -39,6 +62,7 @@ export default component$(() => {
 
   return (
     <>
+
       {!location.url.pathname.includes('/login/') && <Sidebar />}
       {!location.url.pathname.includes('/login/') && <Navbar />}
       <div>

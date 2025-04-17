@@ -1,6 +1,7 @@
 import { component$, Slot } from "@builder.io/qwik";
 import { RequestHandler } from "@builder.io/qwik-city";
 import jwt from "jsonwebtoken";
+import Notifications from "~/components/utils/notifications";
 
 
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env, locale }) => {
@@ -15,7 +16,5 @@ export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, e
 }
 
 export default component$(()=>{
-    return <div class="lg:px-40 md:px-24 px-0">
-        <Slot></Slot>
-    </div>
+    return <Slot></Slot>
 })
