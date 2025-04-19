@@ -19,6 +19,26 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
     const selectedOption = useSignal<HTMLDivElement | undefined>()
     const optRef = useSignal<HTMLOptionElement | undefined>();
     const options = useSignal<HTMLDivElement | undefined>()
+    const tooltipVisible = useSignal<boolean>(false);
+    const tooltip = useSignal<HTMLDivElement | undefined>(undefined);
+    const hoverTimeout = useSignal<NodeJS.Timeout | null>(null);
+
+    const topDistance = useSignal<number>(0);
+    const leftDistance = useSignal<number>(0);
+
+    const showToolTip = $((about: string, e: MouseEvent) => {
+        if (about == "")
+            return;
+        tooltipVisible.value = true;
+        if (tooltip.value) {
+            tooltip.value.innerHTML = " <b>ABOUT</b><br />"+about;
+            const rectOPT = (e.target as HTMLOptionElement).getBoundingClientRect();
+            topDistance.value = rectOPT.y -4;
+            leftDistance.value = rectOPT.x + rectOPT.width + 8;
+        }
+    })
+
+
     useVisibleTask$(({ track }) => {
         track(() => value)
         if (value == '' && selectedOption.value)
@@ -30,6 +50,15 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
                 const e: any = { target: { value: opt.value } };
                 OnClick$(e);
             }
+
+            opt.addEventListener("mouseenter", (e) => {
+                hoverTimeout.value = setTimeout(() => { showToolTip(opt.getAttribute("about") ?? "", e) }, 500)
+            })
+            opt.addEventListener("mouseout", () => {
+                if (hoverTimeout.value)
+                    clearTimeout(hoverTimeout.value);
+                tooltipVisible.value = false
+            })
         })
         clicked.value = false;
     })
@@ -38,6 +67,8 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
         if (disabled) return;
         clicked.value = !clicked.value;
     })
+
+
 
     return (<div class="flex flex-row items-center py-2 px-2  w-full bg-white" >
         <label class="font-semibold w-24" for={id}>{title}</label>
@@ -154,7 +185,10 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
                     </div>
                 }
             </div>
-        </div>
 
+        </div>
+        <div ref={tooltip} class="shadow border border-gray-400 absolute z-50 bg-white rounded-xl text-gray-500 p-2" style={{ display: tooltipVisible.value ? "block" : "none", top: topDistance.value + "px", left: leftDistance.value + "px" }}>
+            
+        </div>
     </div>)
 })

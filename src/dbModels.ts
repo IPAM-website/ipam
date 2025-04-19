@@ -27,6 +27,10 @@ export interface ReteModel{
     nomerete: string;
     descrizione: string;
     vrf: number;
+    iprete: string;
+    prefissorete: number;
+    idv?: number;
+    idretesup?: number;
 }
 
 export interface SiteModel{
