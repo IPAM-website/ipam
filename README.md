@@ -68,7 +68,7 @@ We manage tasks using Jira 🗂️ — an Atlassian tool that supports AGILE met
 ## 🚀 How to start it?
 
 Let’s get this app running!
-### Run the site
+### 🌍 Run the site
 
 Clone the repo:
 ```shell
@@ -93,7 +93,7 @@ pnpm run build
 ```
 The output will be in the dist/ folder 📁.
 
-### Run the DB
+### 🐘 Run the DB
 
 We use Postgres inside a Docker container.
 >🔧 Install Docker Desktop (Windows) or dockerd (Linux) beforehand!
