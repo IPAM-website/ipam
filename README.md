@@ -1,18 +1,36 @@
-# IPAM
+# IPNova
 
 ## What is it?
 
-IP Address Manager is a application useful to add, update or remove IP Addresses from a local DB.
+IPNova is an IPAM.
+IPAM stands for IP Address Management, a type of application useful to manage an handful of networks with ease.
+The key features about this software is the CRUD operations for the networks and ip addresses, and let you create
+a pyramid of networks, each one with his own properties.
+
+## Why use it?
+
+The main reason to use an IPAM is for his quick access to all data. Hence its primary use is for diagnostic.
+It aims to be an accessible software, fast to learn and easy to use.
 
 ## What do we use?
 
-### Front-end and server-side
-The application uses the Qwik.js framework that permits the creation of the front-end of the web-app.
-It can also create middleware functions and API.
+### Front-end
+The application uses Qwik.js. This framework, developed by google, is notorious for its speed during page loading,
+due to deleting the hydration step during a request. In simple terms, it doesn't load all the functions from the server-side,
+but wait an input from a user or an event.
+Qwik.js handles the front-end in a similar way to how react does. It uses component created using typescript and
+let the programmers customize them completely.
+
+### Back-end
+A helpful feature we found useful, is the creation of server-side only functions which are created in the components you need.
+Thanks to this, Qwik.js can be used as a full-stack framework, managing both the front-end and back-end.
+It also provides an easy creation of routes, based on the folders' structure. 
+If this isn't enough, it also provides the creation of endpoints and the implementation of middleware functions inside the components.
 
 ### Database
-The database we use is POSTGRES.
-Here the initial E/R (still in work in progress): https://app.gleek.io/diagrams/CeCUNLWItc0CkFVN6vzQXQ
+The project uses a RDBMS, which is Postgres. We chose to use a SQL database because of the strictness system of the networks.
+The DB is run on a docker container. This is great for mobility, performance and low use of energy.
+Here the E/R we are using now (it may change in the future): https://app.gleek.io/diagrams/CeCUNLWItc0CkFVN6vzQXQ
 
 ### Team Management
 We also use Jira to manage sprints and increments in order to easily divide work through time.
