@@ -37,11 +37,24 @@ Here the E/R we are using now (it may change in the future):
 <p>Created with <a href="https://gleek.io">Gleek.io diagram maker </a></p>
 
 ### Team Management
-We also use Jira to manage sprints and increments in order to easily divide work through time.
+We are currently in two working on this project. In order to organise our work and deadlines, we use Jira.
+Jira is a Atlas tool that organise the work using sprints and tickets. It also follows the AGILE method.
+What does this mean? With sprints, it helps to set a target in a certain deadline and split the work in pieces (tickets), which are easier to understand.
+By following the AGILE method, the commissioner can also take part of the project and communicated rapidly with the scrum master.
 
-# How to use it?
+
+# How to start it?
+
+Let's wrap this up by actually showing the steps to run the app.
 
 ## Run the site
+
+Download the repository zip or clone it on your local device.
+For cloning, use this:
+```shell
+git clone 
+```
+
 For running the application in development mode, use this command:
 ```shell
 pnpm run dev
