@@ -1,19 +1,23 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 import sql from "~/../db";
+import { ReteModel } from "~/dbModels";
 
 interface AddressBoxProps {
     type?: "IPv4" | "IPv6";
+    addressType?: "network" | "host";
     local?: boolean;
     prefix?: string;
     checkAvailability?: boolean;
     title?: string;
     value?: string;
-    currentIPNetwork: number;
+    disabled?: boolean;
+    currentIPNetwork?: number;
+    currentID?: number;
     OnInput$?: (event: { ip: string, class: string, prefix: string, network: string, last: string, complete: boolean, errors: string[], exists: boolean }) => void;
 }
 
-export const getSameIPs = server$(async (ip: string, network : number) => {
+export const getSameIPs = server$(async (ip: string, network: number) => {
     try {
         const query = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete = rete.idrete WHERE ip=${ip} AND indirizzi.idrete = ${network}`
         return query;
@@ -24,7 +28,57 @@ export const getSameIPs = server$(async (ip: string, network : number) => {
     }
 })
 
-export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, currentIPNetwork=-1 }) => {
+export const getNetwork = server$(async (idrete: number) => {
+    try {
+        const query = (await sql`SELECT * FROM rete WHERE rete.idrete = ${idrete}`)[0] as ReteModel;
+        return query;
+    }
+    catch (e) {
+        console.log(e);
+        return ["ERROR"];
+    }
+})
+
+export const getNetworkSpace = server$(async (idrete: number) => {
+    try {
+        const query = (await sql`SELECT * FROM rete WHERE rete.idretesup = ${idrete} ORDER BY iprete`) as ReteModel[];
+        let result: { start: string; finish: string, id: number }[] = [];
+
+        for (const r of query) {
+            let firstIP = r.iprete.split('.').map(x => parseInt(x));
+            let lastIP = new Array(4);
+
+            let reversedPrefix = 32 - r.prefissorete;
+
+            for (let i = 3; i >= 0; i--) {
+                let binaryPrefix = 0;
+                if (reversedPrefix >= 8)
+                    binaryPrefix = 255;
+                else if (reversedPrefix > 0) {
+                    binaryPrefix = (1 << reversedPrefix) - 1;
+                } else
+                    reversedPrefix = 0;
+                reversedPrefix -= 8;
+                lastIP[i] = firstIP[i] | binaryPrefix;
+            }
+
+            result.push({
+                start: r.iprete,
+                finish: lastIP.join('.'),
+                id: r.idrete
+            })
+        }
+
+
+        return result;
+    }
+    catch (e) {
+        console.log(e);
+        return ["ERROR"];
+    }
+})
+
+export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, currentIPNetwork = -1 }) => {
 
     const input1 = useSignal<HTMLInputElement>();
     const input2 = useSignal<HTMLInputElement>();
@@ -32,6 +86,9 @@ export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", loc
     const input4 = useSignal<HTMLInputElement>();
 
     const assembleIP = $(async () => {
+
+        if (disabled)
+            return;
         let ip = "";
         let inputs = [input1, input2, input3, input4];
         let ipclass = "";
@@ -52,10 +109,17 @@ export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", loc
             ipclass = "16";
 
         let working_prefix;
-        if (prefix != "" && parseInt(prefix) >= 0 && parseInt(prefix) < 32)
+        if (prefix != "")
             working_prefix = prefix;
         else
             working_prefix = ipclass;
+
+        if (parseInt(working_prefix) < 0 || parseInt(working_prefix) >= 32) {
+            errors.push("Prefix outside of range 0-31");
+            OnInput$({ ip, class: ipclass, prefix: working_prefix, network: "", last: "", complete: false, errors, exists: false });
+            return;
+        }
+
 
         let parsedIP = ip.split('.').map(segment => parseInt(segment));
         let parsedPrefix = parseInt(working_prefix);
@@ -90,14 +154,19 @@ export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", loc
 
         }
 
-        if (parseInt(working_prefix) < 0 && parseInt(working_prefix) >= 32)
-            errors.push("Prefix outside of range 0-31");
+        if (addressType == "host") {
+            if (ip == networkIP.join('.'))
+                errors.push("Cannot use the network identifier as the IP");
 
-        if (ip == networkIP.join('.'))
-            errors.push("Cannot use the network identifier as the IP");
+            if (ip == lastIP.join('.'))
+                errors.push("Cannot use the broadcast address as the IP");
+        }
+        else if (addressType == "network") {
+            if (ip != networkIP.join('.'))
+                errors.push("Network address not valid");
+        }
 
-        if (ip == lastIP.join('.'))
-            errors.push("Cannot use the broadcast address as the IP");
+
 
         if (local && complete) {
             if (ip.split('.')[0] != "10" && ip.split('.')[0] != "172" && ip.split('.')[0] != "192")
@@ -111,18 +180,42 @@ export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", loc
         parsedIP.map((x) => { if (x < 0 && x > 255) { errors.push("Invalid IP Address: values exceed range 0-255"); } })
 
         let exists = false;
-        if (checkAvailability) {
-            let sameIP = await getSameIPs(ip,currentIPNetwork);
-            exists = sameIP.length > 0
-            // if (sameIP.length > 0)
-            // errors.push("This IP already exists. If you want to allow this, turn off the availability check.");
+
+
+        if (currentIPNetwork && currentIPNetwork != -1) {
+            const parentNetwork: ReteModel = await getNetwork(currentIPNetwork) as ReteModel;
+
+            if (addressType == "network") {
+                if (parentNetwork.prefissorete > parseInt(working_prefix)) {
+                    errors.push("Network exceed dimension limits");
+                }
+                const usedIPs: { start: string, finish: string, id: number }[] = await getNetworkSpace(currentIPNetwork) as { start: string, finish: string, id: number }[];
+                for (let interval of usedIPs) {
+                    console.log(interval.finish, '>=', networkIP.join('.'), ' -> ', interval.finish >= networkIP.join('.'))
+                    console.log(interval.start, '<=', lastIP.join('.'), ' -> ', interval.start <= lastIP.join('.'))
+                    if ((interval.finish >= networkIP.join('.') || interval.start >= lastIP.join('.')) && interval.id != currentID) {
+                        errors.push("Space already occupied");
+                        break;
+                    }
+                }
+            } else {
+                if (checkAvailability) {
+                    let sameIP = await getSameIPs(ip, currentIPNetwork);
+                    exists = sameIP.length > 0
+                }
+
+                if (networkIP.join('.') != parentNetwork.iprete && prefix && complete)
+                    errors.push("Outside of network boundaries");
+            }
         }
 
         OnInput$({ ip, class: ipclass, prefix: working_prefix, network: networkIP.join('.'), last: lastIP.join('.'), complete, errors, exists });
     })
 
-    useVisibleTask$(({track}) => {
-        track(()=>currentIPNetwork)
+    useVisibleTask$(({ track }) => {
+        track(() => currentIPNetwork)
+        track(() => prefix)
+        track(() => value)
 
         for (const item of document.getElementsByClassName("only-numbers")) {
             (item as HTMLInputElement).addEventListener("keydown", function (e: KeyboardEvent) {
@@ -148,7 +241,17 @@ export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", loc
             if (input2.value && !isNaN(parseInt(value.split('.')[1]))) input2.value.value = value.split('.')[1];
             if (input3.value && !isNaN(parseInt(value.split('.')[2]))) input3.value.value = value.split('.')[2];
             if (input4.value && !isNaN(parseInt(value.split('.')[3]))) input4.value.value = value.split('.')[3];
-        }  
+        } else if (value == "") {
+            if (input1.value)
+                input1.value.value = "";
+            if (input2.value)
+                input2.value.value = "";
+            if (input3.value)
+                input3.value.value = "";
+            if (input4.value)
+                input4.value.value = "";
+        }
+
         assembleIP();
     })
 
@@ -157,14 +260,14 @@ export default component$<AddressBoxProps>(({ type = "IPv4", title = "IPv4", loc
     return (
         <div class="flex items-center px-2 py-1">
             <p class="font-semibold">{title}</p>
-            <div class="w-full flex *:w-[48px] gap-1 *:border *:border-gray-300 *:rounded-md *:outline-0 *:p-0.5 *:px-2 *:hover:border-black *:focus:border-black">
-                <input type="text" ref={input1} class="only-numbers address" onInput$={assembleIP} />
+            <div class={"w-full flex *:w-[48px] gap-1 *:border *:border-gray-300 *:rounded-md *:outline-0 *:p-0.5 *:px-2 *:hover:border-black *:focus:border-black " + (disabled ? " *:bg-gray-300 " : "")}>
+                <input type="text" ref={input1} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
                 .
-                <input type="text" ref={input2} class="only-numbers address" onInput$={assembleIP} />
+                <input type="text" ref={input2} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
                 .
-                <input type="text" ref={input3} class="only-numbers address" onInput$={assembleIP} />
+                <input type="text" ref={input3} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
                 .
-                <input type="text" ref={input4} class="only-numbers address" onInput$={assembleIP} />
+                <input type="text" ref={input4} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
             </div>
         </div>
     )

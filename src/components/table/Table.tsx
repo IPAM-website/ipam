@@ -1,5 +1,4 @@
 import { $, component$, Slot, useTask$ } from "@builder.io/qwik";
-import TitoloTable from "~/components/table/TitoloTable";
 
 interface TableProps { title?: string }
 

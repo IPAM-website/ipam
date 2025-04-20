@@ -9,6 +9,7 @@ import sql from "~/../db";
 import Dati from "~/components/table/Dati_Headers";
 import CHKForms from "~/components/forms/CHKForms";
 import Import from "~/components/table/ImportCSV";
+// import { useNotify } from "~/services/notifications";
 
 type Notification = {
   message: string;
@@ -41,10 +42,8 @@ export const useTecnici = server$(async () => {
   }
 })
 
-export const modTecnico = routeAction$(async (data, requestEvent : RequestEventAction) => {
-  try
-  {
-    console.log(data);
+export const modTecnico = routeAction$(async (data, requestEvent: RequestEventAction) => {
+  try {
     await sql`
       UPDATE tecnici
       SET nometecnico = ${data.nome}, cognometecnico = ${data.cognome}, ruolo = ${data.ruolo}, emailtecnico = ${data.email}, pwdtecnico = ${data.pwd}, telefonotecnico = ${data.telefono || null}, admin = ${data.admin == "on"}
@@ -62,8 +61,8 @@ export const modTecnico = routeAction$(async (data, requestEvent : RequestEventA
       message: "Errore durante l'inserimento del tecnico"
     }
   }
-},zod$({
-  admin : z.any(),
+}, zod$({
+  admin: z.any(),
   idtecnico: z.string(),
   nome: z.string().min(2),
   cognome: z.string().min(2),
@@ -73,9 +72,8 @@ export const modTecnico = routeAction$(async (data, requestEvent : RequestEventA
   pwd: z.string().min(2)
 }))
 
-export const addTecnico = routeAction$(async (data, requestEvent : RequestEventAction) => {
-  try
-  {
+export const addTecnico = routeAction$(async (data, requestEvent: RequestEventAction) => {
+  try {
     await sql`
       INSERT INTO tecnici (nometecnico, cognometecnico, ruolo, emailtecnico, pwdtecnico, telefonotecnico, admin)
       VALUES (${data.nome}, ${data.cognome}, ${data.ruolo}, ${data.email}, ${data.pwd}, ${data.telefono || null}, FALSE)
@@ -92,7 +90,7 @@ export const addTecnico = routeAction$(async (data, requestEvent : RequestEventA
       message: "Errore durante l'inserimento del tecnico"
     }
   }
-},zod$({
+}, zod$({
   nome: z.string().min(2),
   cognome: z.string().min(2),
   ruolo: z.string().min(2),
@@ -101,13 +99,12 @@ export const addTecnico = routeAction$(async (data, requestEvent : RequestEventA
   pwd: z.string().min(2)
 }))
 
-export const deleteRow = server$(async function(this,data){
-  try{
-    
+export const deleteRow = server$(async function (this, data) {
+  try {
+
     await sql`DELETE FROM tecnici WHERE tecnici.idtecnico = ${data.idtecnico}`;
     return true;
-  }catch(e)
-  {
+  } catch (e) {
     console.log(e);
     return false;
   }
@@ -115,6 +112,7 @@ export const deleteRow = server$(async function(this,data){
 
 export default component$(() => {
   useStyles$(styles);
+  // const notify = useNotify();
   const admin = useSignal(false);
   const nome = useSignal('');
   const cognome = useSignal('');
@@ -130,24 +128,17 @@ export default component$(() => {
   const addAction = addTecnico();
   const editAction = modTecnico();
   const formAction = useSignal(addAction);
+  const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
 
-
-  useTask$(async ({ track })=>{
-      const query = await useTecnici();
-      dati.value = query;
-      track(() => isEditing.value);
-      //@ts-ignore
-      formAction.value = isEditing.value ? editAction : addAction;
+  useTask$(async ({ track }) => {
+    const query = await useTecnici();
+    dati.value = query;
+    track(() => isEditing.value);
+    //@ts-ignore
+    formAction.value = isEditing.value ? editAction : addAction;
   })
 
-  const addNotification = $((message: string, type: 'success' | 'error') => {
-        notifications.value = [...notifications.value, { message, type }];
-        // Rimuovi la notifica dopo 3 secondi
-        setTimeout(() => {
-          notifications.value = notifications.value.filter(n => n.message !== message);
-        }, 3000);
-    });
 
   const openTeniciDialog = $(() => {
     nome.value = '';
@@ -162,19 +153,29 @@ export default component$(() => {
   });
 
   const closeTecniciDialog = $(() => {
-      showDialog.value = false;
+    showDialog.value = false;
+  });
+
+  const addNotification = $((message: string, type: 'success' | 'error') => {
+    notifications.value = [...notifications.value, { message, type }];
+    // Rimuovi la notifica dopo 3 secondi
+    setTimeout(() => {
+      notifications.value = notifications.value.filter(n => n.message !== message);
+    }, 3000);
   });
 
   const reloadTable = $(() => {
-    if (formAction.value.value?.success) 
-      addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo", 'success');
+    closeTecniciDialog();
+    reloadFN.value?.();
+    if (formAction.value.value?.success) {
+      addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo",'success');
+    }
     else
-      addNotification(lang === "en" ? "Error during editing" : "Errore durante la modifica", 'error');
+      addNotification(lang === "en" ? "Error during editing" : "Errore durante la modifica",'error');
   })
 
   const Modify = $((row: any) => {
     const extractRowData = extractRow(row);
-    console.log(extractRowData.nometecnico);
     nome.value = extractRowData.nometecnico;
     cognome.value = extractRowData.cognometecnico;
     ruolo.value = extractRowData.ruolo;
@@ -187,104 +188,107 @@ export default component$(() => {
     showDialog.value = true;
   })
 
-  const Delete =$(async (row:any)=>{
-    if(await deleteRow(extractRow(row)))
-      addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
+
+
+  const Delete = $(async (row: any) => {
+    if (await deleteRow(extractRow(row)))
+      addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo",'success');
     else
-      console.log("DE")
+      addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione",'error');
   })
 
 
   const handleError = $((error: any) => {
     console.log(error);
-    addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
+    addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione",'error');
   })
 
   const handleOk = $(async () => {
-    addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
+    addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo",'success');
   })
-      
-    return (
-        <>
-            <div class="size-full bg-white overflow-hidden">
-            {/* Aggiungi questo div per le notifiche */}
-            <div class="fixed top-4 right-4 z-50 space-y-2">
-                {notifications.value.map((notification, index) => (
-                  <div 
-                    key={index}
-                    class={`p-4 rounded-md shadow-lg ${
-                      notification.type === 'success' 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-red-500 text-white'
-                    }`}
-                  >
-                    {notification.message}
-                  </div>
-                ))}
-              </div>
 
-              <Title haveReturn={true} url={"/"+lang+"/admin/panel"}>{$localize`Admin Panel`}</Title>
-              <Table title={$localize`Lista tecnici`}>
-                <Dati dati={dati.value} title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} OnModify={Modify} OnDelete={Delete} DBTabella="tecnici"></Dati>
-                <ButtonAdd nomePulsante={$localize`Inserisci tecnico`} onClick$={openTeniciDialog}></ButtonAdd>
-                <Import nomeImport="tecnici" OnError={handleError} OnOk={handleOk}></Import>
-              </Table>
+  const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
+
+  return (
+    <>
+      <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0">
+        {/* Aggiungi questo div per le notifiche */}
+        <div class="fixed top-4 right-4 z-50 space-y-2">
+          {notifications.value.map((notification, index) => (
+            <div
+              key={index}
+              class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-red-500 text-white'
+                }`}
+            >
+              {notification.message}
             </div>
+          ))}
+        </div>
 
-              {showDialog.value && (
-                  <div class="dialog-overlayAdmin openAdmin">
-                    <div class="dialog-contentAdmin">
-                    <div class="absolute top-4 right-4 cursor-pointer" onClick$={closeTecniciDialog}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></div>
-                              <Form action={formAction.value} onSubmit$={reloadTable}>
-                                  <h3 class="dialog-titleAdmin">{isEditing.value ? $localize`Modifica tecnico` : $localize`Aggiungi tecnico`}</h3>
-                                  <div class="dialog-messageAdmin">
-                                          <hr class="text-neutral-200 mb-4 w-11/12" />
-                                          <div class="w-11/12">
-                                              <input class="opacity-0" id="idT" type="text" name="idtecnico" value={currentId.value} />
-                                              <CHKForms id="chkT" name="admin" value={admin.value} nameCHK="Admin"></CHKForms>
-                                              <br />
-                                              <TextBoxForm error={formAction.value.value} id="NomeT" placeholder={$localize`Inserire il nome del tecnico`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
-                                              {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
-                                              <TextBoxForm error={formAction.value.value} id="CognomeT" placeholder={$localize`Inserire il cognome del tecnico`} nameT="cognome" title={$localize`Cognome` + "*"} value={cognome.value}></TextBoxForm>
-                                              {formAction.value.value?.failed && formAction.value.value?.fieldErrors.cognome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Surname not valid" : "Cognome non valido"}</div>)}
-                                              <TextBoxForm error={formAction.value.value} id="RuoloT" placeholder={$localize`Inserire il ruolo del tecnico`} nameT="ruolo" title={$localize`Ruolo` + "*"} value={ruolo.value}></TextBoxForm>
-                                              {formAction.value.value?.failed && formAction.value.value?.fieldErrors.ruolo && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Role not valid" : "Ruolo non valido"}</div>)}
-                                              <TextBoxForm error={formAction.value.value} id="EmailT" placeholder={$localize`Inserire la mail del tecnico`} nameT="email" title={$localize`Email` + "*"} value={mail.value}></TextBoxForm>
-                                              {formAction.value.value?.failed && formAction.value.value?.fieldErrors.email && (<div class="text-sm text-red-600 font-semibold ms-32">{formAction.value.value?.fieldErrors.email}</div>)}
-                                              <TextBoxForm id="TelefonoT" placeholder={$localize`Inserire il telefono del tecnico`} nameT="telefono" title={$localize`Telefono`} value={telefono.value}></TextBoxForm>
-                                              <TextBoxForm error={formAction.value.value} id="PwdT" placeholder={$localize`Inserire la password del tecnico`} nameT="pwd" title={$localize`Password` + "*"} value={password.value}></TextBoxForm>
-                                              {formAction.value.value?.failed && formAction.value.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Password not valid" : "Password non valido"}</div>)}
-                                          </div>
-                                  </div>
-                                  <div class="dialog-actionsAdmin">
-                                      <button
-                                          type='button'
-                                          onClick$={closeTecniciDialog}
-                                          class="dialog-buttonAdmin cancelAdmin cursor-pointer"
-                                      >
-                                          {$localize`Annulla`}
-                                      </button>
-                                      <button 
-                                          class="dialog-buttonAdmin text-white bg-green-500 hover:bg-green-600 cursor-pointer"
-                                          type='submit'
-                                      >
-                                          {$localize`Conferma`}
-                                      </button>
-                                  </div>
-                              </Form>
-                              </div>
-                          </div>
-              )}
-        </>
-    )
+        <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{$localize`Admin Panel`}</Title>
+        <Table title={$localize`Lista tecnici`}>
+          <Dati dati={dati.value} title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici"></Dati>
+          <ButtonAdd nomePulsante={$localize`Inserisci tecnico`} onClick$={openTeniciDialog}></ButtonAdd>
+          <Import nomeImport="tecnici" OnError={handleError} OnOk={handleOk}></Import>
+        </Table>
+      </div>
+
+      {showDialog.value && (
+        <div class="dialog-overlayAdmin openAdmin">
+          <div class="dialog-contentAdmin">
+            <div class="absolute top-4 right-4 cursor-pointer" onClick$={closeTecniciDialog}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></div>
+            <Form action={formAction.value} onSubmit$={reloadTable}>
+              <h3 class="dialog-titleAdmin">{isEditing.value ? $localize`Modifica tecnico` : $localize`Aggiungi tecnico`}</h3>
+              <div class="dialog-messageAdmin">
+                <hr class="text-neutral-200 mb-4 w-11/12" />
+                <div class="w-11/12">
+                  <input class="opacity-0" id="idT" type="text" name="idtecnico" value={currentId.value} />
+                  <CHKForms id="chkT" name="admin" value={admin.value} nameCHK="Admin"></CHKForms>
+                  <br />
+                  <TextBoxForm error={formAction.value.value} id="NomeT" placeholder={$localize`Inserire il nome del tecnico`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
+                  <TextBoxForm error={formAction.value.value} id="CognomeT" placeholder={$localize`Inserire il cognome del tecnico`} nameT="cognome" title={$localize`Cognome` + "*"} value={cognome.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.cognome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Surname not valid" : "Cognome non valido"}</div>)}
+                  <TextBoxForm error={formAction.value.value} id="RuoloT" placeholder={$localize`Inserire il ruolo del tecnico`} nameT="ruolo" title={$localize`Ruolo` + "*"} value={ruolo.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.ruolo && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Role not valid" : "Ruolo non valido"}</div>)}
+                  <TextBoxForm error={formAction.value.value} id="EmailT" placeholder={$localize`Inserire la mail del tecnico`} nameT="email" title={$localize`Email` + "*"} value={mail.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.email && (<div class="text-sm text-red-600 font-semibold ms-32">{formAction.value.value?.fieldErrors.email}</div>)}
+                  <TextBoxForm id="TelefonoT" placeholder={$localize`Inserire il telefono del tecnico`} nameT="telefono" title={$localize`Telefono`} value={telefono.value}></TextBoxForm>
+                  <TextBoxForm error={formAction.value.value} id="PwdT" placeholder={$localize`Inserire la password del tecnico`} nameT="pwd" title={$localize`Password` + "*"} value={password.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Password not valid" : "Password non valido"}</div>)}
+                </div>
+              </div>
+              <div class="dialog-actionsAdmin">
+                <button
+                  type='button'
+                  onClick$={closeTecniciDialog}
+                  class="dialog-buttonAdmin cancelAdmin cursor-pointer"
+                >
+                  {$localize`Annulla`}
+                </button>
+                <button
+                  class="dialog-buttonAdmin text-white bg-green-500 hover:bg-green-600 cursor-pointer"
+                  type='submit'
+                >
+                  {$localize`Conferma`}
+                </button>
+              </div>
+            </Form>
+          </div>
+        </div>
+      )}
+    </>
+  )
 })
 
 export const head: DocumentHead = {
-    title: "Gesione tecnici",
-    meta: [
-        {
-            name: "Gestione tecnici",
-            content: "Pagina dell'admin per la gestione dei tecnici",
-        },
-    ],
+  title: "Gesione tecnici",
+  meta: [
+    {
+      name: "Gestione tecnici",
+      content: "Pagina dell'admin per la gestione dei tecnici",
+    },
+  ],
 };

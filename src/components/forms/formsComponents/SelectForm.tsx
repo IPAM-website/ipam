@@ -3,6 +3,7 @@ import { $, component$, getLocale, JSXOutput, QRL, Signal, Slot, useSignal, useT
 interface SelectFormProps {
     id: string;
     name: string;
+    title?: string;
     value?: string;
     listName?: string;
     disabled?: boolean;
@@ -11,13 +12,33 @@ interface SelectFormProps {
     OnClick$: (event: PointerEvent) => void;
 }
 
-export default component$<SelectFormProps>(({ id, name, value, OnClick$, listName, disabled = false, noElementsHandler,noElementsText }) => {
+export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, listName, disabled = false, noElementsHandler, noElementsText }) => {
 
     const lang = getLocale("en");
     const clicked = useSignal(false);
     const selectedOption = useSignal<HTMLDivElement | undefined>()
     const optRef = useSignal<HTMLOptionElement | undefined>();
     const options = useSignal<HTMLDivElement | undefined>()
+    const tooltipVisible = useSignal<boolean>(false);
+    const tooltip = useSignal<HTMLDivElement | undefined>(undefined);
+    const hoverTimeout = useSignal<NodeJS.Timeout | null>(null);
+
+    const topDistance = useSignal<number>(0);
+    const leftDistance = useSignal<number>(0);
+
+    const showToolTip = $((about: string, e: MouseEvent) => {
+        if (about == "")
+            return;
+        tooltipVisible.value = true;
+        if (tooltip.value) {
+            tooltip.value.innerHTML = " <b>ABOUT</b><br />"+about;
+            const rectOPT = (e.target as HTMLOptionElement).getBoundingClientRect();
+            topDistance.value = rectOPT.y -4;
+            leftDistance.value = rectOPT.x + rectOPT.width + 8;
+        }
+    })
+
+
     useVisibleTask$(({ track }) => {
         track(() => value)
         if (value == '' && selectedOption.value)
@@ -29,6 +50,16 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
                 const e: any = { target: { value: opt.value } };
                 OnClick$(e);
             }
+
+            opt.addEventListener("mouseenter", (e) => {
+                hoverTimeout.value = setTimeout(() => { showToolTip(opt.getAttribute("about") ?? "", e) }, 500)
+            })
+            opt.addEventListener("mouseout", () => {
+                if (hoverTimeout.value)
+                    clearTimeout(hoverTimeout.value);
+                tooltipVisible.value = false
+            })
+            
         })
         clicked.value = false;
     })
@@ -38,8 +69,10 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
         clicked.value = !clicked.value;
     })
 
+
+
     return (<div class="flex flex-row items-center py-2 px-2  w-full bg-white" >
-        <label class="font-semibold" for={id}>{name}</label>
+        <label class="font-semibold w-24" for={id}>{title}</label>
         <div class="relative bg-white w-full" style={{ backgroundColor: disabled ? '#f5f5f5' : '', color: disabled ? '#ddd' : '' }}>
             <div id={id} tabIndex={0} onFocusOut$={() => { if (optRef.value) optRef.value.style.background = ""; }} onKeyDown$={(e) => {
 
@@ -51,6 +84,12 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
                     optRef.value.focus();
                     if (selectedOption.value)
                         selectedOption.value.textContent = optRef.value.textContent;
+
+
+                    if (optRef.value) {
+                        optRef.value.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    }
+
                 }
 
                 clicked.value = true;
@@ -88,6 +127,17 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
                     }
                 }
 
+                if (/^[a-zA-Z]$/.test(e.key)) {
+                    // Handle alphabet key press if needed
+                    console.log(e.key);
+                    for (let i = 0; i < optList.length; i++) {
+                        if ((optList[i] as HTMLOptionElement).textContent?.toLowerCase()[0] == e.key) {
+                            selectOPT(i);
+                            break;
+                        }
+                    }
+                }
+
                 if (e.key == "Tab" || e.key == "Enter") {
                     if (optRef.value)
                         optRef.value.style.background = "";
@@ -102,6 +152,7 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
                 </svg>
             </div>
             <div onClick$={(event) => {
+                tooltipVisible.value = false;
                 if (disabled)
                     return;
                 optRef.value = event.target as HTMLOptionElement;
@@ -115,7 +166,7 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
                 {listName != '' && <h3 class="bg-white font-semibold p-1 ps-3">{listName}</h3>}
                 {
                     options.value?.children.length != 0 ?
-                        <div ref={options} class="cursor-pointer *:p-1 *:bg-white *:px-3 *:pe-5  *:hover:bg-gray-50 *:transition-all">
+                        <div ref={options} class="cursor-pointer *:p-1 *:bg-white *:px-2 *:pe-5 max-h-[120px] overflow-auto *:hover:bg-gray-50 *:transition-all scroll-smooth">
                             <Slot></Slot>
                         </div>
                         :
@@ -136,7 +187,10 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
                     </div>
                 }
             </div>
-        </div>
 
+        </div>
+        <div ref={tooltip} class="shadow border border-gray-400 absolute z-50 bg-white rounded-xl text-gray-500 p-2" style={{ display: tooltipVisible.value ? "block" : "none", top: topDistance.value + "px", left: leftDistance.value + "px" }}>
+            
+        </div>
     </div>)
 })

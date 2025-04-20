@@ -88,7 +88,7 @@ export default component$(() => {
     })
     return (
         <>
-            <div class="size-full bg-white overflow-hidden  ">
+            <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0 ">
                 <Title haveReturn={true} url={"/" + lang + "/dashboard"}>{$localize`Admin Panel`}</Title>
                 <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
@@ -111,10 +111,6 @@ export default component$(() => {
                         <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
                             <div class="justify-start text-black text-xl font-normal">{$localize`Numero medio di clienti per tecnico`}</div>
                             <div class="justify-start text-black text-xl font-normal">{info.value?.rapct}</div>
-                        </div>
-                        <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero medio di siti per tecnico`}</div>
-                            <div class="justify-start text-black text-xl font-normal">{info.value?.rapst}</div>
                         </div>
                     </div>
 

@@ -6,14 +6,14 @@ import { getBaseURL, getUser } from "~/fnUtils";
 
 export const onRequest : RequestHandler = async({params,redirect})=>{
     
-    try{
-        const query = await sql`SELECT * FROM datacenter INNER JOIN siti ON datacenter.iddc=siti.iddc AND datacenter.idcliente = ${params.client} WHERE siti.idsito = ${params.site}`
-        if(query.length==0)
-            throw new Error("Unauthorized access");
-    }catch(e)
-    {
-        throw redirect(301,getBaseURL()+"dashboard");
-    }
+    // try{
+    //     const query = await sql``
+    //     if(query.length==0)
+    //         throw new Error("Unauthorized access");
+    // }catch(e)
+    // {
+    //     throw redirect(301,getBaseURL()+"dashboard");
+    // }
 }
 
 export const getSiteName= server$(async function(){

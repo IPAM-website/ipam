@@ -1,20 +1,19 @@
 import { $, component$, getLocale, Signal, Slot, UseSignal, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { Form, RequestHandler, routeAction$, routeLoader$, server$, useContent, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
 import sql from "~/../db"
-import AddressBox from "~/components/forms/formsComponents/AddressBox";
+import AddressBox, { getNetwork } from "~/components/forms/formsComponents/AddressBox";
 import DatePicker from "~/components/forms/formsComponents/DatePicker";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
 import Title from "~/components/layout/Title";
-import Network from "~/components/ListUtilities/NetworkList/networkModel";
+import { ReteModel, VLANModel, IndirizziModel } from "~/dbModels";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
 import Table from "~/components/table/Table";
-import Subsite from "~/components/ListUtilities/SubSiteList/subsiteModel";
 import Dati from "~/components/table/Dati_Headers";
 import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
-import FMButton from "~/components/forms/formsComponents/FMButton";
-import SelectTextboxForm from "~/components/forms/formsComponents/SelectTextboxForm";
+import { getBaseURL } from "~/fnUtils";
+// import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
     if (!['view', 'insert', 'update'].includes(params.mode)) {
@@ -23,19 +22,6 @@ export const onRequest: RequestHandler = ({ params, redirect, url }) => {
         splitURL.pop();
         throw redirect(301, splitURL.join('/') + "/view")
     }
-}
-
-export interface AddressModel {
-    ip: string,
-    idrete: number,
-    idv: number,
-    n_prefisso: number
-}
-
-export interface VLAN {
-    idv: number;
-    nomevlan: string;
-    descrizione: string;
 }
 
 export interface RowAddress {
@@ -54,10 +40,7 @@ export interface RowAddress {
     tipo_dispositivo?: string
 }
 
-export type Notification = {
-    message: string;
-    type: 'success' | 'error';
-};
+
 
 export interface FilterObject {
     active: boolean;
@@ -71,12 +54,11 @@ export interface FilterObject {
 export const useAddresses = server$(async function (this, filter = { empty: 1 }) {
     filter.query = filter.query ? filter.query + '%' : filter.query = "%";
     filter.query = (filter.query as string).trim();
-    let addresses: AddressModel[] = [];
+    let addresses: IndirizziModel[] = [];
 
     if (filter.empty == 1) {
-        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
-            INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito AND sotto_siti.idsito=${this.params.site}`;
-        addresses = queryResult as unknown as AddressModel[];
+        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site}`;
+        addresses = queryResult as unknown as IndirizziModel[];
         return addresses;
     }
 
@@ -85,40 +67,24 @@ export const useAddresses = server$(async function (this, filter = { empty: 1 })
 
         if (isNaN(parseInt(filter.query))) {
             const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
-            addresses = queryResult as unknown as AddressModel[];
+            addresses = queryResult as unknown as IndirizziModel[];
         }
         else {
             const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
-            addresses = queryResult as unknown as AddressModel[];
+            addresses = queryResult as unknown as IndirizziModel[];
         }
 
-    }
-    else if (this.query.has("subsite") || (filter.subsite != undefined && filter.subsite != '')) {
-
-
-        if (isNaN(parseInt(filter.query))) {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete WHERE indirizzi.nome_dispositivo LIKE ${filter.query}
-                                      AND sottositi_rete.idsottosito=${this.query.get("subsite") ?? filter.subsite}`;
-            addresses = queryResult as unknown as AddressModel[];
-        }
-        else {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete WHERE indirizzi.ip LIKE ${filter.query}
-            AND sottositi_rete.idsottosito=${this.query.get("subsite") ?? filter.subsite}`;
-            addresses = queryResult as unknown as AddressModel[];
-        }
     }
     else {
 
 
         if (isNaN(parseInt(filter.query))) {
-            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
-                                      INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito AND sotto_siti.idsito=${this.params.site} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
-            addresses = queryResult as unknown as AddressModel[];
+            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.query}`;
+            addresses = queryResult as unknown as IndirizziModel[];
         }
         else {
-            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
-            INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito AND sotto_siti.idsito=${this.params.site} WHERE indirizzi.ip LIKE ${filter.query}`;
-            addresses = queryResult as unknown as AddressModel[];
+            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.ip LIKE ${filter.query}`;
+            addresses = queryResult as unknown as IndirizziModel[];
         }
     }
 
@@ -171,10 +137,10 @@ export const useAction = routeAction$(async (data) => {
 
 
 export const getAllVLAN = server$(async function () {
-    let vlans: VLAN[] = [];
+    let vlans: VLANModel[] = [];
     try {
         const query = await sql`SELECT * FROM vlan`
-        vlans = query as unknown as VLAN[];
+        vlans = query as unknown as VLANModel[];
     }
     catch (e) {
         console.log(e);
@@ -184,43 +150,17 @@ export const getAllVLAN = server$(async function () {
 })
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
-    let networks: Network[] = [];
+    let networks: ReteModel[] = [];
     try {
-        const query = await sql`SELECT rete.* FROM rete INNER JOIN sottositi_rete ON rete.idrete=sottositi_rete.idrete 
-                                INNER JOIN sotto_siti ON sottositi_rete.idsottosito=sotto_siti.idsottosito WHERE sotto_siti.idsito=${idsito}`
-        networks = query as unknown as Network[];
+        const query = await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
+                                WHERE siti_rete.idsito=${idsito}`
+        networks = query as unknown as ReteModel[];
     }
     catch (e) {
         console.log(e);
     }
 
     return networks;
-})
-
-export const useNetwork = server$(async function (idSottoSito: number) {
-    let networkList: Network[] = [];
-    try {
-        const query = await sql`SELECT * FROM sottositi_rete INNER JOIN rete ON sottositi_rete.idrete = rete.idrete WHERE idsottosito = ${idSottoSito}`
-        networkList = query as unknown as Network[];
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    return networkList;
-})
-
-export const useSubSite = server$(async function (idSito: number) {
-    let siteList: Subsite[] = [];
-    try {
-        const query = await sql`SELECT * FROM sotto_siti WHERE idsito = ${idSito}`
-        siteList = query as unknown as Subsite[];
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    return siteList;
 })
 
 export const deleteIP = server$(async function (this, data) {
@@ -234,36 +174,35 @@ export const deleteIP = server$(async function (this, data) {
     }
 })
 
+type Notification = {
+    message: string;
+    type: 'success' | 'error';
+  };
+
 export default component$(() => {
+    // const notify = useNotify();
     const lang = getLocale("en");
-    const addressList = useSignal<AddressModel[]>([]);
-    const networks = useSignal<Network[]>([]);
-    const subsites = useSignal<Subsite[]>([]);
+    const addressList = useSignal<IndirizziModel[]>([]);
+    const networks = useSignal<ReteModel[]>([]);
     const loc = useLocation();
     const nav = useNavigate();
     const address = useStore<RowAddress>({});
     const sitename = useSiteName();
-    const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', subsite: '', query: '' } });
+    const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', query: '' } });
     const mode = loc.params.mode ?? "view";
-    const notifications = useSignal<Notification[]>([]);
     const txtQuickSearch = useSignal<HTMLInputElement>();
     const reloadFN = useSignal<(() => void) | null>(null);
+    const notifications = useSignal<Notification[]>([]);
 
-    useTask$(async () => {
+    useTask$(async ({track}) => {
         addressList.value = await useAddresses();
-        subsites.value = await useSubSite(parseInt(loc.params.site));
+        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
 
         for (const [key, value] of loc.url.searchParams.entries()) {
             filter.params[key] = value;
             filter.active = true;
         }
 
-    })
-
-    useTask$(async ({ track }) => {
-        let subsite = track(() => filter.params.subsite);
-        if (subsite)
-            networks.value = await useNetwork(parseInt(subsite))
     })
 
     const addNotification = $((message: string, type: 'success' | 'error') => {
@@ -277,11 +216,12 @@ export default component$(() => {
     const handleError = $((error: any) => {
         console.log(error);
         addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
-    })
-
-    const handleOk = $(async () => {
+      })
+    
+      const handleOkay = $(() => {
+        console.log("ok");
         addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
-    })
+      })
 
     const handleModify = $((row: any) => {
         Object.assign(address, row as RowAddress);
@@ -290,12 +230,12 @@ export default component$(() => {
 
     const handleDelete = $(async (row: any) => {
         if (await deleteIP({ address: row.ip }))
-            addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
+            addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", 'success');
         else
-            addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione", 'error');
+         addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
 
     });
-
+    
     const reloadData = $(async () => {
         if (filter.active)
             return await useAddresses(filter.params);
@@ -315,15 +255,9 @@ export default component$(() => {
                             <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
                                 <div class="flex">
                                     <div class="w-full">
-                                        <span class="ms-2">Subsite</span>
-                                        <SelectForm OnClick$={(e) => { filter.params.subsite = (e.target as HTMLOptionElement).value; }} value={filter.params.subsite} id="filter-subsite" name="" listName="Sottositi">
-                                            {subsites.value.map((x: Subsite) => <option value={x.idsottosito}>{x.nomesottosito}</option>)}
-                                        </SelectForm>
-                                    </div>
-                                    <div class="w-full">
                                         <span class="ms-2">Network</span>
-                                        <SelectForm disabled={filter.params.subsite == ''} OnClick$={(e) => { filter.params.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.params.network} listName="Reti">
-                                            {networks.value.map((x: Network) => <option value={x.idrete}>{x.nomerete}</option>)}
+                                        <SelectForm OnClick$={(e) => { filter.params.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.params.network} listName="Reti">
+                                            {networks.value.map((x: ReteModel) => <option value={x.idrete}>{x.nomerete}</option>)}
                                         </SelectForm>
                                     </div>
                                 </div>
@@ -359,6 +293,37 @@ export default component$(() => {
                                 </div>
                             </PopupModal>
 
+                            <div class="row">
+                                <nav class="bg-gray-50 rounded-xl mt-2">
+                                    <ul class="flex space-x-4">
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/info"} class="text-gray-700 block hover:text-gray-500 p-4">Info</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/addresses/view"} class="text-gray-700 hover:text-gray-500 block p-4">Addresses</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/aggregates/view"} class="text-gray-700 hover:text-gray-500 block p-4">Aggregate</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/prefixed/view"} class="text-gray-700 hover:text-gray-500 block p-4">Prefixes</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/intervals/view"} class="text-gray-700 hover:text-gray-500 block p-4">Intervals</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vrf/view"} class="text-gray-700 hover:text-gray-500 block p-4">VRF</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vlan/view"} class="text-gray-700 hover:text-gray-500 block p-4">VLANs</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/settings"} class="text-gray-700 hover:text-gray-500 block p-4" >Settings</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+
                             <Table>
                                 <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
                                     <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
@@ -391,14 +356,14 @@ export default component$(() => {
                                     </button></div>}
                                 </Dati>
                                 <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
-                                <ImportCSV OnError={handleError} OnOk={handleOk} nomeImport="indirizzi" />
+                                <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="indirizzi" />
                             </Table>
 
 
 
                         </div>)
                     :
-                    <CRUDForm data={address} reload={reloadFN.value} />
+                    <CRUDForm data={address} reloadFN={reloadFN} />
             }
         </>);
 })
@@ -420,44 +385,7 @@ export const FormBox = component$(({ title }: { title?: string }) => {
     </>)
 })
 
-export const useNetAction = routeAction$(async (data, e) => {
-
-    try {
-        await sql`INSERT INTO rete(nomerete,descrizione) VALUES (${data.nomeRete},${data.descrizioneRete})`;
-        const queryRete = await sql`SELECT idrete FROM rete ORDER BY idrete DESC LIMIT 1`;
-        const idrete = queryRete[0].idrete;
-        let lastID = data.idSottosito;
-        if (lastID == "") {
-
-            const queryLastID = await sql`SELECT * FROM sotto_siti ORDER BY idsottosito DESC LIMIT 1`;
-            lastID = queryLastID[0].idsottosito + 1;
-            await sql`INSERT INTO sotto_siti(idsottosito,nomesottosito,idsito) VALUES (${lastID},${data.nomeSottosito},${e.params.site})`
-        }
-
-        await sql`INSERT INTO sottositi_rete(idsottosito,idrete) VALUES (${lastID},${idrete})`
-        return {
-            success: true
-        }
-    }
-    catch (e) {
-        console.log(e);
-        return {
-            success: false
-        }
-    }
-}, zod$({
-    nomeRete: z.string().min(3),
-    descrizioneRete: z.string().nullable(),
-    nomeSottosito: z.string().min(3),
-    idSottosito: z.string().nullable()
-}))
-
-export const getSottositi = server$(async function () {
-    return (await sql`SELECT * FROM sotto_siti WHERE idsito=${this.params.site}`) as unknown as Subsite[];
-})
-
-
-export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reload?: (() => void) | null }) => {
+export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, reloadFN?: Signal<(() => void) | null> }) => {
     const lang = getLocale("en")
     const loc = useLocation();
     const nav = useNavigate();
@@ -481,27 +409,14 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
     const attempted = useSignal<boolean>(false);
     const changeIP = useSignal<boolean>(false);
 
-    const networks = useSignal<Network[]>([]);
-    const vlans = useSignal<VLAN[]>([]);
+    const networks = useSignal<ReteModel[]>([]);
+    const vlans = useSignal<VLANModel[]>([]);
 
-    const addNetworkTempoMenu = useSignal<boolean>(false);
-    const networkInfoTemp = useSignal<Network & { idsottosito: number; nomesottosito: string }>({
-        descrizione: "",
-        idrete: -1,
-        idsottosito: -1,
-        nomerete: "",
-        nomesottosito: ""
-    });
-    const addNetworkTempAction = useNetAction();
-    const sottositoTextbox = useSignal<HTMLInputElement>();
-    const sottositoNomeTextbox = useSignal<HTMLInputElement>();
-    const sottositi = useSignal<Subsite[]>();
 
     useTask$(async () => {
 
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
         vlans.value = await getAllVLAN();
-        sottositi.value = await getSottositi();
 
         if (loc.params.mode == "update") {
             Object.assign(formData, data);
@@ -518,7 +433,7 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
 
             <div class="m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative">
                 <FormBox title="Informazioni">
-                    <SelectForm id="cmbType" name="Tipo Dispositivo" value={formData.tipo_dispositivo} OnClick$={(e) => { formData.tipo_dispositivo = (e.target as HTMLOptionElement).value; }} listName="">
+                    <SelectForm id="cmbType" title="Tipologia: " name="Tipo Dispositivo" value={formData.tipo_dispositivo} OnClick$={(e) => { formData.tipo_dispositivo = (e.target as HTMLOptionElement).value; }} listName="">
                         <option value="Server" key="Server">Server</option>
                         <option value="Controller" key="Controller">Controller</option>
                         <option value="Router" key="Router">Router</option>
@@ -531,7 +446,7 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
                 </FormBox>
                 <FormBox title="Dettagli">
 
-                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
+                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
 
 
                         if (e.complete) {
@@ -573,18 +488,16 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
                         //#endregion
                     }
 
-                    <TextboxForm id="txtName" value={formData.prefix} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
+                    <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
                     {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} noElementsText="Aggiungi" noElementsHandler={$(() => {
-                        addNetworkTempoMenu.value = true;
-                    })} OnClick$={(e) => { formData.idrete = parseInt((e.target as any).value); }} listName="">
-                        {networks.value.map((x: Network) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
+                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString() }} listName="">
+                        {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
 
-                    <SelectForm id="cmbVLAN" name="VLAN" value={formData.idv?.toString() || ""} OnClick$={(e) => { formData.idv = parseInt((e.target as any).value); }} listName="">
-                        {vlans.value.map((x: VLAN) => <option key={x.idv} value={x.idv}>{x.nomevlan}</option>)}
+                    <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.idv?.toString() || ""} OnClick$={(e) => { formData.idv = parseInt((e.target as any).value); }} listName="">
+                        {vlans.value.map((x: VLANModel) => <option key={x.idv} value={x.idv}>{x.nomevlan}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idv && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
 
@@ -619,7 +532,7 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
                 await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, idv: formData.idv, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
                 if (action.value && action.value.success) {
                     await new Promise((resolve) => { setTimeout(resolve, 2000) });
-                    nav(loc.url.href.replace("insert", "view").replace("update", "view"));
+                    window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
                 }
 
             }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
@@ -639,35 +552,6 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
                     {action.value.type_message == 4 && <span>{$localize`Errore durante la modifica`}</span>}
                 </div>
             }
-
-            <PopupModal visible={addNetworkTempoMenu.value} title="Menù temporaneo aggiunti reti" onClosing$={() => addNetworkTempoMenu.value = false}>
-                <Form action={addNetworkTempAction} onSubmit$={async () => {
-                    if (addNetworkTempAction.value?.success) {
-                        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
-                        addNetworkTempoMenu.value = false;
-                    }
-                }}>
-                    <div class="flex flex-col">
-                        <TextboxForm id="nomeRete" nameT="nomeRete" title="Nome Rete" placeholder="Nome" OnInput$={e => { if (networkInfoTemp.value) networkInfoTemp.value.nomerete = (e.target as HTMLInputElement).value }} />
-                        <TextboxForm id="descrizioneRete" nameT="descrizioneRete" title="Descrizione Rete" placeholder="Descrizione" OnInput$={e => { if (networkInfoTemp.value) networkInfoTemp.value.descrizione = (e.target as HTMLInputElement).value }} />
-                        <input class="hidden" type="text" name="idSottosito" ref={sottositoTextbox}></input>
-                        <input class="hidden" type="text" name="nomeSottosito" ref={sottositoNomeTextbox}></input>
-                        <SelectTextboxForm values={sottositi.value?.map(x => { return { value: x.idsottosito, text: x.nomesottosito } })} id="cmbSottosito" name="nomeSottosito" OnSelectedValue$={e => {
-                            console.log(networkInfoTemp.value == undefined);
-                            if (!networkInfoTemp.value)
-                                return;
-                            networkInfoTemp.value.idsottosito = e.value;
-                            networkInfoTemp.value.nomesottosito = e.text;
-                            if (sottositoTextbox.value)
-                                sottositoTextbox.value.value = e.value;
-                            if (sottositoNomeTextbox.value)
-                                sottositoNomeTextbox.value.value = e.text;
-                            console.log(e.text);
-                        }} />
-                        <FMButton>Aggiungi</FMButton>
-                    </div>
-                </Form>
-            </PopupModal>
         </>
     )
 })

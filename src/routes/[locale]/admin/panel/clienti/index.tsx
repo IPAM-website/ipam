@@ -107,7 +107,7 @@ export default component$(() => {
   const addAction = addCliente();
   const editAction = modCliente();
   const formAction = useSignal(addAction);
-  const notifications = useSignal<Notification[]>([]);
+  const notifications = useSignal<Notification[]>([]); 
 
   useTask$(async ({ track }) => {
     const query = await useTecnici();

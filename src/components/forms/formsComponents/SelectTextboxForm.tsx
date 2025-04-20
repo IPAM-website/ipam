@@ -3,6 +3,7 @@ import { $, component$, getLocale, JSXOutput, QRL, Signal, Slot, useSignal, useT
 interface SelectFormProps {
     id: string;
     name: string;
+    title?: string;
     value?: string;
     listName?: string;
     disabled?: boolean;
@@ -11,7 +12,7 @@ interface SelectFormProps {
     OnClick$?: (event: PointerEvent) => void;
 }
 
-export default component$<SelectFormProps>(({ id, name, value, OnClick$, listName, disabled = false, values, OnSelectedValue$ }) => {
+export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, listName, disabled = false, values, OnSelectedValue$ }) => {
 
     const lang = getLocale("en");
     const clicked = useSignal(false);
@@ -57,7 +58,7 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
     })
 
     return (<div class="flex flex-row items-center py-2 px-2  w-full bg-white" >
-        <label class="font-semibold" for={id}>{name}</label>
+        <label class="font-semibold w-40" for={id}>{title}</label>
         <div class="relative bg-white w-full" style={{ backgroundColor: disabled ? '#f5f5f5' : '', color: disabled ? '#ddd' : '' }}>
             <input type="text" ref={textbox} id={id} name={id} tabIndex={0} onFocusOut$={() => {
                 if (optRef.value) optRef.value.style.background = ""; setTimeout(() => {
@@ -141,7 +142,7 @@ export default component$<SelectFormProps>(({ id, name, value, OnClick$, listNam
                 {listName != '' && <h3 class="bg-white font-semibold p-1 ps-3">{listName}</h3>}
                 {
                     hints.value.length != 0 ?
-                        <div ref={options} onClick$={handleClick} class="cursor-pointer *:p-1 *:bg-white *:px-3 *:pe-5  *:hover:bg-gray-50 *:transition-all">
+                        <div ref={options} onClick$={handleClick} class="cursor-pointer *:p-1 *:bg-white *:px-3 *:pe-5 max-h-[120px] overflow-auto *:hover:bg-gray-50 *:transition-all">
                             {hints.value.map(x => <option key={x.value} value={x.value}>{x.text}</option>)}
                         </div>
                         :
