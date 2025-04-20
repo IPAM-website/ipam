@@ -33,6 +33,8 @@ It boosts performance by skipping hydration and only loads functions when needed
 
 It’s similar to React in structure, using TypeScript-based components you can fully customize 🧩.
 
+For the design we used 🎨 Figma.
+
 ### 🔙 Back-end
 
 Qwik.js also supports server-side functions directly inside components, making it an all-in-one full-stack framework 🧰.
