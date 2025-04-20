@@ -30,7 +30,11 @@ If this isn't enough, it also provides the creation of endpoints and the impleme
 ### Database
 The project uses a RDBMS, which is Postgres. We chose to use a SQL database because of the strictness system of the networks.
 The DB is run on a docker container. This is great for mobility, performance and low use of energy.
-Here the E/R we are using now (it may change in the future): https://app.gleek.io/diagrams/CeCUNLWItc0CkFVN6vzQXQ
+Here the E/R we are using now (it may change in the future): 
+<a href="https://app.gleek.io/diagrams/yI5le9oWea5QbPatlvAIKg" target="_blank">
+    <img src="https://sketchertest.blob.core.windows.net/previewimages/yI5le9oWea5QbPatlvAIKg.png" alt="ER Progetto" title="ER Progetto" />
+</a>
+<p>Created with <a href="https://gleek.io">Gleek.io diagram maker </a></p>
 
 ### Team Management
 We also use Jira to manage sprints and increments in order to easily divide work through time.
