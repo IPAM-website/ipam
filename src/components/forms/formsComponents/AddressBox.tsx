@@ -13,6 +13,7 @@ interface AddressBoxProps {
     value?: string;
     disabled?: boolean;
     currentIPNetwork?: number;
+    currentID?: number;
     OnInput$?: (event: { ip: string, class: string, prefix: string, network: string, last: string, complete: boolean, errors: string[], exists: boolean }) => void;
 }
 
@@ -41,10 +42,10 @@ export const getNetwork = server$(async (idrete: number) => {
 export const getNetworkSpace = server$(async (idrete: number) => {
     try {
         const query = (await sql`SELECT * FROM rete WHERE rete.idretesup = ${idrete} ORDER BY iprete`) as ReteModel[];
-        let result: { start: string; finish: string }[] = [];
+        let result: { start: string; finish: string, id: number }[] = [];
 
         for (const r of query) {
-            let firstIP = r.iprete.split('.').map(x=>parseInt(x));
+            let firstIP = r.iprete.split('.').map(x => parseInt(x));
             let lastIP = new Array(4);
 
             let reversedPrefix = 32 - r.prefissorete;
@@ -63,7 +64,8 @@ export const getNetworkSpace = server$(async (idrete: number) => {
 
             result.push({
                 start: r.iprete,
-                finish: lastIP.join('.')
+                finish: lastIP.join('.'),
+                id: r.idrete
             })
         }
 
@@ -76,7 +78,7 @@ export const getNetworkSpace = server$(async (idrete: number) => {
     }
 })
 
-export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, currentIPNetwork = -1 }) => {
+export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, currentIPNetwork = -1 }) => {
 
     const input1 = useSignal<HTMLInputElement>();
     const input2 = useSignal<HTMLInputElement>();
@@ -178,28 +180,32 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
         parsedIP.map((x) => { if (x < 0 && x > 255) { errors.push("Invalid IP Address: values exceed range 0-255"); } })
 
         let exists = false;
-        if (checkAvailability) {
-            let sameIP = await getSameIPs(ip, currentIPNetwork);
-            exists = sameIP.length > 0
-            // if (sameIP.length > 0)
-            // errors.push("This IP already exists. If you want to allow this, turn off the availability check.");
-        }
 
-        if (addressType == "network" && currentIPNetwork && currentIPNetwork != -1) {
+
+        if (currentIPNetwork && currentIPNetwork != -1) {
             const parentNetwork: ReteModel = await getNetwork(currentIPNetwork) as ReteModel;
-            if (parentNetwork.prefissorete > parseInt(working_prefix)) {
-                errors.push("Network exceed dimension limits");
-            }
-            const usedIPs: { start: string, finish: string }[] = await getNetworkSpace(currentIPNetwork) as { start: string, finish: string }[] ;
-            for(let interval of usedIPs)
-            {
-                console.log(interval.finish,'>=',networkIP.join('.'), ' -> ',interval.finish>=networkIP.join('.') )
-                console.log(interval.start,'<=',lastIP.join('.'),' -> ',interval.start<=lastIP.join('.'))
-                if(interval.finish>=networkIP.join('.') || interval.start>=lastIP.join('.'))
-                {
-                    errors.push("Space already occupied");
-                    break;
+
+            if (addressType == "network") {
+                if (parentNetwork.prefissorete > parseInt(working_prefix)) {
+                    errors.push("Network exceed dimension limits");
                 }
+                const usedIPs: { start: string, finish: string, id: number }[] = await getNetworkSpace(currentIPNetwork) as { start: string, finish: string, id: number }[];
+                for (let interval of usedIPs) {
+                    console.log(interval.finish, '>=', networkIP.join('.'), ' -> ', interval.finish >= networkIP.join('.'))
+                    console.log(interval.start, '<=', lastIP.join('.'), ' -> ', interval.start <= lastIP.join('.'))
+                    if ((interval.finish >= networkIP.join('.') || interval.start >= lastIP.join('.')) && interval.id != currentID) {
+                        errors.push("Space already occupied");
+                        break;
+                    }
+                }
+            } else {
+                if (checkAvailability) {
+                    let sameIP = await getSameIPs(ip, currentIPNetwork);
+                    exists = sameIP.length > 0
+                }
+
+                if (networkIP.join('.') != parentNetwork.iprete && prefix && complete)
+                    errors.push("Outside of network boundaries");
             }
         }
 

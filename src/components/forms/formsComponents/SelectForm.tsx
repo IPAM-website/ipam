@@ -59,6 +59,7 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
                     clearTimeout(hoverTimeout.value);
                 tooltipVisible.value = false
             })
+            
         })
         clicked.value = false;
     })
@@ -151,6 +152,7 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
                 </svg>
             </div>
             <div onClick$={(event) => {
+                tooltipVisible.value = false;
                 if (disabled)
                     return;
                 optRef.value = event.target as HTMLOptionElement;

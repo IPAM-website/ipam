@@ -29,7 +29,7 @@ export interface ReteModel{
     vrf: number;
     iprete: string;
     prefissorete: number;
-    idv?: number;
+    vid?: number;
     idretesup?: number;
 }
 

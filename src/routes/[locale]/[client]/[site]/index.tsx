@@ -1,5 +1,5 @@
 import { $, component$, getLocale, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
-import { Form, routeAction$, server$, useLocation, z, zod$ } from "@builder.io/qwik-city";
+import { Form, routeAction$, server$, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import { getBaseURL } from "~/fnUtils";
 import sql from "../../../../../db";
@@ -100,12 +100,10 @@ export const deleteNetwork = server$(async function (data) {
 
 export const insertNetwork = routeAction$(async function (data, e) {
     try {
-
-
         if (data.idretesup)
-            await sql`INSERT INTO rete (nomerete,descrizione,vrf,iprete,prefissorete,idretesup) VALUES (${data.nomerete},${data.descrizione},${data.vrf},${data.iprete},${data.prefissorete},${data.idretesup})`;
+            await sql`INSERT INTO rete (nomerete,descrizione,vrf,iprete,prefissorete,idretesup,vid) VALUES (${data.nomerete},${data.descrizione},${data.vrf},${data.iprete},${data.prefissorete},${data.idretesup},${data.vid})`;
         else
-            await sql`INSERT INTO rete (nomerete,descrizione,vrf,iprete,prefissorete) VALUES (${data.nomerete},${data.descrizione},${data.vrf},${data.iprete},${data.prefissorete})`;
+            await sql`INSERT INTO rete (nomerete,descrizione,vrf,iprete,prefissorete,vid) VALUES (${data.nomerete},${data.descrizione},${data.vrf},${data.iprete},${data.prefissorete},${data.vid})`;
         const id = (await sql`SELECT idrete FROM rete ORDER BY idrete DESC LIMIT 1`)[0].idrete;
         await sql`INSERT INTO siti_rete VALUES (${e.params.site},${id})`;
 
@@ -133,8 +131,38 @@ export const insertNetwork = routeAction$(async function (data, e) {
     vrf: z.number(),
     iprete: z.string(),
     prefissorete: z.any(),
-    idv: z.number(),
+    vid: z.number(),
     idretesup: z.number().optional()
+}))
+
+export const updateNetwork = routeAction$(async function (data, e) {
+    try {
+
+        if (data.idretesup)
+            await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, vrf = ${data.vrf}, prefissorete = ${data.prefissorete}, idretesup = ${data.idretesup} , iprete = ${data.iprete}, vid = ${data.vid} WHERE idrete = ${data.idrete}`;
+        else
+            await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, vrf = ${data.vrf}, prefissorete = ${data.prefissorete} , iprete = ${data.iprete}, vid = ${data.vid} WHERE idrete = ${data.idrete}`;
+
+        return {
+            success: true,
+            message: ''
+        }
+    } catch (e) {
+        console.log(e);
+        return {
+            success: false,
+            message: ''
+        }
+    }
+}, zod$({
+    descrizione: z.string(),
+    nomerete: z.string(),
+    vrf: z.number(),
+    iprete: z.string(),
+    idrete: z.number(),
+    prefissorete: z.any(),
+    vid: z.number(),
+    idretesup: z.number().optional().nullable()
 }))
 
 export const getCity = server$(async function (data) {
@@ -149,6 +177,7 @@ export const reloadData = server$(async function () {
 export default component$(() => {
 
     const loc = useLocation();
+    const nav = useNavigate();
     const lang = getLocale("en");
     const site = useSignal<SiteModel>();
     const client = useSignal<ClienteModel>();
@@ -156,6 +185,7 @@ export default component$(() => {
     const city = useSignal<CittaModel>();
 
     const insertAction = insertNetwork();
+    const updateAction = updateNetwork();
     const formData = useStore<ReteModel>({
         descrizione: "",
         idrete: 0,
@@ -163,12 +193,12 @@ export default component$(() => {
         vrf: 1,
         iprete: "",
         prefissorete: 0,
-        idv: 1
+        vid: 1
     })
     const broadcastIP = useSignal<string>("");
     const ipErrors = useSignal<string[]>([]);
     const attempted = useSignal<boolean>(false);
-    const addNet = useSignal<boolean>(false);
+    const netMode = useSignal<number>(0);
     const vrfs = useSignal<VRFModel[]>([]);
     const vlans = useSignal<VLANModel[]>([]);
 
@@ -189,8 +219,18 @@ export default component$(() => {
         deleteNetwork(e.idrete)
     })
 
+    const handleModify = $((e: any) => {
+        Object.assign(formData, e);
+        hasParent.value = formData.idretesup != undefined;
+        netMode.value = 2;
+    })
+
     const getReloader = $((e: () => void) => {
         reloadFN.value = e;
+    })
+
+    const handleRowClick = $((row:any) => {
+        nav(loc.url + "addresses/view?network="+row.idrete);
     })
 
     return (<>
@@ -198,9 +238,21 @@ export default component$(() => {
             <Title haveReturn={true} url={loc.url.origin + "/" + lang + "/" + client.value?.idcliente} >{client.value?.nomecliente + " - " + site.value?.nomesito}</Title>
             <div>
                 <Table title="Networks">
-                    <Dati_Headers DBTabella="rete" title={lang == 'en' ? "Networks" : "Reti"} dati={networks.value} nomeTabella={lang == 'en' ? "networks" : "reti"} onReloadRef={getReloader} funcReloadData={reloadData} OnDelete={handleDelete} />
+                    <Dati_Headers DBTabella="rete" title={lang == 'en' ? "Networks" : "Reti"} dati={networks.value} nomeTabella={lang == 'en' ? "networks" : "reti"} onReloadRef={getReloader} funcReloadData={reloadData} OnModify={handleModify} OnDelete={handleDelete} onRowClick={handleRowClick} />
                     <ButtonAdd nomePulsante={$localize`Aggiungi rete`} onClick$={() => {
-                        addNet.value = true;
+                        Object.assign(formData, {
+                            descrizione: "",
+                            idrete: 0,
+                            nomerete: "",
+                            vrf: 1,
+                            iprete: "",
+                            prefissorete: 0,
+                            idv: 1,
+                        })
+                        delete formData.idretesup;
+                        hasParent.value = false;
+                        broadcastIP.value = "";
+                        netMode.value = 1;
                     }} ></ButtonAdd>
                 </Table>
             </div>
@@ -252,24 +304,37 @@ export default component$(() => {
             </div>
         </div>
 
-        <PopupModal visible={addNet.value} title={$localize`Aggiunta network`} onClosing$={() => { addNet.value = false }}>
+        <PopupModal visible={netMode.value != 0} title={netMode.value == 1 ? $localize`Aggiunta network` : $localize`Aggiorna network`} onClosing$={() => { netMode.value = 0 }}>
             <Form onSubmit$={async () => {
-                //@ts-ignore
-                await insertAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, idv: formData.idv ?? 1, prefissorete: formData.prefissorete, parent: formData.idretesup })
-                if (insertAction.value?.success) {
-                    addNet.value = false;
-                    reloadFN.value?.();
+                if (netMode.value == 1) {
+                    //@ts-ignore
+                    await insertAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.idv ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup })
+                    if (insertAction.value?.success) {
+                        netMode.value = 0;
+                        reloadFN.value?.();
+                    }
+                    else
+                        console.log(insertAction.value?.message);
                 }
-                else
-                    console.log(insertAction.value?.message);
+                else if (netMode.value == 2) {
+                    //@ts-ignore
+                    await updateAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.idv ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup, idrete: formData.idrete })
+                    if (updateAction.value?.success) {
+                        netMode.value = 0;
+                        reloadFN.value?.();
+                    }
+                    else
+                        console.log(updateAction.value?.message);
+                }
+
             }}>
                 <div class="**:flex-1">
-                    <TextboxForm id="txtName" title={$localize`Nome`} placeholder={$localize`Nome della rete`} OnInput$={(e) => { formData.nomerete = (e.target as any).value; }} />
+                    <TextboxForm id="txtName" title={$localize`Nome`} value={formData.nomerete} placeholder={$localize`Nome della rete`} OnInput$={(e) => { formData.nomerete = (e.target as any).value; }} />
                 </div>
                 <div>
                     <h3 class="font-semibold">{$localize`Descrizione`}</h3>
                     <textarea
-                        name="descrizione"
+                        value={formData.descrizione}
                         id="descrizione"
                         class="w-full p-2 border border-gray-300 rounded-md outline-0 focus:border-black"
                         placeholder={$localize`Inserisci una descrizione`}
@@ -277,7 +342,7 @@ export default component$(() => {
                     ></textarea>
                 </div>
                 <div class="**:flex-1 w-full justify-between">
-                    <AddressBox addressType="network" title={$localize`Indirizzo di rete`} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} OnInput$={e => {
+                    <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} OnInput$={e => {
                         console.log(e);
                         ipErrors.value = e.errors
                         if (e.complete) {
@@ -297,26 +362,45 @@ export default component$(() => {
                     <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 ? "" : formData.prefissorete.toString()} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; }} />
                     {attempted.value && (formData.prefissorete < 1 || formData.prefissorete > 31) && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
                 </div>
-                <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.idv?.toString() || ""} OnClick$={(e) => { formData.idv = parseInt((e.target as any).value); }} listName="">
+                <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
                     {vlans.value.map((x: VLANModel) => <option key={x.idv} about={x.descrizionevlan} value={x.idv}>{x.nomevlan}</option>)}
                 </SelectForm>
-                {attempted.value && !formData.idv && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
+                {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
                 <SelectForm id="txtVRF" name="vrf" value={formData.vrf?.toString() || ""} title="VRF" OnClick$={(e) => { formData.vrf = parseInt((e.target as HTMLOptionElement).value) }}>
                     {vrfs.value.length > 0 && vrfs.value.map(x => <option value={x.idvrf} about={x.descrizionevrf}>{x.nomevrf}</option>)}
                 </SelectForm>
-                {insertAction.submitted && <p>{insertAction.value?.fieldErrors?.idv}</p>}
+                {insertAction.submitted && <p>{insertAction.value?.fieldErrors?.vid}</p>}
                 {insertAction.submitted && <p>{insertAction.value?.formErrors}</p>}
                 <div class="flex">
                     <div class="flex justify-center items-center">
-                        <CHKForms id="" name="" nameCHK={$localize`Sottorete`} setValue={hasParent}></CHKForms>
+                        <CHKForms id="" name="" value={formData.idretesup != undefined} nameCHK={$localize`Sottorete`} setValue={hasParent}></CHKForms>
                     </div>
 
                 </div>
                 {hasParent.value &&
                     <div class="flex flex-col border border-gray-200 justify-center items-center *:block w-full">
-                        <SelectForm id="" value="" name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }}>
-                            {/* @ts-ignore */}
-                            {networks.value.map(x => <option value={x.idrete} about={x.descrizione}>{x.iprete}/{x.prefissorete.toString()}  - {x.nomerete}</option>)}
+                        <SelectForm id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }}>
+
+                            {networks.value.filter(x => {
+                                if (x.prefissorete >= formData.prefissorete)
+                                    return false;
+
+
+
+                                let xIP = x.iprete.split('.');
+                                let formIP = formData.iprete.split('.');
+
+                                return (
+                                    (x.prefissorete >= 24 && xIP[2] == formIP[2] && xIP[3] <= formIP[3])
+                                    ||
+                                    (x.prefissorete >= 16 && x.prefissorete < 24 && xIP[1] == formIP[1] && xIP[2] <= formIP[2])
+                                    ||
+                                    (x.prefissorete >= 8 && x.prefissorete < 16 && xIP[0] == formIP[0] && xIP[1] <= formIP[1])
+                                    ||
+                                    (x.prefissorete < 8 && xIP[0] <= formIP[0])
+                                )
+                                {/* @ts-ignore */ }
+                            }).map(x => <option value={x.idrete} about={x.descrizione}>{x.iprete}/{x.prefissorete.toString()}  - {x.nomerete}</option>)}
                         </SelectForm>
                     </div>}
                 <div class="w-full flex justify-end">

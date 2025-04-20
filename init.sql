@@ -65,8 +65,8 @@ CREATE TABLE Rete(
     prefissorete INTEGER NOT NULL,
     idretesup INTEGER,
 
-    Vlan INTEGER,
-    Vrf INTEGER,
+    vid INTEGER,
+    vrf INTEGER,
     PRIMARY KEY (IDRete)
 );
 

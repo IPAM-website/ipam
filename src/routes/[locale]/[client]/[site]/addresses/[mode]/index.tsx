@@ -1,7 +1,7 @@
 import { $, component$, getLocale, Signal, Slot, UseSignal, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { Form, RequestHandler, routeAction$, routeLoader$, server$, useContent, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
 import sql from "~/../db"
-import AddressBox from "~/components/forms/formsComponents/AddressBox";
+import AddressBox, { getNetwork } from "~/components/forms/formsComponents/AddressBox";
 import DatePicker from "~/components/forms/formsComponents/DatePicker";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
@@ -12,6 +12,7 @@ import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
+import { getBaseURL } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -187,14 +188,15 @@ export default component$(() => {
     const nav = useNavigate();
     const address = useStore<RowAddress>({});
     const sitename = useSiteName();
-    const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', subsite: '', query: '' } });
+    const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', query: '' } });
     const mode = loc.params.mode ?? "view";
     const txtQuickSearch = useSignal<HTMLInputElement>();
     const reloadFN = useSignal<(() => void) | null>(null);
     const notifications = useSignal<Notification[]>([]);
 
-    useTask$(async () => {
+    useTask$(async ({track}) => {
         addressList.value = await useAddresses();
+        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
 
         for (const [key, value] of loc.url.searchParams.entries()) {
             filter.params[key] = value;
@@ -254,7 +256,7 @@ export default component$(() => {
                                 <div class="flex">
                                     <div class="w-full">
                                         <span class="ms-2">Network</span>
-                                        <SelectForm disabled={filter.params.subsite == ''} OnClick$={(e) => { filter.params.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.params.network} listName="Reti">
+                                        <SelectForm OnClick$={(e) => { filter.params.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.params.network} listName="Reti">
                                             {networks.value.map((x: ReteModel) => <option value={x.idrete}>{x.nomerete}</option>)}
                                         </SelectForm>
                                     </div>
@@ -290,6 +292,37 @@ export default component$(() => {
 
                                 </div>
                             </PopupModal>
+
+                            <div class="row">
+                                <nav class="bg-gray-50 rounded-xl mt-2">
+                                    <ul class="flex space-x-4">
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/info"} class="text-gray-700 block hover:text-gray-500 p-4">Info</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/addresses/view"} class="text-gray-700 hover:text-gray-500 block p-4">Addresses</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/aggregates/view"} class="text-gray-700 hover:text-gray-500 block p-4">Aggregate</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/prefixed/view"} class="text-gray-700 hover:text-gray-500 block p-4">Prefixes</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/intervals/view"} class="text-gray-700 hover:text-gray-500 block p-4">Intervals</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vrf/view"} class="text-gray-700 hover:text-gray-500 block p-4">VRF</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vlan/view"} class="text-gray-700 hover:text-gray-500 block p-4">VLANs</a>
+                                        </li>
+                                        <li>
+                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/settings"} class="text-gray-700 hover:text-gray-500 block p-4" >Settings</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
 
                             <Table>
                                 <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
@@ -330,7 +363,7 @@ export default component$(() => {
 
                         </div>)
                     :
-                    <CRUDForm data={address} reload={reloadFN.value} />
+                    <CRUDForm data={address} reloadFN={reloadFN} />
             }
         </>);
 })
@@ -352,7 +385,7 @@ export const FormBox = component$(({ title }: { title?: string }) => {
     </>)
 })
 
-export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reload?: (() => void) | null }) => {
+export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, reloadFN?: Signal<(() => void) | null> }) => {
     const lang = getLocale("en")
     const loc = useLocation();
     const nav = useNavigate();
@@ -378,8 +411,6 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
 
     const networks = useSignal<ReteModel[]>([]);
     const vlans = useSignal<VLANModel[]>([]);
-
-    const addNetworkTempoMenu = useSignal<boolean>(false);
 
 
     useTask$(async () => {
@@ -415,7 +446,7 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
                 </FormBox>
                 <FormBox title="Dettagli">
 
-                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
+                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
 
 
                         if (e.complete) {
@@ -457,10 +488,10 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
                         //#endregion
                     }
 
-                    <TextboxForm id="txtName" value={formData.prefix} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
+                    <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
                     {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={(e) => { formData.idrete = parseInt((e.target as any).value); }} listName="">
+                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString() }} listName="">
                         {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
@@ -501,7 +532,7 @@ export const CRUDForm = component$(({ data, reload }: { data?: RowAddress, reloa
                 await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, idv: formData.idv, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
                 if (action.value && action.value.success) {
                     await new Promise((resolve) => { setTimeout(resolve, 2000) });
-                    nav(loc.url.href.replace("insert", "view").replace("update", "view"));
+                    window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
                 }
 
             }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
