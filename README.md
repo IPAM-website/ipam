@@ -50,12 +50,12 @@ Perks:
 
 ### 🗄️ Database
 
-We use PostgreSQL (🦖), a robust SQL-based RDBMS — perfect for the strict structure of networks.
+We use PostgreSQL, a robust SQL-based RDBMS — perfect for the strict structure of networks.
 It runs in a Docker container 🐳 for easy deployment and efficiency.
 
 Check out our current E/R diagram (may change in the future):
 <a href="https://app.gleek.io/diagrams/yI5le9oWea5QbPatlvAIKg" target="_blank"> <img src="https://sketchertest.blob.core.windows.net/previewimages/yI5le9oWea5QbPatlvAIKg.png" alt="ER Progetto" title="ER Progetto" /> </a>
-Made with Gleek.io 🧩
+Made with Gleek.io
 🤝 Team Management
 
 We're a small but mighty team of two 💪👨‍💻 working on this project.
