@@ -34,6 +34,7 @@ It boosts performance by skipping hydration and only loads functions when needed
 It’s similar to React in structure, using TypeScript-based components you can fully customize 🧩.
 
 For the design we used Figma 🎨.
+Here the mockup link: https://www.figma.com/proto/140HyfKtxB1QSIJjT4UIlm
 
 ### 🔙 Back-end
 
