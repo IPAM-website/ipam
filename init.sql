@@ -5,14 +5,14 @@
      ruolo VARCHAR(50),
      emailTecnico VARCHAR(50) NOT NULL,
      telefonoTecnico VARCHAR(50),
-     pwdTecnico VARCHAR(50) NOT NULL,
+     pwdTecnico VARCHAR(100) NOT NULL,
      "admin" BOOLEAN NOT NULL,
      FA VARCHAR(255),
      PRIMARY KEY (IDTecnico)
  );
 
 INSERT INTO Tecnici(nomeTecnico,cognomeTecnico,ruolo,emailTecnico,telefonoTecnico,pwdTecnico,"admin") VALUES (
-    'Luigi', 'Pirandello', 'Amministratore', 'admin@network.it', '3938216657', 'adminPass','true'
+    'Admin', 'Admin', 'Amministratore', 'admin@network.it', '3938216657', '$2a$12$yq3QnFI1rii1BCAGhzCPWeGililBr3faqMSgDg00yabS9tlWS1sQS','true'
 );
 
 CREATE TABLE Paesi(

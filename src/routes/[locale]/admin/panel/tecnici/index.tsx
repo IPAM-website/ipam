@@ -10,6 +10,7 @@ import Dati from "~/components/table/Dati_Headers";
 import CHKForms from "~/components/forms/CHKForms";
 import Import from "~/components/table/ImportCSV";
 // import { useNotify } from "~/services/notifications";
+import bcrypt from "bcryptjs";
 
 type Notification = {
   message: string;
@@ -42,11 +43,21 @@ export const useTecnici = server$(async () => {
   }
 })
 
+export const searchAdmins = server$(async () => {
+  try {
+    const query = await sql`SELECT * FROM tecnici WHERE admin=true`
+    return query.length>0;
+  }
+  catch {
+    return false
+  }
+})
+
 export const modTecnico = routeAction$(async (data, requestEvent: RequestEventAction) => {
   try {
     await sql`
       UPDATE tecnici
-      SET nometecnico = ${data.nome}, cognometecnico = ${data.cognome}, ruolo = ${data.ruolo}, emailtecnico = ${data.email}, pwdtecnico = ${data.pwd}, telefonotecnico = ${data.telefono || null}, admin = ${data.admin == "on"}
+      SET nometecnico = ${data.nome}, cognometecnico = ${data.cognome}, ruolo = ${data.ruolo}, emailtecnico = ${data.email}, pwdtecnico = ${bcrypt.hashSync(data.pwd,12)}, telefonotecnico = ${data.telefono || null}, admin = ${data.admin == "on"}
       WHERE idtecnico = ${data.idtecnico}
     `;
     return {
@@ -76,7 +87,7 @@ export const addTecnico = routeAction$(async (data, requestEvent: RequestEventAc
   try {
     await sql`
       INSERT INTO tecnici (nometecnico, cognometecnico, ruolo, emailtecnico, pwdtecnico, telefonotecnico, admin)
-      VALUES (${data.nome}, ${data.cognome}, ${data.ruolo}, ${data.email}, ${data.pwd}, ${data.telefono || null}, FALSE)
+      VALUES (${data.nome}, ${data.cognome}, ${data.ruolo}, ${data.email}, ${bcrypt.hashSync(data.pwd,12)}, ${data.telefono || null}, FALSE)
     `;
     return {
       success: true,
@@ -131,12 +142,15 @@ export default component$(() => {
   const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
 
+  const lastAdmin = useSignal<boolean>(false);
+
   useTask$(async ({ track }) => {
     const query = await useTecnici();
     dati.value = query;
     track(() => isEditing.value);
     //@ts-ignore
     formAction.value = isEditing.value ? editAction : addAction;
+    lastAdmin.value = await searchAdmins();
   })
 
 
@@ -168,10 +182,10 @@ export default component$(() => {
     closeTecniciDialog();
     reloadFN.value?.();
     if (formAction.value.value?.success) {
-      addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo",'success');
+      addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo", 'success');
     }
     else
-      addNotification(lang === "en" ? "Error during editing" : "Errore durante la modifica",'error');
+      addNotification(lang === "en" ? "Error during editing" : "Errore durante la modifica", 'error');
   })
 
   const Modify = $((row: any) => {
@@ -192,22 +206,24 @@ export default component$(() => {
 
   const Delete = $(async (row: any) => {
     if (await deleteRow(extractRow(row)))
-      addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo",'success');
+      addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
     else
-      addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione",'error');
+      addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione", 'error');
   })
 
 
   const handleError = $((error: any) => {
     console.log(error);
-    addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione",'error');
+    addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
   })
 
   const handleOk = $(async () => {
-    addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo",'success');
+    addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
   })
 
   const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
+
+  const dff = $((r: any) => !r.admin);
 
   return (
     <>
@@ -218,8 +234,8 @@ export default component$(() => {
             <div
               key={index}
               class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-red-500 text-white'
+                ? 'bg-green-500 text-white'
+                : 'bg-red-500 text-white'
                 }`}
             >
               {notification.message}
@@ -229,7 +245,7 @@ export default component$(() => {
 
         <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{$localize`Admin Panel`}</Title>
         <Table title={$localize`Lista tecnici`}>
-          <Dati dati={dati.value} title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici"></Dati>
+          <Dati dati={dati.value} title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff}></Dati>
           <ButtonAdd nomePulsante={$localize`Inserisci tecnico`} onClick$={openTeniciDialog}></ButtonAdd>
           <Import nomeImport="tecnici" OnError={handleError} OnOk={handleOk}></Import>
         </Table>
@@ -245,7 +261,7 @@ export default component$(() => {
                 <hr class="text-neutral-200 mb-4 w-11/12" />
                 <div class="w-11/12">
                   <input class="opacity-0" id="idT" type="text" name="idtecnico" value={currentId.value} />
-                  <CHKForms id="chkT" name="admin" value={admin.value} nameCHK="Admin"></CHKForms>
+                  {!lastAdmin.value && <CHKForms id="chkT" name="admin" value={admin.value} nameCHK="Admin"></CHKForms>}
                   <br />
                   <TextBoxForm error={formAction.value.value} id="NomeT" placeholder={$localize`Inserire il nome del tecnico`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
                   {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
