@@ -197,6 +197,7 @@ export default component$(() => {
     })
     const broadcastIP = useSignal<string>("");
     const ipErrors = useSignal<string[]>([]);
+    const ipCompleted = useSignal<boolean>(false);
     const attempted = useSignal<boolean>(false);
     const netMode = useSignal<number>(0);
     const vrfs = useSignal<VRFModel[]>([]);
@@ -223,14 +224,15 @@ export default component$(() => {
         Object.assign(formData, e);
         hasParent.value = formData.idretesup != undefined;
         netMode.value = 2;
+        console.log(formData.idretesup);
     })
 
     const getReloader = $((e: () => void) => {
         reloadFN.value = e;
     })
 
-    const handleRowClick = $((row:any) => {
-        nav(loc.url + "addresses/view?network="+row.idrete);
+    const handleRowClick = $((row: any) => {
+        nav(loc.url + "addresses/view?network=" + row.idrete);
     })
 
     return (<>
@@ -248,8 +250,8 @@ export default component$(() => {
                             iprete: "",
                             prefissorete: 0,
                             idv: 1,
+                            idretesup: false
                         })
-                        delete formData.idretesup;
                         hasParent.value = false;
                         broadcastIP.value = "";
                         netMode.value = 1;
@@ -345,15 +347,21 @@ export default component$(() => {
                     <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} OnInput$={e => {
                         console.log(e);
                         ipErrors.value = e.errors
+                        ipCompleted.value = e.complete;
                         if (e.complete) {
                             if (formData.prefissorete == 0)
                                 formData.prefissorete = parseInt(e.class)
                             broadcastIP.value = e.last;
-                            if (e.errors.length == 0)
+                            if (e.errors.length == 0 && ipCompleted.value) {
                                 formData.iprete = e.ip;
+                            }
                             console.log(formData.iprete)
                         }
+
+                        networks.value = [...networks.value]
+
                         attempted.value = e.complete;
+
                     }}></AddressBox>
                     {attempted.value && ipErrors.value.length > 0 && ipErrors.value.map(x => <p class="w-full text-red-500 text-end">{x}</p>)}
                     <AddressBox title={$localize`Indirizzo di broadcast`} disabled={true} value={broadcastIP.value} ></AddressBox>
@@ -382,10 +390,11 @@ export default component$(() => {
                         <SelectForm id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }}>
 
                             {networks.value.filter(x => {
+
+                                if (!ipCompleted.value)
+                                    return true;
                                 if (x.prefissorete >= formData.prefissorete)
                                     return false;
-
-
 
                                 let xIP = x.iprete.split('.');
                                 let formIP = formData.iprete.split('.');
@@ -406,7 +415,7 @@ export default component$(() => {
                 <div class="w-full flex justify-end">
                     <input type="submit" class="rounded-md bg-black text-white disabled:bg-gray-600 disabled:cursor-default p-2 w-1/2 cursor-pointer hover:bg-gray-900 active:bg-gray-800" value={$localize`Conferma`} disabled={
                         formData.descrizione == '' ||
-                        formData.iprete == '' ||
+                        !ipCompleted.value ||
                         formData.nomerete == '' ||
                         !(formData.prefissorete > 0 && formData.prefissorete < 32) ||
                         ipErrors.value.length > 0 ||

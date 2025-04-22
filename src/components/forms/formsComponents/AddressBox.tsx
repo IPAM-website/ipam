@@ -109,7 +109,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
             ipclass = "16";
 
         let working_prefix;
-        if (prefix != "")
+        if (prefix != "0")
             working_prefix = prefix;
         else
             working_prefix = ipclass;
