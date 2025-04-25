@@ -1,18 +1,24 @@
-import { component$, useSignal, useTask$ } from "@builder.io/qwik";
-import { routeLoader$, server$, useLocation } from "@builder.io/qwik-city";
+import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
+import { routeLoader$, server$, useLocation, useNavigate } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import { getBaseURL } from "~/fnUtils";
 import sql from "~/../db";
 import { ReteModel } from "~/dbModels";
+import SelectForm from "~/components/forms/formsComponents/SelectForm";
+import SiteNavigator from "~/components/layout/SiteNavigator";
 
 export const useSiteName = routeLoader$(async ({ params }) => {
     return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0].nomesito;
 })
 
-export const useNet = routeLoader$(async ({ query }) => {
-    if (!query.has("network"))
+export const useSiteNet = routeLoader$(async ({ params }) => {
+    return (await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE idsito = ${params.site}`) as ReteModel[];
+})
+
+export const useNet = server$(async function() {
+    if (!this.query.has("network"))
         return;
-    return (await sql`SELECT * FROM rete WHERE idrete = ${query.get('network')}`)[0] as ReteModel;
+    return (await sql`SELECT * FROM rete WHERE idrete = ${this.query.get('network')}`)[0] as ReteModel;
 })
 
 export const getNetworkSpace = server$(async (idrete: number) => {
@@ -57,13 +63,16 @@ export const getChildrenNetworks = server$(async (idrete: number) => {
 
 export default component$(() => {
     const loc = useLocation();
+    const nav = useNavigate();
     const sitename = useSiteName();
-    const network = useNet();
+    const siteNetworks = useSiteNet();
+    const network = useSignal<ReteModel>();
     const allocatedSpace = useSignal<number>(0);
     const parentNetwork = useSignal<ReteModel>();
     const childrenNetworks = useSignal<ReteModel[]>();
 
     useTask$(async () => {
+        network.value = await useNet();
         if (network.value) {
             allocatedSpace.value = await getNetworkSpace(network.value.idrete) as number;
             parentNetwork.value = await getParentNetwork(network.value.idrete) as ReteModel;
@@ -71,45 +80,24 @@ export default component$(() => {
         }
     })
 
-    if (!network.value)
-        return (<p>Error</p>)
+    const siteURL =getBaseURL() + loc.params.client + "/" + loc.params.site;
+
+    
     return (
         <div>
             <Title haveReturn={true} url={loc.url.pathname.split('info')[0]} > {sitename.value.toString()} IP</Title>
-            <div class="flex flex-col md:flex-row gap-8">
-                <div class="row">
-                    <nav class="bg-gray-50 rounded-xl mt-2">
-                        <ul class="flex space-x-4">
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/info"} class="text-gray-700 block hover:text-gray-500 p-4">Info</a>
-                            </li>
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/addresses/view"} class="text-gray-700 hover:text-gray-500 block p-4">Addresses</a>
-                            </li>
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/aggregates/view"} class="text-gray-700 hover:text-gray-500 block p-4">Aggregate</a>
-                            </li>
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/prefixed/view"} class="text-gray-700 hover:text-gray-500 block p-4">Prefixes</a>
-                            </li>
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/intervals/view"} class="text-gray-700 hover:text-gray-500 block p-4">Intervals</a>
-                            </li>
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vrf/view"} class="text-gray-700 hover:text-gray-500 block p-4">VRF</a>
-                            </li>
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vlan/view"} class="text-gray-700 hover:text-gray-500 block p-4">VLANs</a>
-                            </li>
-                            <li>
-                                <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/settings"} class="text-gray-700 hover:text-gray-500 block p-4" >Settings</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+            <SiteNavigator />
 
-            </div>
-            <div class="flex gap-4">
+            <SelectForm OnClick$={async (e)=>{
+                const idrete = (e.target as HTMLOptionElement).value;
+                network.value = (await server$(async () =>{ 
+                    return (await sql`SELECT * FROM rete WHERE idrete=${idrete}`)[0] as ReteModel;
+                })())
+            }} id="" name="" value="" >
+                {siteNetworks.value.map(x=><option value={x.idrete}>{x.nomerete}</option>)}
+            </SelectForm>
+
+            {network.value && <div class="flex gap-4">
                 <div class="flex-1 px-5 py-3 mt-4 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
                     <div class="h-[50px] w-full flex items-center overflow-hidden">
                         <div class="text-black text-lg font-semibold">{$localize`Informazioni sulla rete`}</div>
@@ -151,7 +139,7 @@ export default component$(() => {
                             </div>
                         </div>}
                 </div>
-            </div>
+            </div>}
         </div>
 
     )

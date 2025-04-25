@@ -13,6 +13,7 @@ import Dati from "~/components/table/Dati_Headers";
 import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
 import { getBaseURL } from "~/fnUtils";
+import SiteNavigator from "~/components/layout/SiteNavigator";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -293,36 +294,7 @@ export default component$(() => {
                                 </div>
                             </PopupModal>
 
-                            <div class="row">
-                                <nav class="bg-gray-50 rounded-xl mt-2">
-                                    <ul class="flex space-x-4">
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/info"} class="text-gray-700 block hover:text-gray-500 p-4">Info</a>
-                                        </li>
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/addresses/view"} class="text-gray-700 hover:text-gray-500 block p-4">Addresses</a>
-                                        </li>
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/aggregates/view"} class="text-gray-700 hover:text-gray-500 block p-4">Aggregate</a>
-                                        </li>
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/prefixed/view"} class="text-gray-700 hover:text-gray-500 block p-4">Prefixes</a>
-                                        </li>
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/intervals/view"} class="text-gray-700 hover:text-gray-500 block p-4">Intervals</a>
-                                        </li>
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vrf/view"} class="text-gray-700 hover:text-gray-500 block p-4">VRF</a>
-                                        </li>
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/vlan/view"} class="text-gray-700 hover:text-gray-500 block p-4">VLANs</a>
-                                        </li>
-                                        <li>
-                                            <a href={getBaseURL() + loc.params.client + "/" + loc.params.site + "/settings"} class="text-gray-700 hover:text-gray-500 block p-4" >Settings</a>
-                                        </li>
-                                    </ul>
-                                </nav>
-                            </div>
+                            <SiteNavigator />
 
                             <Table>
                                 <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>

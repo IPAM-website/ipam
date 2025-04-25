@@ -4,16 +4,8 @@ import { setClientName, setSiteName } from "~/components/layout/Sidebar";
 import sql from "../../../../../db";
 import { getBaseURL, getUser } from "~/fnUtils";
 
-export const onRequest : RequestHandler = async({params,redirect})=>{
+export const onRequest : RequestHandler = async({redirect})=>{
     
-    // try{
-    //     const query = await sql``
-    //     if(query.length==0)
-    //         throw new Error("Unauthorized access");
-    // }catch(e)
-    // {
-    //     throw redirect(301,getBaseURL()+"dashboard");
-    // }
 }
 
 export const getSiteName= server$(async function(){

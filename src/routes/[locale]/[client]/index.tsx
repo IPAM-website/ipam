@@ -117,7 +117,6 @@ export const getCityCountry = server$(async (idcitta: number) => {
         console.log(idcitta);
         return data as unknown as (CittaModel & PaeseModel)[];
     } catch (e) {
-        console.log(e);
         return [];
     }
 })

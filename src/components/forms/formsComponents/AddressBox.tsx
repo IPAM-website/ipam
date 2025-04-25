@@ -17,10 +17,16 @@ interface AddressBoxProps {
     OnInput$?: (event: { ip: string, class: string, prefix: string, network: string, last: string, complete: boolean, errors: string[], exists: boolean }) => void;
 }
 
-export const getSameIPs = server$(async (ip: string, network: number) => {
+export const getSameIPs = server$(async function (ip: string, network: number, prefix: number, type: string) {
     try {
-        const query = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete = rete.idrete WHERE ip=${ip} AND indirizzi.idrete = ${network}`
-        return query;
+        if (type == "host") {
+            const query = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete = rete.idrete WHERE ip=${ip} AND indirizzi.idrete = ${network} AND n_prefisso<=${prefix}`
+            return query;
+        }
+        else if (type == "network") {
+            const query = await sql`SELECT * FROM rete WHERE iprete=${ip} AND prefissorete<=${prefix}`
+            return query;
+        }
     }
     catch (e) {
         console.log(e);
@@ -103,10 +109,12 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
         if (ip.split('.')[0] == "10")
             ipclass = "8";
-        if (ip.split('.')[0] == "192" && ip.split('.')[1] == "168")
+        else if (ip.split('.')[0] == "192" && ip.split('.')[1] == "168")
             ipclass = "24";
-        if (ip.split('.')[0] == "172" && parseInt(ip.split('.')[1]) >= 16 && parseInt(ip.split('.')[1]) < 32)
+        else if (ip.split('.')[0] == "172" && parseInt(ip.split('.')[1]) >= 16 && parseInt(ip.split('.')[1]) < 32)
             ipclass = "16";
+        else
+            ipclass = "0"
 
         let working_prefix;
         if (prefix != "0")
@@ -198,15 +206,18 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
                         break;
                     }
                 }
-            } else {
-                if (checkAvailability) {
-                    let sameIP = await getSameIPs(ip, currentIPNetwork);
-                    exists = sameIP.length > 0
-                }
-
-                if (networkIP.join('.') != parentNetwork.iprete && prefix && complete)
-                    errors.push("Outside of network boundaries");
             }
+
+            if (networkIP.join('.') != parentNetwork.iprete && prefix && complete)
+                errors.push("Outside of network boundaries");
+
+        }
+
+        if (checkAvailability) {
+            let sameIP = [];
+            sameIP = await getSameIPs(ip, currentIPNetwork, parseInt(working_prefix), addressType) as any[];
+            console.log(sameIP)
+            exists = sameIP.length > 0
         }
 
         OnInput$({ ip, class: ipclass, prefix: working_prefix, network: networkIP.join('.'), last: lastIP.join('.'), complete, errors, exists });
@@ -219,10 +230,14 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
         for (const item of document.getElementsByClassName("only-numbers")) {
             (item as HTMLInputElement).addEventListener("keydown", function (e: KeyboardEvent) {
-                if (isNaN(parseInt(e.key)) && e.key != "Backspace" && e.key != "Tab" && e.key != "ArrowLeft" && e.key != "ArrowRight")
-                    e.preventDefault();
+            if (isNaN(parseInt(e.key)) && e.key != "Backspace" && e.key != "Tab" && e.key != "ArrowLeft" && e.key != "ArrowRight")
+                e.preventDefault();
+            if (this.selectionStart === this.selectionEnd && this.value.length >= 3 && !["Backspace", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+                e.preventDefault();
+            }
             });
         }
+
 
 
         let numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
@@ -235,6 +250,8 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
         input3.value?.addEventListener("keyup", function (e: KeyboardEvent) {
             if (this.value.length == 3 && numbers.includes(e.key)) input4.value?.focus();
         });
+
+        
 
         if (value != "" && value?.split('.').length == 4) {
             if (input1.value && !isNaN(parseInt(value.split('.')[0]))) input1.value.value = value.split('.')[0];
