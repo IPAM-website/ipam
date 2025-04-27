@@ -58,20 +58,20 @@ const TableMaps: { [key: string]: TableMap } = {
     },
     "cliente_tecnico": {
         headers: {
-            it:[
+            it: [
                 "Data Assegnazione",
                 "Nome Tecnico",
                 "Nome Cliente",
                 ""
             ],
-            en:[               
+            en: [
                 "Assignment Date",
                 "Technician Name",
                 "Client name",
                 ""
             ]
         },
-        keys: [            
+        keys: [
             "data_assegnazione",
             "nometecnico",
             "nomecliente"
@@ -107,12 +107,12 @@ const TableMaps: { [key: string]: TableMap } = {
             "data_inserimento",
             "tipo_dispositivo",
             "n_prefisso",
-            "idv"
+            "vid"
         ]
     },
-    "rete":{
+    "rete": {
         headers: {
-            it:[
+            it: [
                 "Nome",
                 "Indirizzo",
                 "Prefisso",
@@ -121,7 +121,7 @@ const TableMaps: { [key: string]: TableMap } = {
                 "ID",
                 ""
             ],
-            en:[
+            en: [
                 "Name",
                 "Address",
                 "Prefix",
@@ -139,6 +139,111 @@ const TableMaps: { [key: string]: TableMap } = {
             'vrf',
             'idrete'
         ]
+    },
+    "aggregati": {
+        headers: {
+            it: [
+                'Nome',
+                'Descrizione',
+                'ID',
+                'Rete',
+                ''
+            ],
+            en: [
+                'Name',
+                'Description',
+                'ID',
+                'Network',
+                ''
+            ]
+        },
+        keys: [
+            'nomeaggregato',
+            'descrizioneaggregato',
+            'idaggregato',
+            'idrete'
+        ]
+    },
+    "prefissi": {
+        headers: {
+            it: [
+                'Prefisso',
+                ''
+            ],
+            en: [
+                'Prefix',
+                ''
+            ]
+        },
+        keys: [
+            'prefissorete'
+        ]
+    },
+    "vlan": {
+        headers: {
+            it: [
+                'VID',
+                'Nome',
+                'Descrizione'
+            ],
+            en: [
+                'VID',
+                'Name',
+                'Description'
+            ]
+        },
+        keys: [
+            'vid',
+            'nomevlan',
+            'descrizionevlan'
+        ]
+    },
+    "vrf": {
+        headers: {
+            it: [
+                'ID',
+                'Nome',
+                'Descrizione'
+            ],
+            en: [
+                'ID',
+                'Name',
+                'Description'
+            ]
+        },
+        keys: [
+            'idvrf',
+            'nomevrf',
+            'descrizionevrf'
+        ]
+    },
+    "intervalli": {
+        headers: {
+            it: [
+                'Nome',
+                'IP Iniziale',
+                'IP Finale',
+                'Lunghezza',
+                'ID',
+                'Rete'
+            ],
+            en: [
+                'Name',
+                'Start IP',
+                'End IP',
+                'Length',
+                'ID',
+                'Network'
+            ],
+        },
+        keys: [
+            'nomeintervallo',
+            'iniziointervallo',
+            'fineintervallo',
+            'lunghezzaintervallo',
+            'idintervallo',
+            'idrete'
+        ]
     }
 }
 
@@ -153,10 +258,25 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
         keys: ["idcliente", "idtecnico"]
     },
     "indirizzi": {
-        keys: [ "ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "idv" ]
+        keys: ["ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "vid"]
     },
-    "rete":{
-        keys: ['iprete','nomerete','descrizione','vrf','idrete']
+    "rete": {
+        keys: ['iprete', 'nomerete', 'descrizione', 'vrf', 'idrete']
+    },
+    "aggregati": {
+        keys: ['nomeaggregato', 'descrizioneaggregato', 'idaggregato', 'idrete']
+    },
+    "prefissi": {
+        keys: ['prefisso']
+    },
+    "vlan": {
+        keys: ['vid', 'nomevlan', 'descrizionevlan']
+    },
+    "vrf": {
+        keys: ['idvrf', 'nomevrf', 'descrizionevrf']
+    },
+    "intervalli": {
+        keys: ['idintervallo', 'nomeintervallo', 'iniziointervallo', 'lunghezzaintervallo', 'fineintervallo', 'idrete']
     }
 };
 

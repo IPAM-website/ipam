@@ -11,7 +11,7 @@ export default component$(() => {
 
     const smartRedirect = $((path: string) => {
         if (loc.url.href.includes(path)) return;
-        nav(siteURL + path + loc.url.search)
+        nav(siteURL + path + '/' + loc.url.search)
     })
 
     return (<div class="flex flex-col md:flex-row gap-8">
@@ -27,9 +27,9 @@ export default component$(() => {
                     <li>
                         <button onClick$={() => smartRedirect("/aggregates")} class="text-gray-700 hover:text-gray-500 block p-4">Aggregate</button>
                     </li>
-                    <li>
+                    {/* <li>
                         <button onClick$={() => smartRedirect("/prefixes")} class="text-gray-700 hover:text-gray-500 block p-4">Prefixes</button>
-                    </li>
+                    </li> */}
                     <li>
                         <button onClick$={() => smartRedirect("/intervals")} class="text-gray-700 hover:text-gray-500 block p-4">Intervals</button>
                     </li>

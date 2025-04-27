@@ -10,7 +10,7 @@ interface LoaderState { [key: string]: boolean; }
 interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; funcReloadData?: () => any, onReloadRef?: (reloadFunc : ()=>void)=>void, noModify?:string, onRowClick?:(row:any)=>void, modifyWhen? : QRL<(r:any)=>boolean>, deleteWhen? : QRL<(r:any)=>boolean> }
 
 
-export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella, funcReloadData, onReloadRef, noModify = "", onRowClick=undefined, modifyWhen, deleteWhen }) => {
+export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = null, DBTabella, funcReloadData, onReloadRef, noModify = "", onRowClick=undefined, modifyWhen, deleteWhen }) => {
     const modificaIT_EN = ["Modifica", "Edit"];
     useStyles$(tableStyle);
     const showDialog = useSignal(false);
@@ -112,8 +112,8 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
         }*/
 
         loadingStates[rowId] = false;
-
-        OnDelete(row);
+        if(OnDelete)
+            OnDelete(row);
     });
 
     const cancelDelete = $(() => {
@@ -141,11 +141,11 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
 
     const settings = useStore({
         visible: false,
-        tableColumnsKey: [TableMaps[nT.value].keys[0], TableMaps[nT.value].keys[1]],
-        tableColumnsHeader: [TableMaps[nT.value].headers[lang][0], TableMaps[nT.value].headers[lang][1],''],
-        previewTableColumnsKey: [TableMaps[nT.value].keys[0], TableMaps[nT.value].keys[1]],
-        previewTableColumnsHeader: [TableMaps[nT.value].headers[lang][0], TableMaps[nT.value].headers[lang][1]]
-    })
+        tableColumnsKey: TableMaps[nT.value].keys.slice(0, 2),
+        tableColumnsHeader: TableMaps[nT.value].headers[lang].slice(0, 2).concat(''),
+        previewTableColumnsKey: TableMaps[nT.value].keys.slice(0, 2),
+        previewTableColumnsHeader: TableMaps[nT.value].headers[lang].slice(0, 2)
+    });
 
     const handleSettingsClosing = $(() => {
         settings.previewTableColumnsHeader = [];

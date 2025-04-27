@@ -15,7 +15,7 @@ export const useSiteNet = routeLoader$(async ({ params }) => {
     return (await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE idsito = ${params.site}`) as ReteModel[];
 })
 
-export const useNet = server$(async function() {
+export const useNet = server$(async function () {
     if (!this.query.has("network"))
         return;
     return (await sql`SELECT * FROM rete WHERE idrete = ${this.query.get('network')}`)[0] as ReteModel;
@@ -80,24 +80,25 @@ export default component$(() => {
         }
     })
 
-    const siteURL =getBaseURL() + loc.params.client + "/" + loc.params.site;
+    const siteURL = getBaseURL() + loc.params.client + "/" + loc.params.site;
 
-    
+
     return (
         <div>
             <Title haveReturn={true} url={loc.url.pathname.split('info')[0]} > {sitename.value.toString()} IP</Title>
             <SiteNavigator />
 
-            <SelectForm OnClick$={async (e)=>{
+            <SelectForm OnClick$={async (e) => {
                 const idrete = (e.target as HTMLOptionElement).value;
-                network.value = (await server$(async () =>{ 
+                network.value = (await server$(async () => {
                     return (await sql`SELECT * FROM rete WHERE idrete=${idrete}`)[0] as ReteModel;
                 })())
-            }} id="" name="" value="" >
-                {siteNetworks.value.map(x=><option value={x.idrete}>{x.nomerete}</option>)}
+                nav("?network=" + idrete)
+            }} id="" name="" value={loc.url.searchParams.get('network') ?? ""} >
+                {siteNetworks.value.map(x => <option value={x.idrete}>{x.nomerete}</option>)}
             </SelectForm>
 
-            {network.value && <div class="flex gap-4">
+            {network.value ? <div class="flex gap-4">
                 <div class="flex-1 px-5 py-3 mt-4 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
                     <div class="h-[50px] w-full flex items-center overflow-hidden">
                         <div class="text-black text-lg font-semibold">{$localize`Informazioni sulla rete`}</div>
@@ -131,7 +132,7 @@ export default component$(() => {
                         <div class="justify-start text-black text-lg font-normal">{$localize`Parent Network`}</div>
                         <div class="justify-start text-black text-lg font-normal">{parentNetwork.value?.iprete}</div>
                     </div>}
-                    {childrenNetworks.value && childrenNetworks.value.length>0  &&
+                    {childrenNetworks.value && childrenNetworks.value.length > 0 &&
                         <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
                             <div class="justify-start text-black text-lg font-normal">{$localize`Childrens`}</div>
                             <div class="justify-start text-black text-lg font-normal">
@@ -139,7 +140,10 @@ export default component$(() => {
                             </div>
                         </div>}
                 </div>
-            </div>}
+            </div> :
+                <div class="w-full mt-2 rounded-2xl border border-gray-300 p-2 flex items-center justify-center min-h-[400px]">
+                    <p class="text-gray-500">{$localize`Select a network to see its info`}</p>
+                </div>}
         </div>
 
     )

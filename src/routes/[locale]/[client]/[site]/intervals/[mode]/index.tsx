@@ -6,7 +6,7 @@ import DatePicker from "~/components/forms/formsComponents/DatePicker";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
 import Title from "~/components/layout/Title";
-import { ReteModel, VLANModel, IndirizziModel } from "~/dbModels";
+import { ReteModel, VLANModel, IndirizziModel, IntervalloModel } from "~/dbModels";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
@@ -25,24 +25,6 @@ export const onRequest: RequestHandler = ({ params, redirect, url }) => {
     }
 }
 
-export interface RowAddress {
-    descrizione?: string,
-    idrete?: number,
-    idsito?: number,
-    idsottosito?: number,
-    vid?: number,
-    ip?: string,
-    n_prefisso?: number,
-    nomerete?: string,
-    nomesottosito?: string,
-    nome_dispositivo?: string,
-    brand_dispositivo?: string,
-    data_inserimento?: string,
-    tipo_dispositivo?: string
-}
-
-
-
 export interface FilterObject {
     active: boolean;
     visible: boolean;
@@ -52,44 +34,44 @@ export interface FilterObject {
 }
 
 
-export const useAddresses = server$(async function (this, filter = { empty: 1 }) {
+export const getIntervals = server$(async function (this, filter = { empty: 1 }) {
     filter.query = filter.query ? filter.query + '%' : filter.query = "%";
     filter.query = (filter.query as string).trim();
-    let addresses: IndirizziModel[] = [];
+    let intervals: IntervalloModel[] = [];
 
     if (filter.empty == 1) {
-        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site}`;
-        addresses = queryResult as unknown as IndirizziModel[];
-        return addresses;
+        const queryResult = await sql`SELECT * FROM intervalli INNER JOIN siti_rete ON intervalli.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site}`;
+        intervals = queryResult as unknown as IntervalloModel[];
+        return intervals;
     }
 
-    if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
+    // if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
 
 
-        if (isNaN(parseInt(filter.query))) {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
-        else {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
+    //     if (isNaN(parseInt(filter.query))) {
+    //         const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
+    //         addresses = queryResult as unknown as IndirizziModel[];
+    //     }
+    //     else {
+    //         const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
+    //         addresses = queryResult as unknown as IndirizziModel[];
+    //     }
 
-    }
-    else {
+    // }
+    // else {
 
 
-        if (isNaN(parseInt(filter.query))) {
-            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
-        else {
-            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.ip LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
-    }
+    //     if (isNaN(parseInt(filter.query))) {
+    //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.query}`;
+    //         addresses = queryResult as unknown as IndirizziModel[];
+    //     }
+    //     else {
+    //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.ip LIKE ${filter.query}`;
+    //         addresses = queryResult as unknown as IndirizziModel[];
+    //     }
+    // }
 
-    return addresses;
+    return intervals;
 })
 
 
@@ -98,21 +80,20 @@ export const useSiteName = routeLoader$(async ({ params }) => {
 })
 
 
-export const useAction = routeAction$(async (data) => {
+export const useAction = routeAction$(async (data, ev) => {
     let success = false;
     let type_message = 0;
-    console.log(data.data_inserimento);
     try {
-        if (data.mode == "update") {
-            await sql`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, idv=${data.idv}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
+        if (ev.params.mode == "update") {
+            await sql`UPDATE intervalli SET nomeintervallo= ${data.nomeintervallo},iniziointervallo = ${data.iniziointervallo}, lunghezzaintervallo = ${data.lunghezzaintervallo}, fineintervallo=${data.fineintervallo},idrete=${data.idrete} WHERE idintervallo=${data.idintervallo}`;
             type_message = 2;
         } else {
-            await sql`INSERT INTO indirizzi(ip,idrete,idv,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.idv},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
+            await sql`INSERT INTO intervalli(nomeintervallo,iniziointervallo,lunghezzaintervallo,fineintervallo,idrete) VALUES (${data.nomeintervallo},${data.iniziointervallo},${data.lunghezzaintervallo},${data.fineintervallo},${data.idrete})`;
             type_message = 1;
         }
         success = true;
     } catch (e) {
-        if (data.mode == "update")
+        if (ev.params.mode == "update")
             type_message = 4;
         else
             type_message = 3;
@@ -124,30 +105,26 @@ export const useAction = routeAction$(async (data) => {
     }
 },
     zod$({
-        ip: z.string().min(8),
-        idrete: z.number().positive(),
-        idv: z.number().positive(),
-        n_prefisso: z.number().positive().max(31).min(0),
-        to_ip: z.string(),
-        mode: z.string(),
-        tipo_dispositivo: z.string(),
-        brand_dispositivo: z.string(),
-        nome_dispositivo: z.string(),
-        data_inserimento: z.any()
+        idintervallo: z.number(),
+        nomeintervallo: z.string(),
+        iniziointervallo: z.string(),
+        lunghezzaintervallo: z.number(),
+        fineintervallo: z.string(),
+        idrete: z.number()
     }))
 
 
-export const getAllVLAN = server$(async function () {
-    let vlans: VLANModel[] = [];
+export const getAllIntervals = server$(async function () {
+    let intervals: IntervalloModel[] = [];
     try {
-        const query = await sql`SELECT * FROM vlan`
-        vlans = query as unknown as VLANModel[];
+        const query = await sql`SELECT * FROM intervalli`
+        intervals = query as unknown as IntervalloModel[];
     }
     catch (e) {
         console.log(e);
     }
 
-    return vlans;
+    return intervals;
 })
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
@@ -164,9 +141,9 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
     return networks;
 })
 
-export const deleteIP = server$(async function (this, data) {
+export const deleteInterval = server$(async function (this, data) {
     try {
-        await sql`DELETE FROM indirizzi WHERE ip=${data.address}`;
+        await sql`DELETE FROM intervalli WHERE idintervallo=${data.idintervallo}`;
         return true;
     }
     catch (e) {
@@ -178,16 +155,24 @@ export const deleteIP = server$(async function (this, data) {
 type Notification = {
     message: string;
     type: 'success' | 'error';
-  };
+};
 
 export default component$(() => {
     // const notify = useNotify();
     const lang = getLocale("en");
-    const addressList = useSignal<IndirizziModel[]>([]);
+    const intervalList = useSignal<IntervalloModel[]>([]);
     const networks = useSignal<ReteModel[]>([]);
     const loc = useLocation();
     const nav = useNavigate();
-    const address = useStore<RowAddress>({});
+    const interval = useStore<IntervalloModel>({
+        fineintervallo: '',
+        idintervallo: 0,
+        idrete: 0,
+        iniziointervallo: '',
+        lunghezzaintervallo: 0,
+        nomeintervallo: '',
+        descrizioneintervallo:''
+    });
     const sitename = useSiteName();
     const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', query: '' } });
     const mode = loc.params.mode ?? "view";
@@ -195,8 +180,8 @@ export default component$(() => {
     const reloadFN = useSignal<(() => void) | null>(null);
     const notifications = useSignal<Notification[]>([]);
 
-    useTask$(async ({track}) => {
-        addressList.value = await useAddresses();
+    useTask$(async ({ track }) => {
+        intervalList.value = await getAllIntervals();
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
 
         for (const [key, value] of loc.url.searchParams.entries()) {
@@ -217,43 +202,43 @@ export default component$(() => {
     const handleError = $((error: any) => {
         console.log(error);
         addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
-      })
-    
-      const handleOkay = $(() => {
+    })
+
+    const handleOkay = $(() => {
         console.log("ok");
         addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
-      })
+    })
 
     const handleModify = $((row: any) => {
-        Object.assign(address, row as RowAddress);
+        Object.assign(interval, row as IntervalloModel);
         nav(loc.url.href.replace("view", "update"));
     })
 
     const handleDelete = $(async (row: any) => {
-        if (await deleteIP({ address: row.ip }))
+        if (await deleteInterval({ idintervallo: row.idintervallo }))
             addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", 'success');
         else
-         addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
+            addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
 
     });
-    
+
     const reloadData = $(async () => {
-        if (filter.active)
-            return await useAddresses(filter.params);
-        else
-            return await useAddresses();
+        // if (filter.active)
+        //     return await get(filter.params);
+        // else
+        return await getAllIntervals();
     })
 
     const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
 
     return (
         <>
-            <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("addresses")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title>
+            <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("intervals")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} Intervals</Title>
             {
                 mode == "view"
                     ? (
                         <div>
-                            <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
+                            {/* <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
                                 <div class="flex">
                                     <div class="w-full">
                                         <span class="ms-2">Network</span>
@@ -292,13 +277,13 @@ export default component$(() => {
                                         Search</button>
 
                                 </div>
-                            </PopupModal>
+                            </PopupModal> */}
 
                             <SiteNavigator />
 
                             <Table>
-                                <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
-                                    <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
+                                <Dati DBTabella="intervalli" title={$localize`Lista intervalli`} dati={intervalList.value} nomeTabella={"intervalli"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
+                                    {/* <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
                                         filter.params.query = (e.target as HTMLInputElement).value;
                                         filter.active = false;
                                         for (let item in filter.params) {
@@ -309,8 +294,8 @@ export default component$(() => {
                                         }
                                         if (reloadFN)
                                             reloadFN.value?.();
-                                    }} />
-                                    <div class="has-tooltip">
+                                    }} /> */}
+                                    {/* <div class="has-tooltip">
                                         <button class="cursor-pointer p-1 rounded-md bg-black hover:bg-gray-700 text-white size-[32px] flex items-center justify-center" onClick$={() => filter.visible = true} >
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
@@ -325,17 +310,17 @@ export default component$(() => {
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                                         </svg>
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
-                                    </button></div>}
+                                    </button></div>} */}
                                 </Dati>
-                                <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
-                                <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="indirizzi" />
+                                <ButtonAddLink nomePulsante={$localize`Aggiungi intervallo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
+                                <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="intervallo" />
                             </Table>
 
 
 
                         </div>)
                     :
-                    <CRUDForm data={address} reloadFN={reloadFN} />
+                    <CRUDForm data={interval} reloadFN={reloadFN} />
             }
         </>);
 })
@@ -357,47 +342,36 @@ export const FormBox = component$(({ title }: { title?: string }) => {
     </>)
 })
 
-export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, reloadFN?: Signal<(() => void) | null> }) => {
+export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel, reloadFN?: Signal<(() => void) | null> }) => {
     const lang = getLocale("en")
     const loc = useLocation();
     const nav = useNavigate();
     const action = useAction();
 
-    const formData = useStore<RowAddress & { ipDest: string, prefix: string }>({
-        tipo_dispositivo: 'Other',
-        prefix: '',
-        ip: '',
-        ipDest: '',
-        vid: undefined,
-        idrete: undefined,
-        nome_dispositivo: '',
-        brand_dispositivo: '',
-        data_inserimento: '',
-    });
+    const formData = useStore<IntervalloModel>({
+            fineintervallo: '',
+            idintervallo: 0,
+            idrete: 0,
+            iniziointervallo: '',
+            lunghezzaintervallo: 0,
+            nomeintervallo: '',
+            descrizioneintervallo:''
+        });
 
-    const ipErrors = useSignal<string[]>([]);
-    const ipDestErrors = useSignal<string[]>([]);
 
     const attempted = useSignal<boolean>(false);
     const changeIP = useSignal<boolean>(false);
 
     const networks = useSignal<ReteModel[]>([]);
-    const vlans = useSignal<VLANModel[]>([]);
+    const intervals = useSignal<IntervalloModel[]>([]);
 
+    const ipErrors = useSignal<string[]>([]);
 
     useTask$(async () => {
 
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
-        vlans.value = await getAllVLAN();
+        intervals.value = await getAllIntervals();
 
-        if (loc.params.mode == "update") {
-            Object.assign(formData, data);
-            if (formData.n_prefisso)
-                formData.prefix = formData.n_prefisso.toString();
-            if (data?.tipo_dispositivo == undefined)
-                formData.tipo_dispositivo = 'Other'
-            console.log(formData);
-        }
     })
 
     return (
@@ -405,115 +379,59 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
 
             <div class="m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative">
                 <FormBox title="Informazioni">
-                    <SelectForm id="cmbType" title="Tipologia: " name="Tipo Dispositivo" value={formData.tipo_dispositivo} OnClick$={(e) => { formData.tipo_dispositivo = (e.target as HTMLOptionElement).value; }} listName="">
-                        <option value="Server" key="Server">Server</option>
-                        <option value="Controller" key="Controller">Controller</option>
-                        <option value="Router" key="Router">Router</option>
-                        <option value="Firewall" key="Firewall">Firewall</option>
-                        <option value="Other" key="Other">{$localize`Altro`}</option>
-                    </SelectForm>
-                    <TextboxForm id="txtName" title={$localize`Nome Dispositivo`} value={formData.nome_dispositivo} placeholder="Es. Server1" OnInput$={(e) => formData.nome_dispositivo = (e.target as HTMLInputElement).value} />
-                    <TextboxForm id="txtModel" title={$localize`Marca Dispositivo`} value={formData.brand_dispositivo} placeholder="Es. Dell" OnInput$={(e) => formData.brand_dispositivo = (e.target as HTMLInputElement).value} />
-                    <DatePicker id="dpData" name={$localize`Data inserimento`} value={formData.data_inserimento} OnInput$={(e) => formData.data_inserimento = (e.target as HTMLInputElement).value} />
+                    <TextboxForm id="txtName" title={$localize`Nome Intervallo`} value={formData.nomeintervallo} placeholder="Es. Intervallo 1" OnInput$={(e) => formData.nomeintervallo = (e.target as HTMLInputElement).value} />
+                    <TextboxForm id="txtModel" title={$localize`Descrizione Intervallo`} value={formData.descrizioneintervallo} placeholder="Es. Pool indirizzi ufficio 1" OnInput$={(e) => formData.descrizioneintervallo = (e.target as HTMLInputElement).value} />
                 </FormBox>
                 <FormBox title="Dettagli">
 
-                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
-
-
+                    <AddressBox title={$localize`IP Iniziale`} addressType="host" currentIPNetwork={formData.idrete ?? -1} value={data?.iniziointervallo} OnInput$={(e) => {
+                        console.log(formData.idrete);
                         if (e.complete) {
                             if (loc.params.mode == "update" && !e.exists)
                                 e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
                             else if (loc.params.mode == "insert" && e.exists)
                                 e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
                             else
-                                formData.ip = e.ip;
+                                formData.iniziointervallo = e.ip;
                         }
-                        if (formData.prefix == "")
-                            formData.prefix = e.prefix;
 
                         ipErrors.value = e.errors;
                     }} />
-                    {attempted.value && !formData.ip && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
+                    {attempted.value && !formData.iniziointervallo && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
 
                     {ipErrors.value && <span class="text-red-600">{ipErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
 
-                    {
-                        //#region ChangeIP
-                        loc.params.mode === "update"
-                        &&
-                        changeIP.value
-                        &&
-                        <div class="flex flex-col">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 lg:ms-8 md:ms-6 sm:ms-4">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
-                            </svg>
-                            <AddressBox title="IP Dest" value={formData.ip} prefix={formData.prefix} currentIPNetwork={formData.idrete ?? -1} OnInput$={(e) => {
-                                if (e.complete && e.errors.length == 0)
-                                    formData.ipDest = e.ip;
-                                if (formData.prefix == "")
-                                    formData.prefix = e.prefix;
+                    <AddressBox title={$localize`IP Finale`} addressType="host" value={formData.fineintervallo} />
 
-                                ipDestErrors.value = e.errors;
-                            }} />
-                        </div>
-                        //#endregion
-                    }
+                    <TextboxForm id="txtLunghezza" value={formData.lunghezzaintervallo.toString()}  title={$localize`Lunghezza`} placeholder="Interval Length" OnInput$={(e) => { formData.lunghezzaintervallo = parseInt((e.target as any).value); }} />
+                    {attempted.value && !formData.lunghezzaintervallo && <span class="text-red-600">{$localize`This length is invalid`}</span>}
 
-                    <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
-                    {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
-
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString() }} listName="">
+                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as HTMLOptionElement).value);}} listName="">
                         {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
 
-                    <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
-                        {vlans.value.map((x: VLANModel) => <option key={x.vid} value={x.vid}>{x.nomevlan}</option>)}
-                    </SelectForm>
-                    {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
 
 
                 </FormBox>
-                {loc.params.mode === "update"
-                    &&
-                    <button class="absolute top-16 -right-8" onClick$={() => { changeIP.value = !changeIP.value }}>
-                        {
-                            changeIP.value ?
-                                (<div class="has-tooltip relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                </svg> <span class="tooltip">{$localize`Remove`}</span> </div>)
-                                :
-                                (<div class="has-tooltip relative"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3" />
-                                </svg> <span class="tooltip">{$localize`Change IP`}</span> </div>)
-                        }
-
-                    </button>
-                }
 
             </div>
             <button onClick$={async (e) => {
                 e.preventDefault();
-                if (!formData.prefix || !formData.ip || !formData.idrete || !formData.vid) {
+                if (!formData.lunghezzaintervallo || formData.iniziointervallo!="" || !formData.idrete) {
                     attempted.value = true;
-                    if (isNaN(parseInt(formData.prefix)))
-                        formData.prefix = "";
+                    if (isNaN(formData.lunghezzaintervallo))
+                        formData.lunghezzaintervallo = 0;
                     return;
                 }
-                await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, idv: formData.vid, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
+                await action.submit(formData);
                 if (action.value && action.value.success) {
                     await new Promise((resolve) => { setTimeout(resolve, 2000) });
                     window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
                 }
 
             }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
-                ipErrors.value.length > 0 ||
-                ipDestErrors.value.length > 0 ||
-                formData.ip == "" ||
-                !formData.idrete ||
-                !formData.vid ||
-                formData.prefix == ""
+                !formData.lunghezzaintervallo || formData.iniziointervallo!="" || !formData.idrete
             }>{$localize`Conferma`}</button>
             <a class="bg-red-500 hover:bg-red-600 transition-all rounded-md text-white p-2 inline-block mx-1" href={loc.url.href.replace("insert", "view").replace("update", "view")}>{$localize`Annulla`}</a>
             {action.submitted && action.value &&

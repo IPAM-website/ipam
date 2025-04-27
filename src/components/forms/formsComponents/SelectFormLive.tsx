@@ -10,9 +10,12 @@ interface SelectFormProps {
     noElementsText?: string;
     noElementsHandler?: () => void;
     OnClick$: (event: PointerEvent) => void;
+    data: any[],
+    valueMember: string,
+    displayMember: QRL<(e:any)=>string>
 }
 
-export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, listName, disabled = false, noElementsHandler, noElementsText, }) => {
+export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, listName, disabled = false, noElementsHandler, noElementsText, data, valueMember, displayMember }) => {
 
     const lang = getLocale("en");
     const clicked = useSignal(false);
@@ -167,9 +170,9 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
             }} style={{ opacity: clicked.value ? 1 : 0, top: clicked.value ? "40px" : "32px", transition: clicked.value ? "0.15s top ease-in-out,0.15s opacity ease-in-out" : "", zIndex: clicked.value ? "10" : "-100000" }} class="px-1 w-full bg-white -z-40  absolute shadow-sm rounded-md border text-md border-gray-200 border-sm" >
                 {listName != '' && <h3 class="bg-white font-semibold p-1 ps-3">{listName}</h3>}
                 {
-                    options.value?.children.length != 0 ?
+                    data.length != 0 ?
                         <div ref={options} class="cursor-pointer *:p-1 *:bg-white *:px-2 *:pe-5 max-h-[120px] overflow-auto *:hover:bg-gray-50 *:transition-all scroll-smooth">
-                            <Slot></Slot>
+                            {data.map(async x=><option value={x[valueMember]}>{await displayMember(x)}</option>)}
                         </div>
                         :
                         (

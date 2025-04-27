@@ -15,16 +15,18 @@ interface AddressBoxProps {
     currentIPNetwork?: number;
     currentID?: number;
     OnInput$?: (event: { ip: string, class: string, prefix: string, network: string, last: string, complete: boolean, errors: string[], exists: boolean }) => void;
+    forceUpdate$?: (e: () => void) => void
 }
 
 export const getSameIPs = server$(async function (ip: string, network: number, prefix: number, type: string) {
     try {
+        if (isNaN(prefix)) return [];
         if (type == "host") {
-            const query = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete = rete.idrete WHERE ip=${ip} AND indirizzi.idrete = ${network} AND n_prefisso<=${prefix}`
+            const query = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete = rete.idrete WHERE ip=${ip} AND indirizzi.idrete = ${network} AND n_prefisso=${prefix}`
             return query;
         }
         else if (type == "network") {
-            const query = await sql`SELECT * FROM rete WHERE iprete=${ip} AND prefissorete<=${prefix}`
+            const query = await sql`SELECT * FROM rete WHERE iprete=${ip} AND prefissorete=${prefix}`
             return query;
         }
     }
@@ -84,7 +86,7 @@ export const getNetworkSpace = server$(async (idrete: number) => {
     }
 })
 
-export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, currentIPNetwork = -1 }) => {
+export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, forceUpdate$, currentIPNetwork = -1 }) => {
 
     const input1 = useSignal<HTMLInputElement>();
     const input2 = useSignal<HTMLInputElement>();
@@ -159,7 +161,6 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
                 reversedPrefix = 0;
             reversedPrefix -= 8;
             lastIP[i] = networkIP[i] | binaryPrefix;
-
         }
 
         if (addressType == "host") {
@@ -192,6 +193,22 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
         if (currentIPNetwork && currentIPNetwork != -1) {
             const parentNetwork: ReteModel = await getNetwork(currentIPNetwork) as ReteModel;
+            
+            let parentNetworkIP = parentNetwork.iprete.split('.').map(x=>parseInt(x));
+            let parentLastIp = new Array(4);
+            let reversedPrefix = 32 - parentNetwork.prefissorete;
+
+            for (let i = 3; i >= 0; i--) {
+                let binaryPrefix = 0;
+                if (reversedPrefix >= 8)
+                    binaryPrefix = 255;
+                else if (reversedPrefix > 0) {
+                    binaryPrefix = (1 << reversedPrefix) - 1;
+                } else
+                    reversedPrefix = 0;
+                reversedPrefix -= 8;
+                parentLastIp[i] = parentNetworkIP[i] | binaryPrefix;
+            }
 
             if (addressType == "network") {
                 if (parentNetwork.prefissorete > parseInt(working_prefix)) {
@@ -206,10 +223,14 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
                         break;
                     }
                 }
+
+                if (!(networkIP.join('.') >= parentNetwork.iprete && lastIP.join('.') <= parentLastIp.join('.')) && complete)
+                    errors.push("Outside of network boundaries");
             }
 
-            if (networkIP.join('.') != parentNetwork.iprete && prefix && complete)
-                errors.push("Outside of network boundaries");
+
+            // if (networkIP.join('.') != parentNetwork.iprete && complete)
+            //     errors.push("Outside of network boundaries");
 
         }
 
@@ -223,18 +244,28 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
         OnInput$({ ip, class: ipclass, prefix: working_prefix, network: networkIP.join('.'), last: lastIP.join('.'), complete, errors, exists });
     })
 
+    const forceValue = useSignal<boolean[]>([true]);
+
+    const forceUpdate = $(() => {
+        forceValue.value = [...forceValue.value]
+    })
+
     useVisibleTask$(({ track }) => {
+
+        if (forceUpdate$)
+            forceUpdate$(forceUpdate);
+
         track(() => currentIPNetwork)
         track(() => prefix)
-        track(() => value)
+        track(() => forceValue.value)
 
         for (const item of document.getElementsByClassName("only-numbers")) {
             (item as HTMLInputElement).addEventListener("keydown", function (e: KeyboardEvent) {
-            if (isNaN(parseInt(e.key)) && e.key != "Backspace" && e.key != "Tab" && e.key != "ArrowLeft" && e.key != "ArrowRight")
-                e.preventDefault();
-            if (this.selectionStart === this.selectionEnd && this.value.length >= 3 && !["Backspace", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-                e.preventDefault();
-            }
+                if (isNaN(parseInt(e.key)) && e.key != "Backspace" && e.key != "Tab" && e.key != "ArrowLeft" && e.key != "ArrowRight")
+                    e.preventDefault();
+                if (this.selectionStart === this.selectionEnd && this.value.length >= 3 && !["Backspace", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+                    e.preventDefault();
+                }
             });
         }
 
@@ -251,7 +282,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
             if (this.value.length == 3 && numbers.includes(e.key)) input4.value?.focus();
         });
 
-        
+        console.log("PASSED VALUE:", value)
 
         if (value != "" && value?.split('.').length == 4) {
             if (input1.value && !isNaN(parseInt(value.split('.')[0]))) input1.value.value = value.split('.')[0];

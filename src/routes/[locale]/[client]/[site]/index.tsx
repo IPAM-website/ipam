@@ -12,6 +12,7 @@ import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import FMButton from "~/components/forms/formsComponents/FMButton";
 import CHKForms from "~/components/forms/CHKForms";
+import SelectFormLive from "~/components/forms/formsComponents/SelectFormLive";
 
 type Notification = {
     message: string;
@@ -184,6 +185,7 @@ export default component$(() => {
     const site = useSignal<SiteModel>();
     const client = useSignal<ClienteModel>();
     const networks = useSignal<ReteModel[]>([]);
+    const filteredNetworks = useSignal<ReteModel[]>([]);
     const city = useSignal<CittaModel>();
 
     const page = useSignal<string>("address")
@@ -207,11 +209,22 @@ export default component$(() => {
     const vrfs = useSignal<VRFModel[]>([]);
     const vlans = useSignal<VLANModel[]>([]);
 
+    const personalizedPrefix = useSignal<boolean>(false);
+
     const hasParent = useSignal<boolean>(false);
     const IPreteSup = useSignal<string>("");
     const reloadFN = useSignal<() => void | undefined>();
 
     const notifications = useSignal<Notification[]>([]);
+
+    const updateAddr1 = useSignal<() => void>(() => { });
+    const updateAddr2 = useSignal<() => void>(() => { });
+    const updateParents = useSignal<() => void>(() => { });
+
+    const displayParent = $((row:any)=>{
+        const x = row as ReteModel;
+        return `${x.iprete}/${x.prefissorete.toString()} - ${x.nomerete}`
+    })
 
     useTask$(async () => {
         client.value = await getClient(parseInt(loc.params.client));
@@ -220,6 +233,32 @@ export default component$(() => {
         vrfs.value = await getAllVRF();
         vlans.value = await getAllVLAN();
         city.value = await getCity(parseInt(loc.params.site));
+    })
+
+    useTask$(({ track }) => {
+        track(() => formData.iprete)
+        track(() => formData.prefissorete)
+        track(() => networks.value)
+        console.log("re caloclo")
+        filteredNetworks.value = networks.value.filter(x => {
+            if (!ipCompleted.value)
+                return true;
+            if (x.prefissorete >= formData.prefissorete)
+                return false;
+
+            let xIP = x.iprete.split('.');
+            let formIP = formData.iprete.split('.');
+
+            return (
+                (x.prefissorete >= 24 && xIP[2] == formIP[2] && xIP[3] <= formIP[3])
+                ||
+                (x.prefissorete >= 16 && x.prefissorete < 24 && xIP[1] == formIP[1] && xIP[2] <= formIP[2])
+                ||
+                (x.prefissorete >= 8 && x.prefissorete < 16 && xIP[0] == formIP[0] && xIP[1] <= formIP[1])
+                ||
+                (x.prefissorete < 8 && xIP[0] <= formIP[0])
+            )
+        })
     })
 
     const addNotification = $((message: string, type: 'success' | 'error') => {
@@ -242,7 +281,8 @@ export default component$(() => {
         Object.assign(formData, e);
         hasParent.value = formData.idretesup != undefined;
         netMode.value = 2;
-        console.log(formData.idretesup);
+        personalizedPrefix.value = false;
+        updateAddr1.value();
     })
 
     const getReloader = $((e: () => void) => {
@@ -257,6 +297,8 @@ export default component$(() => {
         page.value = (e.target as HTMLOptionElement).value.toString() || "address";
     })
 
+
+    const prefixBox = useSignal<HTMLInputElement>();
 
 
     return (<>
@@ -296,9 +338,12 @@ export default component$(() => {
                                 idv: 1,
                                 idretesup: null
                             })
+                            personalizedPrefix.value = false;
                             hasParent.value = false;
                             broadcastIP.value = "";
                             netMode.value = 1;
+                            if (updateAddr2.value)
+                                updateAddr2.value();
                         }} ></ButtonAdd>
                     </Table>
                 </div>}
@@ -395,23 +440,23 @@ export default component$(() => {
                     ></textarea>
                 </div>
                 <div class="**:flex-1 w-full justify-between">
-                    <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} OnInput$={e => {
+                    <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} forceUpdate$={e => updateAddr1.value = e} OnInput$={e => {
                         ipErrors.value = e.errors
                         ipCompleted.value = e.complete;
-                        
-                        
+
                         if (e.complete) {
                             if (formData.prefissorete == 0)
                                 formData.prefissorete = parseInt(e.class)
                             broadcastIP.value = e.last;
+                            updateAddr2.value();
 
-                            if (netMode.value==2 && !e.exists)
+                            if (netMode.value == 2 && !e.exists)
                                 e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
-                            else if (netMode.value==1 && e.exists)
+                            else if (netMode.value == 1 && e.exists)
                                 e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
-                        }
 
-                        formData.iprete = e.ip;
+                            formData.iprete = e.ip;
+                        }
 
                         networks.value = [...networks.value]
 
@@ -419,14 +464,14 @@ export default component$(() => {
 
                     }}></AddressBox>
                     {attempted.value && ipErrors.value.length > 0 && ipErrors.value.map(x => <p class="w-full text-red-500 text-end">{x}</p>)}
-                    <AddressBox title={$localize`Indirizzo di broadcast`} disabled={true} value={broadcastIP.value} ></AddressBox>
+                    <AddressBox title={$localize`Indirizzo di broadcast`} forceUpdate$={e => updateAddr2.value = e} disabled={true} value={broadcastIP.value} ></AddressBox>
                 </div>
                 <div class="**:flex-1">
-                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 ? "" : formData.prefissorete.toString()} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; }} />
-                    {attempted.value && (formData.prefissorete < 1 || formData.prefissorete > 31) && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
+                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 || personalizedPrefix.value ? prefixBox.value?.value : formData.prefissorete.toString()} title={$localize`Prefisso`} ref={prefixBox} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; personalizedPrefix.value = true }} />
+                    {personalizedPrefix.value && (formData.prefissorete < 1 || formData.prefissorete > 31) && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
                 </div>
                 <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
-                    {vlans.value.map((x: VLANModel) => <option key={x.idv} about={x.descrizionevlan} value={x.idv}>{x.nomevlan}</option>)}
+                    {vlans.value.map((x: VLANModel) => <option key={x.vid} about={x.descrizionevlan} value={x.vid}>{x.nomevlan}</option>)}
                 </SelectForm>
                 {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
                 <SelectForm id="txtVRF" name="vrf" value={formData.vrf?.toString() || ""} title="VRF" OnClick$={(e) => { formData.vrf = parseInt((e.target as HTMLOptionElement).value) }}>
@@ -442,30 +487,14 @@ export default component$(() => {
                 </div>
                 {hasParent.value &&
                     <div class="flex flex-col border border-gray-200 justify-center items-center *:block w-full">
-                        <SelectForm id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }}>
-
-                            {networks.value.filter(x => {
-
-                                if (!ipCompleted.value)
-                                    return true;
-                                if (x.prefissorete >= formData.prefissorete)
-                                    return false;
-
-                                let xIP = x.iprete.split('.');
-                                let formIP = formData.iprete.split('.');
-
-                                return (
-                                    (x.prefissorete >= 24 && xIP[2] == formIP[2] && xIP[3] <= formIP[3])
-                                    ||
-                                    (x.prefissorete >= 16 && x.prefissorete < 24 && xIP[1] == formIP[1] && xIP[2] <= formIP[2])
-                                    ||
-                                    (x.prefissorete >= 8 && x.prefissorete < 16 && xIP[0] == formIP[0] && xIP[1] <= formIP[1])
-                                    ||
-                                    (x.prefissorete < 8 && xIP[0] <= formIP[0])
-                                )
-                                {/* @ts-ignore */ }
-                            }).map(x => <option value={x.idrete} about={x.descrizione}>{x.iprete}/{x.prefissorete.toString()}  - {x.nomerete}</option>)}
-                        </SelectForm>
+                        {/* <SelectForm id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }}>
+                            {filteredNetworks.value.length!=0 && filteredNetworks.value.map(x => (
+                                <option value={x.idrete} about={x.descrizione}>
+                                    {`${x.iprete}/${x.prefissorete.toString()} - ${x.nomerete}`}
+                                </option>
+                            ))}
+                        </SelectForm> */}
+                        <SelectFormLive data={filteredNetworks.value} valueMember="idrete" displayMember={displayParent} id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }} />
                     </div>}
                 <div class="w-full flex justify-end">
                     <input type="submit" class="rounded-md bg-black text-white disabled:bg-gray-600 disabled:cursor-default p-2 w-1/2 cursor-pointer hover:bg-gray-900 active:bg-gray-800" value={$localize`Conferma`} disabled={
