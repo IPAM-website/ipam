@@ -15,6 +15,10 @@ type Notification = {
   type: 'success' | 'error';
 };
 
+export interface FilterObject {
+  value?: string;
+}
+
 export const extractRow = (row: any) => {
   const { idcliente, nomecliente } = row;
   return {
@@ -106,6 +110,22 @@ export const addCliente = routeAction$(async (data, requestEvent: RequestEventAc
   telefono: z.string().min(10)
 }))
 
+export const search = server$(async (data) => {
+  try {
+    const query = await sql`
+      SELECT 
+        *
+      FROM clienti
+      WHERE nomecliente LIKE ${data.filter}
+      OR telefonocliente LIKE ${data.filter}
+    `;
+    return query;
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+})
+
 
 export default component$(() => {
   useStyles$(styles);
@@ -120,6 +140,8 @@ export default component$(() => {
   const editAction = modCliente();
   const formAction = useSignal(addAction);
   const notifications = useSignal<Notification[]>([]);
+  const filter = useSignal<FilterObject>({ value: '' });
+  const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
 
   const reloadFN = useSignal<() => void>();
 
@@ -148,12 +170,13 @@ export default component$(() => {
   })
 
   const reloadTable = $(async () => {
-    if (formAction.value.value?.success)
+    if (formAction.value.value?.success) {
       addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo", 'success');
+      reloadFN.value?.();
+      showDialog.value = false;
+    }
     else
       addNotification(lang === "en" ? "Error during editing" : "Errore durante la modifica", 'error');
-    reloadFN.value?.();
-    showDialog.value = false;
   })
 
   const openClientiDialog = $(() => {
@@ -186,6 +209,15 @@ export default component$(() => {
 
   const getRef = $((e: () => void) => reloadFN.value = e)
 
+  const reload = $(async () => {
+    if (filter.value.value !== "") {
+      const query = await search({ filter: `%${filter.value.value}%` });
+      return query;
+    }
+    else
+      return await useTecnici();
+  })
+
   return (
     <>
       <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0">
@@ -206,7 +238,12 @@ export default component$(() => {
 
         <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{$localize`Admin Panel`}</Title>
         <Table title={$localize`Lista clienti`}>
-          <Dati dati={dati.value} title={$localize`Lista clienti`} nomeTabella={$localize`clients`} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef}></Dati>
+          <TextBoxForm id="txtfilter" value={filter.value.value} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
+            filter.value.value = (e.target as HTMLInputElement).value;
+            if (reloadFN)
+              reloadFN.value?.();
+          }} />
+          <Dati dati={dati.value} title={$localize`Lista clienti`} nomeTabella={$localize`clients`} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
           <ButtonAdd nomePulsante={$localize`Aggiungi cliente/i`} onClick$={openClientiDialog}></ButtonAdd>
           <Import nomeImport="clienti" OnError={handleError} OnOk={handleOk}></Import>
         </Table>

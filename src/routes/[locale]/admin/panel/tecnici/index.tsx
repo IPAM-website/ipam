@@ -17,6 +17,10 @@ type Notification = {
   type: 'success' | 'error';
 };
 
+export interface FilterObject {
+  value?: string;
+}
+
 export const extractRow = (row: any) => {
   const { idtecnico, nometecnico, cognometecnico, ruolo, emailtecnico, telefonotecnico, pwdtecnico, admin } = row;
   return {
@@ -46,7 +50,7 @@ export const useTecnici = server$(async () => {
 export const searchAdmins = server$(async () => {
   try {
     const query = await sql`SELECT * FROM tecnici WHERE admin=true`
-    return query.length>0;
+    return query.length > 0;
   }
   catch {
     return false
@@ -57,7 +61,7 @@ export const modTecnico = routeAction$(async (data, requestEvent: RequestEventAc
   try {
     await sql`
       UPDATE tecnici
-      SET nometecnico = ${data.nome}, cognometecnico = ${data.cognome}, ruolo = ${data.ruolo}, emailtecnico = ${data.email}, pwdtecnico = ${bcrypt.hashSync(data.pwd,12)}, telefonotecnico = ${data.telefono || null}, admin = ${data.admin == "on"}
+      SET nometecnico = ${data.nome}, cognometecnico = ${data.cognome}, ruolo = ${data.ruolo}, emailtecnico = ${data.email}, pwdtecnico = ${bcrypt.hashSync(data.pwd, 12)}, telefonotecnico = ${data.telefono || null}, admin = ${data.admin == "on"}
       WHERE idtecnico = ${data.idtecnico}
     `;
     return {
@@ -87,7 +91,7 @@ export const addTecnico = routeAction$(async (data, requestEvent: RequestEventAc
   try {
     await sql`
       INSERT INTO tecnici (nometecnico, cognometecnico, ruolo, emailtecnico, pwdtecnico, telefonotecnico, admin)
-      VALUES (${data.nome}, ${data.cognome}, ${data.ruolo}, ${data.email}, ${bcrypt.hashSync(data.pwd,12)}, ${data.telefono || null}, FALSE)
+      VALUES (${data.nome}, ${data.cognome}, ${data.ruolo}, ${data.email}, ${bcrypt.hashSync(data.pwd, 12)}, ${data.telefono || null}, FALSE)
     `;
     return {
       success: true,
@@ -121,6 +125,27 @@ export const deleteRow = server$(async function (this, data) {
   }
 })
 
+export const search = server$(async (data) => {
+  try {
+    const query = await sql`
+      SELECT 
+        *
+      FROM tecnici
+      WHERE nometecnico LIKE ${data.filter}
+      OR cognometecnico LIKE ${data.filter}
+      OR ruolo LIKE ${data.filter}
+      OR emailtecnico LIKE ${data.filter}
+      OR telefonotecnico LIKE ${data.filter}
+      OR pwdtecnico LIKE ${data.filter}
+    `;
+    return query;
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+})
+
+
 export default component$(() => {
   useStyles$(styles);
   // const notify = useNotify();
@@ -141,6 +166,8 @@ export default component$(() => {
   const formAction = useSignal(addAction);
   const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
+  const filter = useSignal<FilterObject>({ value: '' });
+  const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
 
   const lastAdmin = useSignal<boolean>(false);
 
@@ -179,9 +206,10 @@ export default component$(() => {
   });
 
   const reloadTable = $(() => {
-    closeTecniciDialog();
     reloadFN.value?.();
     if (formAction.value.value?.success) {
+      reloadFN.value?.();
+      closeTecniciDialog();
       addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo", 'success');
     }
     else
@@ -223,6 +251,15 @@ export default component$(() => {
 
   const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
 
+  const reload = $(async () => {
+    if (filter.value.value !== "") {
+      const query = await search({ filter: `%${filter.value.value}%` });
+      return query;
+    }
+    else
+      return await useTecnici();
+  })
+
   const dff = $((r: any) => !r.admin);
 
   return (
@@ -245,7 +282,12 @@ export default component$(() => {
 
         <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{$localize`Admin Panel`}</Title>
         <Table title={$localize`Lista tecnici`}>
-          <Dati dati={dati.value} title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff}></Dati>
+          <TextBoxForm id="txtfilter" value={filter.value.value} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
+            filter.value.value = (e.target as HTMLInputElement).value;
+            if (reloadFN)
+              reloadFN.value?.();
+          }} />
+          <Dati dati={dati.value} title={$localize`Lista tecnici`} nomeTabella={$localize`technicians`} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
           <ButtonAdd nomePulsante={$localize`Inserisci tecnico`} onClick$={openTeniciDialog}></ButtonAdd>
           <Import nomeImport="tecnici" OnError={handleError} OnOk={handleOk}></Import>
         </Table>
@@ -270,7 +312,7 @@ export default component$(() => {
                   <TextBoxForm error={formAction.value.value} id="RuoloT" placeholder={$localize`Inserire il ruolo del tecnico`} nameT="ruolo" title={$localize`Ruolo` + "*"} value={ruolo.value}></TextBoxForm>
                   {formAction.value.value?.failed && formAction.value.value?.fieldErrors.ruolo && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Role not valid" : "Ruolo non valido"}</div>)}
                   <TextBoxForm error={formAction.value.value} id="EmailT" placeholder={$localize`Inserire la mail del tecnico`} nameT="email" title={$localize`Email` + "*"} value={mail.value}></TextBoxForm>
-                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.email && (<div class="text-sm text-red-600 font-semibold ms-32">{formAction.value.value?.fieldErrors.email}</div>)}
+                  {formAction.value.value?  .failed && formAction.value.value?.fieldErrors.email && (<div class="text-sm text-red-600 font-semibold ms-32">{formAction.value.value?.fieldErrors.email}</div>)}
                   <TextBoxForm id="TelefonoT" placeholder={$localize`Inserire il telefono del tecnico`} nameT="telefono" title={$localize`Telefono`} value={telefono.value}></TextBoxForm>
                   <TextBoxForm error={formAction.value.value} id="PwdT" placeholder={$localize`Inserire la password del tecnico`} nameT="pwd" title={$localize`Password` + "*"} value={password.value}></TextBoxForm>
                   {formAction.value.value?.failed && formAction.value.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Password not valid" : "Password non valido"}</div>)}

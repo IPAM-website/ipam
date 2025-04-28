@@ -1,4 +1,4 @@
- CREATE TABLE Tecnici (
+CREATE TABLE Tecnici (
      IDTecnico SERIAL,
      nomeTecnico VARCHAR(50) NOT NULL,
      cognomeTecnico VARCHAR(50) NOT NULL,
@@ -12,7 +12,7 @@
  );
 
 INSERT INTO Tecnici(nomeTecnico,cognomeTecnico,ruolo,emailTecnico,telefonoTecnico,pwdTecnico,"admin") VALUES (
-    'Admin', 'Admin', 'Amministratore', 'admin@network.it', '3938216657', '$2a$12$yq3QnFI1rii1BCAGhzCPWeGililBr3faqMSgDg00yabS9tlWS1sQS','true'
+    'Admin', 'Admin', 'Amministratore', 'admin@network.it', '3938216657', '$2b$12$k0cWvUlLTqS7OsAW506ILuaj/wdJNoT6IDtKMEuXP8tFjxzzaVKTe','true'
 );
 
 CREATE TABLE Paesi(
@@ -35,6 +35,18 @@ CREATE TABLE Clienti(
     telefonoCliente VARCHAR(50),
     PRIMARY KEY (IDCliente)
 );
+
+CREATE TABLE UserCliente (
+     IDUCliente SERIAL,
+     nomeUCliente VARCHAR(50) NOT NULL,
+     cognomeUCliente VARCHAR(50) NOT NULL,
+     emailUCliente VARCHAR(50) NOT NULL,
+     pwdUCliente VARCHAR(100) NOT NULL,
+     FA VARCHAR(255),
+     IDCliente INTEGER,
+     PRIMARY KEY (IDUCliente),
+     CONSTRAINT fk_idCliente_UserCliente FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+ );
 
 CREATE TABLE Siti(
     IDSito SERIAL,
@@ -347,6 +359,16 @@ VALUES
 -- (2, 'Cliente B'),
 -- (3, 'Cliente C');
 
+-- Sample data for additional Clienti
+INSERT INTO Clienti(IDCliente,nomeCliente,telefonocliente) VALUES
+    (2,'Azienda Bianchi','0698765432'),
+    (3,'Azienda Verdi','0623456789');
+
+-- Sample data for additional UserCliente
+INSERT INTO UserCliente(nomeUCliente,cognomeUCliente,emailUCliente,pwdUCliente,IDCliente) VALUES
+    ('Giulia','Bianchi','giulia.bianchi@azienda.it','Pass1234',2),
+    ('Luca','Neri','luca.neri@azienda.it','$2y$12$qF5Omkq1PIk269/GZKpk3eFjvVoq9k1e.rAGEv4rLoa.asVhL9MzO',2),
+    ('Francesca','Verdi','francesca.verdi@azienda.it','Pwd7890',3);
 
 -- -- Inserimento Clienti
 -- INSERT INTO Datacenter (idDC, nomeDC, IDCliente) VALUES

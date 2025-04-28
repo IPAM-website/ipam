@@ -10,6 +10,7 @@ import sql from "../../../db"
 interface LoginData {
     userP?: string,
     onValueChange$?: PropFunction<(value: string) => void>;
+    table?: string;
 }
 
 export const getQR = server$(async () => {
@@ -72,6 +73,7 @@ export default component$<LoginData>((props) => {
     const showModal = useSignal<boolean>(false);
     const otpCode = useSignal("");
     const utente = useSignal(props.userP);
+    const tabella = useSignal(props.table);
     const error = useSignal(false);
     const firstTime = useSignal(false);
     const verifiedClicked = useSignal(false);
@@ -84,6 +86,7 @@ export default component$<LoginData>((props) => {
 
 
     useTask$(async () => {
+        console.log(tabella.value)
         if (utente.value) {
             const user = JSON.parse(utente.value);
             // console.log(user);

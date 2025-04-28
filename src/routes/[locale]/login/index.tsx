@@ -23,9 +23,9 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
   let success = false;
   let type_message = 0;
   let userP = undefined;
+  let tabella = undefined;
   try {
     const query = await sql`SELECT * FROM tecnici WHERE emailtecnico = ${data.username}`;
-
     const user = query[0];
     console.log(user);
     if (user) {
@@ -34,12 +34,29 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
         success = true;
         type_message = 1 //"Login effettuato con successo"
         userP = JSON.stringify(user);
+        tabella = "tecnici";
       }
       else
       type_message = 2 // $localize`Password errata`
     }
-    else
-      type_message = 3 // $localize`Username errato`
+    else{
+      const query = await sql`SELECT * FROM usercliente WHERE emailucliente = ${data.username}`;
+      const user = query[0];
+      if (user) {
+        if (bcrypt.compareSync(data.pwd,user.pwducliente)) {
+          success = true;
+          type_message = 1 //"Login effettuato con successo"
+          userP = JSON.stringify(user);
+          tabella = "usercliente";
+        }
+        else
+        type_message = 2 // $localize`Password errata`
+      }
+      else
+      {
+        type_message = 3 // $localize`Username errato`
+      }
+    }
   }
   catch (e) {
     console.log(e);
@@ -49,7 +66,8 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
   return {
     success: success,
     type_message: type_message,
-    userP: userP
+    userP: userP,
+    tabella: tabella
   };
 },
   zod$({
@@ -113,7 +131,7 @@ export default component$(() => {
           </div>
         </Form>
         :
-        <FA userP={action.value.userP} onValueChange$={revert}></FA>
+        <FA userP={action.value.userP} table={action.value.tabella} onValueChange$={revert}></FA>
     }
   </>)
 });
