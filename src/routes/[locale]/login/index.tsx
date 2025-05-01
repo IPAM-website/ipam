@@ -6,6 +6,7 @@ import Password from '~/components/forms/formsComponents/Password';
 import sql from "~/../db"
 import FA from "~/components/auth/FA";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs"
 
 export const onGet: RequestHandler = async ({ cookie, redirect, env, locale }) => {
   if (cookie.has("jwt")) {
@@ -22,35 +23,52 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
   let success = false;
   let type_message = 0;
   let userP = undefined;
+  let tabella = undefined;
   try {
+    //console.log(data);
     const query = await sql`SELECT * FROM tecnici WHERE emailtecnico = ${data.username}`;
-
     const user = query[0];
+    //console.log(user);
     if (user) {
-      if (user.pwdtecnico === data.pwd && user.fa == "") {
+      //console.log(bcrypt.hashSync(data.pwd,12))
+      if (bcrypt.compareSync(data.pwd,user.pwdtecnico)) {
         success = true;
         type_message = 1 //"Login effettuato con successo"
         userP = JSON.stringify(user);
-      }
-      else if (user.pwdtecnico === data.pwd && user.fa != "") {
-        success = true;
-        type_message = 1 // "Login effettuato con successo"
-        userP = JSON.stringify(user);
+        tabella = "tecnici";
       }
       else
       type_message = 2 // $localize`Password errata`
     }
-    else
-      type_message = 3 // $localize`Username errato`
+    else{
+      const query = await sql`SELECT * FROM usercliente WHERE emailucliente = ${data.username}`;
+      const user = query[0];
+      if (user) {
+        if (bcrypt.compareSync(data.pwd,user.pwducliente)) {
+          success = true;
+          type_message = 1 //"Login effettuato con successo"
+          userP = JSON.stringify(user);
+          tabella = "usercliente";
+        }
+        else
+        type_message = 2 // $localize`Password errata`
+      }
+      else
+      {
+        type_message = 3 // $localize`Username errato`
+      }
+    }
   }
   catch (e) {
+    console.log(e);
     type_message = 4  // $localize`Errore del server. Attendere.`;
   }
 
   return {
     success: success,
     type_message: type_message,
-    userP: userP
+    userP: userP,
+    tabella: tabella,
   };
 },
   zod$({
@@ -114,7 +132,7 @@ export default component$(() => {
           </div>
         </Form>
         :
-        <FA userP={action.value.userP} onValueChange$={revert}></FA>
+        <FA userP={action.value.userP} table={action.value.tabella} onValueChange$={revert}></FA>
     }
   </>)
 });

@@ -1,16 +1,16 @@
-{/*import { $, component$, getLocale, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
+import { $, component$, getLocale, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 import { DocumentHead, Form, RequestEventAction, routeAction$, server$, useLocation, z, zod$ } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 import ButtonAdd from "~/components/table/ButtonAdd";
-import adminSelect from "~/components/forms/adminSelect";
+import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import TextBoxForm from "~/components/forms/formsComponents/TextboxForm";
 import styles from "../dialog.css?inline";
 import Import from "~/components/table/ImportCSV";
 import sql from "~/../db";
-import AdminSelect from "~/components/forms/adminSelect";
-import clienti from "../clienti";
+import { ClienteModel } from "~/dbModels";
+import bcrypt from "bcryptjs"
 
 // Aggiungi questo tipo per la notifica
 type Notification = {
@@ -18,52 +18,44 @@ type Notification = {
   type: 'success' | 'error';
 };
 
+export interface FilterObject {
+  value ?: string;
+}
+
 export interface TableModel {
-  idtecnico: number;
-  idcliente: number;
-  nometecnico: string;
-  nomecliente: string;
+  nomeucliente: string;
+  cognomeucliente: string;
+  emailucliente: string;
+  pwducliente: string;
 }
 
 export const extractRow = (row: any) => {
-  const { idtecnico, nometecnico, idcliente, nomecliente } = row;
+  console.log(row);
+  const { iducliente, nomeucliente, cognomeucliente, emailucliente, nomecliente, idcliente } = row;
   return {
-    idtecnico,
-    idcliente,
-    nometecnico,
-    nomecliente
+    iducliente,
+    nomeucliente,
+    cognomeucliente,
+    emailucliente,
+    nomecliente,
+    idcliente
   }
 }
 
-export const useReload = server$(async function () {
-  //.log("Reloading data...");
+export const deleteRow = server$(async function (this, data) {
+  console.log(data);
   try {
-    //const query = await sql`SELECT cliente_tecnico.idcliente, cliente_tecnico.data_assegnazione, cliente_tecnico.idtecnico, tecnici.nometecnico, clienti.nomecliente FROM Cliente_Tecnico, tecnici, clienti WHERE Cliente_Tecnico.idtecnico = tecnici.idtecnico AND Cliente_Tecnico.idcliente = clienti.idcliente ORDER BY cliente_tecnico.idtecnico`;
-    //console.log(query);
-    //return query;
-  }
-  catch {
-    return {
-      errore: "SI"
-    }
-  }
-})
-
-export const deleteRow = server$(async function(this,data){
-  try{
-    console.log(data);
-    //await sql`DELETE FROM cliente_tecnico WHERE cliente_tecnico.idtecnico = ${data.idtecnico} AND cliente_tecnico.idcliente = ${data.idcliente}`;
+    await sql`DELETE FROM usercliente WHERE usercliente.iducliente = ${data.iducliente}`;
     return true;
-  }catch(e)
-  {
+  } catch (e) {
     console.log(e);
     return false;
   }
 })
 
-export const useTecnici = server$(async () => {
+export const useUserCliente = server$(async () => {
   try {
-    //const query = await sql`SELECT cliente_tecnico.idcliente, cliente_tecnico.data_assegnazione, cliente_tecnico.idtecnico, tecnici.nometecnico, clienti.nomecliente FROM Cliente_Tecnico, tecnici, clienti WHERE Cliente_Tecnico.idtecnico = tecnici.idtecnico AND Cliente_Tecnico.idcliente = clienti.idcliente ORDER BY cliente_tecnico.idtecnico`;
+    const query = await sql`SELECT usercliente.iducliente, usercliente.nomeucliente, usercliente.cognomeucliente, usercliente.emailucliente, usercliente.pwducliente, clienti.nomecliente, clienti.idcliente FROM usercliente, clienti WHERE usercliente.idcliente = clienti.idcliente`;
     //console.log(query);
     //return query;
   }
@@ -74,15 +66,14 @@ export const useTecnici = server$(async () => {
   }
 })
 
-export const modCliente = routeAction$(async (data, requestEvent : RequestEventAction) => {
-  try
-  {
+export const modUserCliente = routeAction$(async (data, requestEvent: RequestEventAction) => {
+  try {
     console.log(data);
-    await sql`
-      UPDATE clienti
-      SET nomecliente = ${data.nome}
-      WHERE idcliente = ${data.idcliente}
-    `;
+    if (data.idcliente != undefined && data.idcliente != null && data.idcliente != '' && parseInt(data.idcliente) != 0) {
+      await sql`UPDATE usercliente SET nomeucliente = ${data.nome}, cognomeucliente = ${data.cognome}, emailucliente = ${data.email}, idcliente = ${parseInt(data.idcliente)} WHERE iducliente = ${data.iducliente}`;
+    }
+    else
+      await sql`UPDATE usercliente SET nomeucliente = ${data.nome}, cognomeucliente = ${data.cognome}, emailucliente = ${data.email} WHERE iducliente = ${data.iducliente}`;
     return {
       success: true,
       message: "Cliente modificato con successo"
@@ -95,19 +86,23 @@ export const modCliente = routeAction$(async (data, requestEvent : RequestEventA
       message: "Errore durante l'inserimento del cliente"
     }
   }
-},zod$({
-  idcliente: z.string(),
+}, zod$({
+  iducliente: z.string(),
+  idcliente: z.string().optional(),
   nome: z.string().min(2),
+  cognome: z.string().min(2),
+  email: z.string().email()
 }))
 
-export const addCliente = routeAction$(async (data, requestEvent : RequestEventAction) => {
-  try
-  {
-    console.log(data);
-    //await sql`
-      //INSERT INTO cliente_tecnico (idcliente, idtecnico, data_assegnazione)
-      //VALUES (${data.idcliente}, ${data.idtecnico}, ${new Date().toISOString()})
-    //`;
+export const addUserCliente = routeAction$(async (data, requestEvent: RequestEventAction) => {
+  try {
+    if (data.idcliente != undefined && data.idcliente != null && parseInt(data.idcliente) != 0 && data.idcliente != '') {
+      await sql`INSERT INTO usercliente (nomeucliente, cognomeucliente, emailucliente, pwducliente, idcliente) VALUES (${data.nome}, ${data.cognome}, ${data.email}, ${bcrypt.hashSync(data.pwd, 12)}, ${data.idcliente})`;
+    }
+    else{
+      console.log(data);
+      await sql`INSERT INTO usercliente (nomeucliente, cognomeucliente, emailucliente, pwducliente) VALUES (${data.nome}, ${data.cognome}, ${data.email}, ${bcrypt.hashSync(data.pwd, 12)})`;
+    }
     return {
       success: true,
       message: "Cliente inserito con successo"
@@ -120,113 +115,100 @@ export const addCliente = routeAction$(async (data, requestEvent : RequestEventA
       message: "Errore durante l'inserimento del cliente"
     }
   }
-},zod$({
-  idcliente: z.string(),
-  idtecnico: z.string()
-}))
-
-export const clientList = server$(async function (this, idTecnico?: number) {
-  try {
-    // If idTecnico is provided, get clients not associated with this technician
-    if (idTecnico) {
-     /* const query = await sql`
-        SELECT * FROM clienti 
-        WHERE idcliente NOT IN (
-          SELECT idcliente FROM cliente_tecnico 
-          WHERE idtecnico = ${idTecnico}
-        )
-      `;
-      return query;
-    } 
-    // Otherwise return all clients
-    else {
-      const query = await sql`SELECT * FROM clienti`;
-      return query;
-    }
-  }
-  catch (e) {
-    console.log(e);
-    return {
-      errore: "SI"
-    }
-  }
-})
-
-export const tecniciList = server$(async function (this) {
-  try {
-    const query = await sql`SELECT * FROM tecnici`;
-    return query;
-  }
-  catch (e) {
-    console.log(e);
-    return {
-      errore: "SI"
-    }
-  }
-})
-
-export const addRelazione = routeAction$(async (data) => {
-  try {
-    console.log("Aggiunta relazione:", data);
-    // Inserisci la nuova relazione tra tecnico e cliente
-    /*await sql`
-      INSERT INTO cliente_tecnico (idtecnico, idcliente, data_assegnazione)
-      VALUES (${data.idtecnico}, ${data.idcliente}, NOW())
-    `;
-    return {
-      success: true,
-      message: "Relazione inserita con successo"
-    }
-  }
-  catch (e) {
-    console.log(e);
-    return {
-      success: false,
-      message: "Errore durante l'inserimento della relazione"
-    }
-  }
 }, zod$({
-  idtecnico: z.string().min(1),
-  idcliente: z.string().min(1)
+  idcliente: z.string().optional(),
+  nome: z.string().min(2),
+  cognome: z.string().min(2),
+  email: z.string().email(),
+  pwd: z.string().min(2),
 }))
+
+export const listaClienti = server$(async function (this) {
+  try {
+    const query = await sql`SELECT * FROM clienti`;
+    return query as unknown as ClienteModel[];
+  }
+  catch (e) {
+    console.log(e);
+    return [];
+  }
+})
+
+export const listaClientiExcept = server$(async (data) => {
+  try {
+    console.log(data);
+    const query = await sql`SELECT * FROM clienti WHERE idcliente != ${data.idcliente}`;
+    return query as unknown as ClienteModel[];
+  }
+  catch (e) {
+    console.log(e);
+    return [];
+  }
+})
+
+export const search = server$(async (data) => {
+  try {
+    const query = await sql`
+      SELECT 
+        usercliente.iducliente, 
+        usercliente.nomeucliente, 
+        usercliente.cognomeucliente, 
+        usercliente.emailucliente, 
+        usercliente.pwducliente, 
+        clienti.nomecliente
+      FROM usercliente
+      JOIN clienti ON usercliente.idcliente = clienti.idcliente
+      WHERE (
+        usercliente.nomeucliente   LIKE ${data.filter}
+        OR usercliente.cognomeucliente LIKE ${data.filter}
+        OR usercliente.emailucliente   LIKE ${data.filter}
+        OR clienti.nomecliente         LIKE ${data.filter}
+      )
+    `;
+    return query;
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+})
 
 export default component$(() => {
   useStyles$(styles);
   const dati = useSignal();
   const lang = getLocale("en");
   const nome = useSignal('');
+  const cognome = useSignal('');
+  const email = useSignal('');
+  const password = useSignal('');
   const showDialog = useSignal(false);
   const isEditing = useSignal(false);
-  const currentId = useSignal<number | null>(null);
-  const addAction = addCliente();
-  const editAction = modCliente();
+  const currentIdC = useSignal<string | number | null>(null);
+  const addAction = addUserCliente();
+  const editAction = modUserCliente();
   const formAction = useSignal(addAction);
-  const currentIDT = useSignal<number | null>(null);
   // Aggiungi questo stato per le notifiche
   const notifications = useSignal<Notification[]>([]);
   const reloadFN = useSignal<(() => void) | null>(null);
-  const listSelect = useSignal([]);
   const currentTecnico = useSignal<number | null>(null);
-  const listSelectTecnici = useSignal([]);
-  const addRelazioneAction = addRelazione();
+  const clientList = useSignal<ClienteModel[]>([]);
+  const currentIdUC = useSignal<string | number | null>(null);
+  const filter = useSignal<FilterObject>({ value: '' });
+  const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
 
-  useTask$(async ({ track })=>{
-      const query = await useTecnici();
-      dati.value = query;
-      track(() => isEditing.value);
-      // @ts-ignore
-      formAction.value = isEditing.value ? editAction : addAction;
-      
-      // Track changes to currentTecnico and update client list accordingly
-      track(() => currentTecnico.value);
-      if (currentTecnico.value) {
-        listSelect.value = await clientList(currentTecnico.value);
-      } else {
-        listSelect.value = await clientList();
-      }
+  useTask$(async ({ track }) => {
+    const query = await useUserCliente();
+    dati.value = query;
+    track(() => isEditing.value);
+    // @ts-ignore
+    formAction.value = isEditing.value ? editAction : addAction;
+    //console.log(clientList.value);
+  })
 
-      // Carica i tecnici all'avvio
-      listSelectTecnici.value = await tecniciList();
+  const clients = $(async () => {
+    if(isEditing.value)
+      clientList.value = await listaClienti();
+    else
+      clientList.value = await listaClientiExcept({ idcliente: currentIdC.value });
   })
 
   // Funzione per aggiungere una notifica
@@ -238,42 +220,54 @@ export default component$(() => {
     }, 3000);
   });
 
-  const Modify = $((row:any)=>{
+  const Modify = $(async (row: any) => {
+
     const extractRowData = extractRow(row);
     console.log(extractRowData);
-    currentId.value = extractRowData.idtecnico;
-    nome.value = extractRowData.nometecnico;
-    currentTecnico.value = extractRowData.idtecnico;
+    nome.value = extractRowData.nomeucliente;
+    cognome.value = extractRowData.cognomeucliente;
+    email.value = extractRowData.emailucliente;
+    currentIdUC.value = extractRowData.iducliente;
     isEditing.value = true;
     showDialog.value = true;
+    currentIdC.value = extractRowData.idcliente;
+    console.log(currentIdC.value);
+    clientList.value = await listaClientiExcept({ idcliente: currentIdC.value });
   })
 
 
-  const Delete =$(async (row:any)=>{
-    if(await deleteRow(extractRow(row)))
+  const Delete = $(async (row: any) => {
+    //console.log(extractRow(row));
+    if (await deleteRow(extractRow(row)))
       addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", 'success');
     else
       addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
   })
 
   const reloadTable = $(() => {
-    if (formAction.value.value?.success){
-      addNotification(lang === "en" ? "Record added successfully" : "Dato aggiunto con successo", 'success');  
+    if (formAction.value.value?.success) {
+      addNotification(lang === "en" ? "Record added successfully" : "Dato aggiunto con successo", 'success');
       showDialog.value = false;
       isEditing.value = false;
+      reloadFN.value?.();
     }
     else
       addNotification(lang === "en" ? "Error during adding" : "Errore durante l'aggiunta", 'error');
   })
 
-  const openClientiDialog = $(() => {
+  const openClientiDialog = $(async () => {
     nome.value = '';
+    cognome.value = '';
+    email.value = '';
+    password.value = '';
     isEditing.value = false;
     showDialog.value = true;
-    currentId.value = null;
+    currentIdC.value = null;
     currentTecnico.value = null;
-    // Usa l'azione di aggiunta relazione
-    formAction.value = addRelazioneAction;
+    if(!isEditing.value)
+      clientList.value = await listaClienti();
+    else
+      clientList.value = await listaClientiExcept({ idcliente: currentIdC.value });
   })
 
   const closeClientiDialog = $(() => {
@@ -286,49 +280,51 @@ export default component$(() => {
   })
 
   const handleOkay = $(() => {
-    console.log("ok");
     addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
   })
 
-  const reloadData = $(async () => {
-    return await useReload();
+  const reload = $(async () => {
+    if (filter.value.value != '') {
+      const query = await search({ filter: `%${filter.value.value}%` });
+      //console.log(query);
+      return query;
+    }
+    else
+      return await useUserCliente();
   })
 
-  const clienteSelezionato = $((event: any) => {
-    currentId.value = event.target.value;
+  const reload2 = $(async (e: any) => {
+    reloadFN.value = e;
   })
 
-  // Funzione per aggiornare il tecnico selezionato e ricaricare la lista clienti
-  const tecnicoSelezionato = $(async (event: any) => {
-    currentTecnico.value = parseInt(event.target.value);
-    nome.value = event.target.text || event.target.value;
-    listSelect.value = await clientList(currentTecnico.value);
-  })
-      
   return (
     <>
-      <div class="size-full bg-white overflow-hidden">
-        {/* Aggiungi questo div per le notifiche }
+      <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0">
+        {/* Aggiungi questo div per le notifiche */}
         <div class="fixed top-4 right-4 z-50 space-y-2">
           {notifications.value.map((notification, index) => (
-            <div 
+            <div
               key={index}
-              class={`p-4 rounded-md shadow-lg ${
-                notification.type === 'success' 
-                  ? 'bg-green-500 text-white' 
+              class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
+                  ? 'bg-green-500 text-white'
                   : 'bg-red-500 text-white'
-              }`}
+                }`}
             >
               {notification.message}
             </div>
           ))}
         </div>
-        
-        <Title haveReturn={true} url={"/"+lang+"/admin/panel"}>{$localize`Admin Panel`}</Title>
+
+        <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{$localize`Admin Panel`}</Title>
         <Table title={$localize`Lista relazioni`}>
-          <Dati dati={dati.value} title={$localize`Lista relazioni`} nomeTabella={$localize`relations`} OnModify={Modify} OnDelete={Delete} DBTabella="cliente_tecnico" funcReloadData={reloadData} noModify="si"></Dati>
+          <TextBoxForm id="txtfilter" value={filter.value.value} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
+            filter.value.value = (e.target as HTMLInputElement).value;
+            if (reloadFN)
+              reloadFN.value?.();
+          }} />
+          <Dati dati={dati.value} title={$localize`Lista relazioni`} nomeTabella={$localize`relations`} OnModify={Modify} OnDelete={Delete} DBTabella="usercliente" onReloadRef={reload2} funcReloadData={reload}></Dati>
           <ButtonAdd nomePulsante={$localize`Aggiungi relazione/i`} onClick$={openClientiDialog}></ButtonAdd>
-          <Import nomeImport="cliente_tecnico" OnError={handleError} OnOk={handleOkay}></Import>
+          <Import nomeImport="usercliente" OnError={handleError} OnOk={handleOkay}></Import>
         </Table>
       </div>
 
@@ -345,48 +341,25 @@ export default component$(() => {
               <div class="dialog-messageAdmin">
                 <hr class="text-neutral-200 mb-4 w-11/12" />
                 <div class="w-11/12">
-                  <input class="opacity-0" id="idC" type="text" name="idcliente" value={currentId.value} />
-                  <input class="opacity-0" id="idT" type="text" name="idtecnico" value={currentTecnico.value} />
-                  {/* Campo nascosto per passare il nome del tecnico al form }
-                  <input class="opacity-0" id="nomeHidden" type="text" name="nome" value={nome.value} />
+                  <input type="hidden" name="idcliente" id="idC" value={currentIdC.value} />
+                  <input type="hidden" name="iducliente" id="idUC" value={currentIdUC.value} />
                   <br />
-                  {/* Mostra il selettore tecnici solo in modalità aggiunta, non in modalità modifica}
-                  {isEditing.value ? (
-                    <TextBoxForm error={formAction.value.value} id="NomeT" disabled='si' nameT="nome" title={$localize`Tecnico`} value={nome.value}></TextBoxForm>
-                  ) : (
-                    <AdminSelect 
-                      id="idT" 
-                      name={$localize`Tecnico`} 
-                      value={currentTecnico.value} 
-                      OnClick$={tecnicoSelezionato} 
-                      listName={$localize`Lista Tecnici`}
-                    >
-                      {/* Genera le opzioni dai dati di listSelectTecnici }
-                      {listSelectTecnici.value && listSelectTecnici.value.length > 0 ? (
-                        listSelectTecnici.value.map((tecnico: any) => (
-                          <option key={tecnico.idtecnico} value={tecnico.idtecnico}>{tecnico.nometecnico}</option>
-                        ))
-                      ) : (
-                        <option value="">{$localize`Nessun tecnico disponibile`}</option>
-                      )}
-                    </AdminSelect>
-                  )}
-                  <AdminSelect 
-                    id="idC" 
-                    name={$localize`Cliente`} 
-                    value={currentId.value} 
-                    OnClick$={clienteSelezionato} 
-                    listName={$localize`Lista Clienti`}
-                  >
-                    {/* Genera le opzioni dai dati di listSelect }
-                    {listSelect.value && listSelect.value.length > 0 ? (
-                      listSelect.value.map((client: any) => (
-                        <option key={client.idcliente} value={client.idcliente}>{client.nomecliente}</option>
-                      ))
-                    ) : (
-                      <option value="">{$localize`Nessun cliente disponibile`}</option>
-                    )}
-                  </AdminSelect>
+                  <SelectForm value="" OnClick$={(e) => { (document.getElementsByName("idcliente")[0] as HTMLInputElement).value = (e.target as HTMLOptionElement).value }} id="idUC" name="idcliente" title="Cliente" listName="">
+                    {!isEditing.value && <option value="0" selected>{$localize`No selected`}</option>}
+                    {clientList.value && clientList.value?.map((row: any) => {
+                      return (
+                        <option value={row.idcliente}>{row.nomecliente}</option>
+                      )
+                    })}
+                  </SelectForm>
+                  <TextBoxForm error={formAction.value.value} id="NomeCU" placeholder={$localize`Inserire il nome dell'utente`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
+                  <TextBoxForm error={formAction.value.value} id="CognomeCU" placeholder={$localize`Inserire il cognome dell'utente`} nameT="cognome" title={$localize`Cognome` + "*"} value={cognome.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.cognome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Surname not valid" : "Cognome non valido"}</div>)}
+                  <TextBoxForm error={formAction.value.value} id="EmailCU" placeholder={$localize`Inserire la mail dell'utente`} nameT="email" title={$localize`Email` + "*"} value={email.value}></TextBoxForm>
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.email && (<div class="text-sm text-red-600 font-semibold ms-32">{formAction.value.value?.fieldErrors.email}</div>)}
+                  {!isEditing.value && <TextBoxForm error={formAction.value.value} id="PwdT" placeholder={$localize`Inserire la password dell'uente`} nameT="pwd" title={$localize`Password` + "*"} value={password.value}></TextBoxForm>}
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Password not valid" : "Password non valido"}</div>)}
                 </div>
               </div>
               <div class="dialog-actionsAdmin">
@@ -397,7 +370,7 @@ export default component$(() => {
                 >
                   {$localize`Annulla`}
                 </button>
-                <button 
+                <button
                   class="dialog-buttonAdmin text-white bg-green-500 hover:bg-green-600 cursor-pointer"
                   type='submit'
                 >
@@ -420,4 +393,4 @@ export const head: DocumentHead = {
       content: "Pagina dell'admin per la gestione dei clienti e tecnici",
     },
   ],
-};*/}
+};

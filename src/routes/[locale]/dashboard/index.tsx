@@ -3,17 +3,24 @@ import { RequestHandler, useNavigate, routeLoader$, DocumentHead } from "@builde
 import ClientList from "~/components/ListUtilities/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 import { getBaseURL, getUser } from "~/fnUtils";
-import { TecnicoModel } from "~/dbModels";
+import { ClienteModel, TecnicoModel, UtenteModel } from "~/dbModels";
+import sql from "../../../../db";
 
 
-export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap }) => {
+export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap,  }) => {
 
     try {
         const user = await getUser();
         sharedMap.set("user", user);
+        //console.log(user)
+        const result = await sql`SELECT idcliente FROM usercliente WHERE emailucliente = ${user.mail}`
+        //console.log(result[0].idcliente.toString())
+        if(result.length != 0)
+            throw redirect(301, getBaseURL() + result[0].idcliente.toString());
+
     }
     catch (e) {
-        throw redirect(301, getBaseURL() + "login");
+        throw redirect(302, getBaseURL() + "login");
     }
 
 };
@@ -29,7 +36,7 @@ export default component$(() => {
     return (
         <div class="size-full lg:px-40 px-24">
             <Title>{$localize`: @@dbTitle:Client Selection Page`}</Title>
-            {/* <ClientList  /> */}
+            <ClientList />
 
 
             {user.admin && (

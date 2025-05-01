@@ -8,10 +8,12 @@ export const onRequest: RequestHandler = async ({ params, redirect }) => {
 
     try {
         const user = await getUser();
-        const query = await sql`SELECT * FROM cliente_tecnico WHERE cliente_tecnico.idtecnico = ${user?.id ?? -1} AND cliente_tecnico.idcliente= ${params.client}`
+        //console.log(user);
+        const query = await sql`SELECT * FROM usercliente WHERE usercliente.iducliente=${user.id} AND usercliente.emailucliente=${user.mail}`;
         if (query.length == 0)
             throw new Error("Unauthorized access");
     } catch (e) {
+        console.log(e);
         throw redirect(301, getBaseURL() + "dashboard");
     }
 }

@@ -5,6 +5,14 @@ export default component$(({ visible = false, title = "", onClosing$ = $(() => {
     const popup = useSignal<HTMLDivElement | undefined>();
     const mask = useSignal<HTMLDivElement | undefined>();
 
+    // useVisibleTask$(()=>{
+    //     document.addEventListener("keydown",function(e){
+    //         if(e.key=="Escape"){
+    //             onClosing$();
+    //         }
+    //     });
+    // })
+
     return (<div ref={mask} class="fixed top-0 left-0 w-[100vw] h-[100vh] bg-[rgba(1,1,1,0.25)] z-100 flex justify-center items-center" style={{ display: visible ? "flex" : "none" }} onClick$={(e) => {
         if ((e.target as (HTMLDivElement | undefined)) === mask.value)
             onClosing$();

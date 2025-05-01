@@ -5,11 +5,13 @@ import QRCode from 'qrcode';
 import { server$, useNavigate } from '@builder.io/qwik-city'
 
 import sql from "../../../db"
+import { table } from 'node:console';
 
 
 interface LoginData {
     userP?: string,
     onValueChange$?: PropFunction<(value: string) => void>;
+    table?: string;
 }
 
 export const getQR = server$(async () => {
@@ -54,10 +56,16 @@ export const QRverify = server$(async ({ tokenP, secret }) => {
     }
 });
 
-export const QRupdateDB = server$(async ({ userP, secret }) => {
+export const QRupdateDB = server$(async ({ userP, secret, tabella }) => {
     const user = JSON.parse(userP);
+    //console.log(tabella);
     try {
-        const response = await sql`UPDATE tecnici SET fa=${secret} WHERE idtecnico=${user.idtecnico}`;
+        let response;
+            if(tabella === "tecnici")
+                response = await sql`UPDATE tecnici SET fa=${secret} WHERE idtecnico=${user.idtecnico}`;
+            else if(tabella === "usercliente")
+                response = await sql`UPDATE usercliente SET fa=${secret} WHERE iducliente=${user.iducliente}`;
+        
         return ({ success: true });
     }
     catch (e) {
@@ -75,6 +83,7 @@ export default component$<LoginData>((props) => {
     const error = useSignal(false);
     const firstTime = useSignal(false);
     const verifiedClicked = useSignal(false);
+    const tabella = useSignal(props.table);
     const cookie = useStore({
         mail: "",
         admin: false,
@@ -84,12 +93,20 @@ export default component$<LoginData>((props) => {
 
 
     useTask$(async () => {
+        //console.log(props.table)
         if (utente.value) {
             const user = JSON.parse(utente.value);
-            // console.log(user);
-            cookie.mail = user.emailtecnico;
-            cookie.admin = user.admin;
-            cookie.id = user.idtecnico;
+            console.log(user);
+            //console.log(tabella.value);
+            if(tabella.value == "tecnici"){
+                cookie.mail = user.emailtecnico;
+                cookie.admin = user.admin;
+                cookie.id = user.idtecnico;
+            }
+            else if(tabella.value == "usercliente"){
+                cookie.mail = user.emailucliente;
+                cookie.id = user.iducliente;
+            }
             const expires = new Date();
             expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000));
             cookie.expire = expires.toUTCString();
@@ -117,16 +134,17 @@ export default component$<LoginData>((props) => {
         error.value = false;
         if (verifica.success) {
             if (firstTime.value) {
-                const update = await QRupdateDB({ "userP": utente.value, "secret": secret.value });
-                
+                const update = await QRupdateDB({ "userP": utente.value, "secret": secret.value, "tabella": tabella.value });
             }
 
+            //console.log(cookie)
             await fetch("/api/cookie", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(cookie)
+                body: JSON.stringify(cookie),
+                credentials: "include"
             })
             nav("/"+getLocale("en")+"/dashboard");
 
