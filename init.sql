@@ -367,7 +367,7 @@ INSERT INTO Clienti(IDCliente,nomeCliente,telefonocliente) VALUES
 -- Sample data for additional UserCliente
 INSERT INTO UserCliente(nomeUCliente,cognomeUCliente,emailUCliente,pwdUCliente,IDCliente) VALUES
     ('Giulia','Bianchi','giulia.bianchi@azienda.it','Pass1234',2),
-    ('Luca','Neri','luca.neri@azienda.it','$2y$12$qF5Omkq1PIk269/GZKpk3eFjvVoq9k1e.rAGEv4rLoa.asVhL9MzO',2),
+    ('Luca','Neri','luca.neri@azienda.it','$2a$12$SChoN9OCW7JfqwGNDliCR.1HgvZ3PsNUYhXqsDsutnEn6A8twsMIG',2),
     ('Francesca','Verdi','francesca.verdi@azienda.it','Pwd7890',3);
 
 -- -- Inserimento Clienti

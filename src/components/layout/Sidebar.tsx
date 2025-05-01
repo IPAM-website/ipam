@@ -2,7 +2,7 @@ import { $, component$, getLocale, useSignal, useTask$, useVisibleTask$ } from "
 import Accordion from "./Accordion/Accordion";
 import { NavLink } from "../NavLink/NavLink";
 import { RequestHandler, server$, useLocation, useNavigate } from "@builder.io/qwik-city";
-import { getBaseURL, getUser } from "~/fnUtils";
+import { getBaseURL, getUser, isUserClient } from "~/fnUtils";
 
 export const toggleSidebar = $(() => {
     const sidebar = document.getElementById('sidebar');
@@ -33,9 +33,11 @@ export default component$(() => {
     const nav = useNavigate();
     const loc = useLocation();
 
-    const user = useSignal<{mail:string,id:number,admin:boolean}>();
-    useTask$(async ()=>{
+    const user = useSignal<{ mail: string, id: number, admin: boolean }>();
+    const isClient = useSignal(false);
+    useTask$(async () => {
         user.value = await getUser();
+        isClient.value = await isUserClient();
     })
 
     const lang = getLocale("en");
@@ -100,25 +102,26 @@ export default component$(() => {
 
 
                         <div>
-                            <div class="flex-1 my-3 text-center justify-start text-black text-base font-semibold font-['Inter'] leading-normal">{$localize`Other`}</div>
+                            {(loc.params.site || !isClient.value) &&
+                                <div class="flex-1 my-3 text-center justify-start text-black text-base font-semibold font-['Inter'] leading-normal">{$localize`Other`}</div>
+                            }
 
-
-                            <a href={"/" + lang + "/dashboard"} class="block cursor-pointer text-center p-1 bg-[#0094ff] hover:bg-[#0083ee] rounded-lg text-white text-base font-['Inter'] leading-normal">
+                            {!isClient.value && <a href={"/" + lang + "/dashboard"} class="block cursor-pointer text-center p-1 bg-[#0094ff] hover:bg-[#0083ee] rounded-lg text-white text-base font-['Inter'] leading-normal">
                                 {$localize`Change client`}
-                            </a>
+                            </a>}
 
                             {
-                                loc.params.client &&
+                                loc.params.site &&
                                 <a href={baseSiteUrl.replace(loc.params.site + "/", "")} class="block cursor-pointer my-1 text-center p-1 bg-[#d506ff] hover:bg-[#c405ee] rounded-lg text-white text-base font-['Inter'] leading-normal">
                                     {$localize`Change site`}
-                                </a>                                
+                                </a>
                             }
 
                             {
                                 loc.params.site &&
                                 <a href={baseSiteUrl} class="block cursor-pointer my-1 text-center p-1 bg-[#1ada3a] hover:bg-[#10d030] rounded-lg text-white text-base font-['Inter'] leading-normal">
                                     {$localize`Go to site`}
-                                </a>  
+                                </a>
                             }
 
                             {
