@@ -466,7 +466,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                     <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
                     {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
+                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString(); updateIP.value()     }} listName="">
                         {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
