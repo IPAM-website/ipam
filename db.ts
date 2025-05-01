@@ -11,7 +11,8 @@ const sql = postgres({
     database: POSTGRES_DB,
     username: POSTGRES_USER,
     password: POSTGRES_PASSWORD,
-    port: parseInt(POSTGRES_PORT || '5432')
+    port: parseInt(POSTGRES_PORT || '5432'),
+    idle_timeout: 20,
 });
 
 console.log('Connected to PostgreSQL')

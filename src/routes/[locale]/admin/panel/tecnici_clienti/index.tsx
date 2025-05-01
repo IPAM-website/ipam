@@ -96,12 +96,13 @@ export const modUserCliente = routeAction$(async (data, requestEvent: RequestEve
 
 export const addUserCliente = routeAction$(async (data, requestEvent: RequestEventAction) => {
   try {
-    //console.log(data);
-    if (data.idcliente != undefined && data.idcliente != null && parseInt(data.idcliente) != 0) {
-      await await sql`INSERT INTO usercliente (nomeucliente, cognomeucliente, emailucliente, pwducliente, idcliente) VALUES (${data.nome}, ${data.cognome}, ${data.email}, ${bcrypt.hashSync(data.pwd, 12)}, ${data.idcliente})`;
+    if (data.idcliente != undefined && data.idcliente != null && parseInt(data.idcliente) != 0 && data.idcliente != '') {
+      await sql`INSERT INTO usercliente (nomeucliente, cognomeucliente, emailucliente, pwducliente, idcliente) VALUES (${data.nome}, ${data.cognome}, ${data.email}, ${bcrypt.hashSync(data.pwd, 12)}, ${data.idcliente})`;
     }
-    else
+    else{
+      console.log(data);
       await sql`INSERT INTO usercliente (nomeucliente, cognomeucliente, emailucliente, pwducliente) VALUES (${data.nome}, ${data.cognome}, ${data.email}, ${bcrypt.hashSync(data.pwd, 12)})`;
+    }
     return {
       success: true,
       message: "Cliente inserito con successo"
