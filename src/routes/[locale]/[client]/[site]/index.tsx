@@ -239,7 +239,7 @@ export default component$(() => {
         track(() => formData.iprete)
         track(() => formData.prefissorete)
         track(() => networks.value)
-        console.log("re caloclo")
+        // console.log("re caloclo")
         filteredNetworks.value = networks.value.filter(x => {
             if (!ipCompleted.value)
                 return true;
@@ -274,7 +274,7 @@ export default component$(() => {
             addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
         else
             addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione", 'error');
-        console.log("COME?")
+        // console.log("COME?")
     })
 
     const handleModify = $((e: any) => {
@@ -407,7 +407,7 @@ export default component$(() => {
                         addNotification("Network added successfully", "success");
                     }
                     else {
-                        console.log(insertAction.value?.message);
+                        // console.log(insertAction.value?.message);
                         addNotification("Error during creation", "error");
                     }
                 }
@@ -420,7 +420,7 @@ export default component$(() => {
                         addNotification("Network updated successfully", "success");
                     }
                     else {
-                        console.log(updateAction.value?.message);
+                        // console.log(updateAction.value?.message);
                         addNotification("Error during update", "error");
                     }
                 }

@@ -152,6 +152,61 @@ export const deleteInterval = server$(async function (this, data) {
     }
 })
 
+export const isOccupied = server$(async function (this, data) {
+    try {
+        if (this.params.mode == "insert") {
+            const result = await sql`
+            SELECT COUNT(*) as count 
+            FROM indirizzi 
+            WHERE ip >= ${data.iniziointervallo} AND ip <= ${data.fineintervallo} AND idrete = ${data.idrete}
+            UNION 
+            SELECT COUNT(*) as count 
+            FROM intervalli 
+            WHERE idrete = ${data.idrete} 
+            
+            AND (
+            (iniziointervallo >= ${data.iniziointervallo} AND iniziointervallo <= ${data.fineintervallo}) 
+            OR (fineintervallo >= ${data.iniziointervallo} AND fineintervallo <= ${data.fineintervallo}) 
+            OR (iniziointervallo <= ${data.iniziointervallo} AND fineintervallo >= ${data.fineintervallo})
+            )
+        `;
+            const count = result.reduce((acc: number, i: any) => {
+                if (acc === undefined) acc = 0;
+                return acc + parseInt(i.count, 10);
+            }, 0)
+            return count > 0;
+        }
+        else if (this.params.mode == "update") {
+            const result = await sql`
+            SELECT COUNT(*) as count 
+            FROM indirizzi 
+            WHERE ip >= ${data.iniziointervallo} AND ip <= ${data.fineintervallo} AND idrete = ${data.idrete}
+            UNION 
+            SELECT COUNT(*) as count 
+            FROM intervalli 
+            WHERE idrete = ${data.idrete} 
+            AND idintervallo != ${data.idintervallo} -- Exclude the current interval in update mode
+            AND (
+            (iniziointervallo >= ${data.iniziointervallo} AND iniziointervallo <= ${data.fineintervallo}) 
+            OR (fineintervallo >= ${data.iniziointervallo} AND fineintervallo <= ${data.fineintervallo}) 
+            OR (iniziointervallo <= ${data.iniziointervallo} AND fineintervallo >= ${data.fineintervallo})
+            )
+        `;
+            const count = result.reduce((acc: number, i: any) => {
+                if (acc === undefined) acc = 0;
+                return acc + parseInt(i.count, 10);
+            }, 0)
+            return count > 0;
+        }
+
+        return false;
+    }
+    catch (e) {
+        console.log(e);
+        return false;
+    }
+})
+
 type Notification = {
     message: string;
     type: 'success' | 'error';
@@ -171,7 +226,7 @@ export default component$(() => {
         iniziointervallo: '',
         lunghezzaintervallo: 0,
         nomeintervallo: '',
-        descrizioneintervallo:''
+        descrizioneintervallo: ''
     });
     const sitename = useSiteName();
     const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', query: '' } });
@@ -205,7 +260,7 @@ export default component$(() => {
     })
 
     const handleOkay = $(() => {
-        console.log("ok");
+        // console.log("ok");
         addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
     })
 
@@ -348,15 +403,17 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
     const nav = useNavigate();
     const action = useAction();
 
+    const network = useSignal<ReteModel>();
+
     const formData = useStore<IntervalloModel>({
-            fineintervallo: '',
-            idintervallo: 0,
-            idrete: 0,
-            iniziointervallo: '',
-            lunghezzaintervallo: 0,
-            nomeintervallo: '',
-            descrizioneintervallo:''
-        });
+        fineintervallo: '',
+        idintervallo: 0,
+        idrete: 0,
+        iniziointervallo: '',
+        lunghezzaintervallo: 0,
+        nomeintervallo: '',
+        descrizioneintervallo: ''
+    });
 
 
     const attempted = useSignal<boolean>(false);
@@ -366,12 +423,24 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
     const intervals = useSignal<IntervalloModel[]>([]);
 
     const ipErrors = useSignal<string[]>([]);
+    const ipFineErrors = useSignal<string[]>([]);
+    const alreadyOccupied = useSignal<boolean>(false);
 
     useTask$(async () => {
+
+        Object.assign(formData, data as IntervalloModel);
 
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
         intervals.value = await getAllIntervals();
 
+        network.value = networks.value.find(x => x.idrete == parseInt(loc.url.searchParams.get('network') || "0"))
+        // console.log(network.value)
+    })
+
+    const updateFIP = useSignal<() => void>(() => { });
+
+    const handleUpdate = $((e: () => void) => {
+        updateFIP.value = e;
     })
 
     return (
@@ -383,16 +452,31 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
                     <TextboxForm id="txtModel" title={$localize`Descrizione Intervallo`} value={formData.descrizioneintervallo} placeholder="Es. Pool indirizzi ufficio 1" OnInput$={(e) => formData.descrizioneintervallo = (e.target as HTMLInputElement).value} />
                 </FormBox>
                 <FormBox title="Dettagli">
-
-                    <AddressBox title={$localize`IP Iniziale`} addressType="host" currentIPNetwork={formData.idrete ?? -1} value={data?.iniziointervallo} OnInput$={(e) => {
-                        console.log(formData.idrete);
+                    <AddressBox title={$localize`IP Iniziale`} disabled={loc.params.mode == "update"} addressType="host" currentIPNetwork={formData.idrete ?? -1} prefix={network.value?.prefissorete.toString()} value={formData?.iniziointervallo} OnInput$={(e) => {
+                        // console.log(formData.idrete);
                         if (e.complete) {
-                            if (loc.params.mode == "update" && !e.exists)
-                                e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
-                            else if (loc.params.mode == "insert" && e.exists)
-                                e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
-                            else
-                                formData.iniziointervallo = e.ip;
+                            formData.iniziointervallo = e.ip;
+
+                            if (formData.fineintervallo != "") {
+                                const parsedIP = formData.iniziointervallo.split('.').map(x => parseInt(x));
+                                const parsedFineIP = formData.fineintervallo.split('.').map(x => parseInt(x));
+
+                                let distance = 0;
+
+                                for (let [i, v] of parsedIP.entries()) {
+                                    distance += (parsedFineIP[i] - v) * (Math.pow(2, 8 * (3 - i)));
+                                }
+
+                                if (distance < 1) {
+                                    ipFineErrors.value.push("Interval size is invalid")
+                                    return;
+                                }
+                                formData.lunghezzaintervallo = distance;
+                                console.log(distance);
+
+                                isOccupied(formData).then(result => alreadyOccupied.value = result);
+                            }
+
                         }
 
                         ipErrors.value = e.errors;
@@ -401,24 +485,71 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
 
                     {ipErrors.value && <span class="text-red-600">{ipErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
 
-                    <AddressBox title={$localize`IP Finale`} addressType="host" value={formData.fineintervallo} />
+                    <AddressBox title={$localize`IP Finale`} disabled={loc.params.mode == "update"} addressType="host" value={formData.fineintervallo} currentIPNetwork={formData.idrete ?? -1} prefix={network.value?.prefissorete.toString()} forceUpdate$={handleUpdate} OnInput$={(e) => {
+                        ipFineErrors.value = e.errors;
 
-                    <TextboxForm id="txtLunghezza" value={formData.lunghezzaintervallo.toString()}  title={$localize`Lunghezza`} placeholder="Interval Length" OnInput$={(e) => { formData.lunghezzaintervallo = parseInt((e.target as any).value); }} />
+                        if (e.complete && formData.iniziointervallo != "") {
+                            const parsedIP = formData.iniziointervallo.split('.').map(x => parseInt(x));
+                            const parsedFineIP = e.ip.split('.').map(x => parseInt(x));
+
+                            let distance = 0;
+
+                            for (let [i, v] of parsedIP.entries()) {
+                                distance += (parsedFineIP[i] - v) * (Math.pow(2, 8 * (3 - i)));
+                            }
+
+                            if (distance < 1) {
+                                ipFineErrors.value.push("Interval size is invalid")
+                                return;
+                            }
+
+                            formData.fineintervallo = e.ip;
+                            formData.lunghezzaintervallo = distance;
+                            isOccupied(formData).then(result => alreadyOccupied.value = result);
+                        }
+                    }} />
+
+                    {ipFineErrors.value && <span class="text-red-600">{ipFineErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
+
+                    <TextboxForm id="txtLunghezza" value={formData.lunghezzaintervallo.toString()} title={$localize`Lunghezza`} placeholder="Interval Length" OnInput$={(e) => {
+                        const lunghezza = parseInt((e.target as HTMLInputElement).value);
+                        if (isNaN(lunghezza))
+                            return;
+
+                        formData.lunghezzaintervallo = parseInt((e.target as any).value);
+                        // modificare indirizzo finale
+                        let parsedIP = formData.iniziointervallo.split('.').map(x => parseInt(x));
+                        parsedIP[3] += lunghezza;
+                        for (let i = 3; i > 1; i--) {
+                            if (isNaN(parsedIP[i]))
+                                return;
+
+                            if (parsedIP[i] >= 256) {
+                                parsedIP[i - 1] = parsedIP[i - 1] + Math.trunc(parsedIP[i] / 256);
+                                parsedIP[i] = parsedIP[i] % 256;
+                            }
+                            else
+                                break;
+                        }
+                        formData.fineintervallo = parsedIP.join('.');
+                        updateFIP.value();
+                        isOccupied(formData).then(result => alreadyOccupied.value = result);
+                    }} />
                     {attempted.value && !formData.lunghezzaintervallo && <span class="text-red-600">{$localize`This length is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as HTMLOptionElement).value);}} listName="">
+                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as HTMLOptionElement).value); network.value = networks.value.find(x => x.idrete == formData.idrete) }} listName="">
                         {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
 
-
+                    {alreadyOccupied.value && <span class="text-red-600">{$localize`Space already occupied`}</span>}
 
                 </FormBox>
 
             </div>
             <button onClick$={async (e) => {
                 e.preventDefault();
-                if (!formData.lunghezzaintervallo || formData.iniziointervallo!="" || !formData.idrete) {
+                if (!formData.lunghezzaintervallo || formData.iniziointervallo == "" || !formData.idrete) {
                     attempted.value = true;
                     if (isNaN(formData.lunghezzaintervallo))
                         formData.lunghezzaintervallo = 0;
@@ -431,7 +562,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
                 }
 
             }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
-                !formData.lunghezzaintervallo || formData.iniziointervallo!="" || !formData.idrete
+                !formData.lunghezzaintervallo || formData.iniziointervallo == "" || !formData.idrete
             }>{$localize`Conferma`}</button>
             <a class="bg-red-500 hover:bg-red-600 transition-all rounded-md text-white p-2 inline-block mx-1" href={loc.url.href.replace("insert", "view").replace("update", "view")}>{$localize`Annulla`}</a>
             {action.submitted && action.value &&

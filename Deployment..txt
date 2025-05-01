@@ -1,0 +1,6 @@
+Metterlo su linux. (Ubuntu per semplicità, Debian per stabilità)
+Utilizzare let's encrypt per il certificato.
+Fare il reverse proxy (con nginx).
+Usare VPS (AWS, DigitalOcean, Linode)
+o PaaS (Heroku,Vercel,Render,Railway)
+Usare crontab per rinnovare il certificato SSL.

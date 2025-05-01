@@ -27,9 +27,9 @@ export const useLogin = routeAction$(async (data, requestEvent: RequestEventActi
     const query = await sql`SELECT * FROM tecnici WHERE emailtecnico = ${data.username}`;
 
     const user = query[0];
-    console.log(user);
+    // console.log(user);
     if (user) {
-      console.log(bcrypt.hashSync(data.pwd,12))
+      // console.log(bcrypt.hashSync(data.pwd,12))
       if (bcrypt.compareSync(data.pwd,user.pwdtecnico)) {
         success = true;
         type_message = 1 //"Login effettuato con successo"

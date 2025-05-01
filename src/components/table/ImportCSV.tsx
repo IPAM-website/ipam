@@ -34,7 +34,7 @@ export const processCSV = server$(async (csvContent: string) => {
       //console.log(tabella)
       // console.log(DBTableMaps[tabella]);
       // console.log(rows)
-      console.log(data);
+      // console.log(data);
       const query = await sql`INSERT INTO ${sql(tabella)} (${sql(tableMap)}) VALUES ${sql(rows)}`;
       //console.log(query)
     }

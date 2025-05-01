@@ -94,7 +94,6 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
     const input4 = useSignal<HTMLInputElement>();
 
     const assembleIP = $(async () => {
-
         if (disabled)
             return;
         let ip = "";
@@ -132,6 +131,11 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
 
         let parsedIP = ip.split('.').map(segment => parseInt(segment));
+
+        for(let ip of parsedIP)
+            if(ip<0 || ip>255)
+                errors.push("Invalid IP");
+
         let parsedPrefix = parseInt(working_prefix);
         let networkIP = new Array(4)
 
@@ -193,8 +197,8 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
         if (currentIPNetwork && currentIPNetwork != -1) {
             const parentNetwork: ReteModel = await getNetwork(currentIPNetwork) as ReteModel;
-            
-            let parentNetworkIP = parentNetwork.iprete.split('.').map(x=>parseInt(x));
+
+            let parentNetworkIP = parentNetwork.iprete.split('.').map(x => parseInt(x));
             let parentLastIp = new Array(4);
             let reversedPrefix = 32 - parentNetwork.prefissorete;
 
@@ -214,20 +218,23 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
                 if (parentNetwork.prefissorete > parseInt(working_prefix)) {
                     errors.push("Network exceed dimension limits");
                 }
+
                 const usedIPs: { start: string, finish: string, id: number }[] = await getNetworkSpace(currentIPNetwork) as { start: string, finish: string, id: number }[];
                 for (let interval of usedIPs) {
-                    console.log(interval.finish, '>=', networkIP.join('.'), ' -> ', interval.finish >= networkIP.join('.'))
-                    console.log(interval.start, '<=', lastIP.join('.'), ' -> ', interval.start <= lastIP.join('.'))
+                    // console.log(interval.finish, '>=', networkIP.join('.'), ' -> ', interval.finish >= networkIP.join('.'))
+                    // console.log(interval.start, '<=', lastIP.join('.'), ' -> ', interval.start <= lastIP.join('.'))
                     if ((interval.finish >= networkIP.join('.') || interval.start >= lastIP.join('.')) && interval.id != currentID) {
                         errors.push("Space already occupied");
                         break;
                     }
                 }
-
-                if (!(networkIP.join('.') >= parentNetwork.iprete && lastIP.join('.') <= parentLastIp.join('.')) && complete)
-                    errors.push("Outside of network boundaries");
             }
 
+            
+
+            // console.log(lastIP,networkIP);
+            if (!(networkIP.join('.') >= parentNetwork.iprete && lastIP.join('.') <= parentLastIp.join('.')) && complete)
+                errors.push("Outside of network boundaries");
 
             // if (networkIP.join('.') != parentNetwork.iprete && complete)
             //     errors.push("Outside of network boundaries");
@@ -237,7 +244,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
         if (checkAvailability) {
             let sameIP = [];
             sameIP = await getSameIPs(ip, currentIPNetwork, parseInt(working_prefix), addressType) as any[];
-            console.log(sameIP)
+            // console.log(sameIP)
             exists = sameIP.length > 0
         }
 
@@ -251,12 +258,17 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
     })
 
     useVisibleTask$(({ track }) => {
+        track(() => currentIPNetwork)
+        assembleIP();
+    });
+
+    useVisibleTask$(({ track }) => {
 
         if (forceUpdate$)
             forceUpdate$(forceUpdate);
 
-        track(() => currentIPNetwork)
-        track(() => prefix)
+
+        // track(() => prefix)
         track(() => forceValue.value)
 
         for (const item of document.getElementsByClassName("only-numbers")) {
@@ -266,6 +278,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
                 if (this.selectionStart === this.selectionEnd && this.value.length >= 3 && !["Backspace", "Tab", "ArrowLeft", "ArrowRight"].includes(e.key)) {
                     e.preventDefault();
                 }
+
             });
         }
 
@@ -282,7 +295,6 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
             if (this.value.length == 3 && numbers.includes(e.key)) input4.value?.focus();
         });
 
-        console.log("PASSED VALUE:", value)
 
         if (value != "" && value?.split('.').length == 4) {
             if (input1.value && !isNaN(parseInt(value.split('.')[0]))) input1.value.value = value.split('.')[0];

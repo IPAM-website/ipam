@@ -60,7 +60,7 @@ export const deleteClient = server$(async (data) => {
 
 export const modCliente = routeAction$(async (data, requestEvent: RequestEventAction) => {
   try {
-    console.log(data);
+    // console.log(data);
     await sql`
       UPDATE clienti
       SET nomecliente = ${data.nome}
@@ -121,7 +121,7 @@ export default component$(() => {
   const formAction = useSignal(addAction);
   const notifications = useSignal<Notification[]>([]);
 
-  const reloadFN = useSignal<() => void>();
+  
 
   useTask$(async ({ track }) => {
     const query = await useTecnici();
@@ -177,13 +177,14 @@ export default component$(() => {
   })
 
   const Delete = $(async (row: any) => {
-    console.log(row);
+    // console.log(row);
     if (await deleteRow(extractRow(row)))
       addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
     else
       addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione", 'error');
   })
 
+  const reloadFN = useSignal<() => void>();
   const getRef = $((e: () => void) => reloadFN.value = e)
 
   return (

@@ -101,7 +101,7 @@ export const useSiteName = routeLoader$(async ({ params }) => {
 export const useAction = routeAction$(async (data) => {
     let success = false;
     let type_message = 0;
-    console.log(data.data_inserimento);
+    // console.log(data.data_inserimento);
     try {
         if (data.mode == "update") {
             await sql`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, idv=${data.idv}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
@@ -220,7 +220,7 @@ export default component$(() => {
       })
     
       const handleOkay = $(() => {
-        console.log("ok");
+        // console.log("ok");
         addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
       })
 
@@ -384,6 +384,9 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
     const networks = useSignal<ReteModel[]>([]);
     const vlans = useSignal<VLANModel[]>([]);
 
+    const updateIP = useSignal<()=>void>(()=>{});
+
+    const handleFUpdate = $((e:()=>void)=>updateIP.value=e);
 
     useTask$(async () => {
 
@@ -396,7 +399,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                 formData.prefix = formData.n_prefisso.toString();
             if (data?.tipo_dispositivo == undefined)
                 formData.tipo_dispositivo = 'Other'
-            console.log(formData);
+            // console.log(formData);
         }
     })
 
@@ -418,7 +421,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                 </FormBox>
                 <FormBox title="Dettagli">
 
-                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
+                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" forceUpdate$={handleFUpdate} currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
 
 
                         if (e.complete) {
@@ -463,7 +466,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                     <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
                     {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString() }} listName="">
+                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
                         {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}

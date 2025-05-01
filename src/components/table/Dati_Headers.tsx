@@ -46,7 +46,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
     const reloadData = $(async () => {
         store.globalLoading = true;
         try {
-            console.log("Reloading data for table:", nT.value);
+            // console.log("Reloading data for table:", nT.value);
             const freshData = funcReloadData ? await funcReloadData() : await server$(async () => {
                 const result = await sql`SELECT * FROM ${sql(nT.value)}`;
                 return Array.isArray(result) ? result : [];
@@ -256,7 +256,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                             {settings.tableColumnsHeader.map((header) => {
                                 const index = TableMaps[nT.value].headers[lang].indexOf(header);
                                 const key = TableMaps[nT.value].keys[index];
-                                console.log(key);
+                                // console.log(key);
                                 return (
                                     <div key={index} class="text-zinc-500 text-sm cursor-pointer font-semibold py-3 px-4 flex items-center flex-1" onClick$={() => { if (header == "") return; orderFilter[key] = ((orderFilter[key] + 2) % 3) - 1; reloadData() }}>
                                         {header}

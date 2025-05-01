@@ -131,7 +131,7 @@ export default component$<SelectFormProps>(({ id, name, value, title, OnClick$, 
 
                 if (/^[a-zA-Z]$/.test(e.key)) {
                     // Handle alphabet key press if needed
-                    console.log(e.key);
+                    // console.log(e.key);
                     for (let i = 0; i < optList.length; i++) {
                         if ((optList[i] as HTMLOptionElement).textContent?.toLowerCase()[0] == e.key) {
                             selectOPT(i);

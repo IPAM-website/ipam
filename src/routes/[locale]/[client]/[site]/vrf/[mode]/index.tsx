@@ -214,7 +214,7 @@ export default component$(() => {
     })
 
     const handleOkay = $(() => {
-        console.log("ok");
+        // console.log("ok");
         addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
     })
 
@@ -390,7 +390,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: VRFModel, reloa
 
         if (loc.params.mode == "update") {
             Object.assign(formData, data);
-            console.log(formData);
+            // console.log(formData);
         }
     })
 

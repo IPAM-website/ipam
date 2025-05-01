@@ -53,7 +53,7 @@ export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, 
             textbox.value.value = optRef.value.textContent;
         clicked.value = false;
 
-        console.log("Selected Value")
+        // console.log("Selected Value")
         OnSelectedValue$?.({ value: optRef.value.value, text: optRef.value.text });
     })
 
@@ -97,7 +97,7 @@ export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, 
                     if (textbox != undefined) {
                         let found = false;
                         for (let i = 0; i < optList.length - 1; i++) {
-                            console.log(optList[i])
+                            // console.log(optList[i])
                             if (optList[i] == optRef.value) {
                                 found = true;
                                 selectOPT(i + 1);
@@ -131,7 +131,7 @@ export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, 
                         if (textbox.value && optRef.value?.textContent)
                             textbox.value.value = optRef.value?.textContent;
                         const e: any = { target: { value: optRef.value?.textContent } };
-                        console.log("Selected Value")
+                        // console.log("Selected Value")
                         OnSelectedValue$?.({ value: optRef.value.value, text: optRef.value.text });
                         clicked.value = false;
                     }

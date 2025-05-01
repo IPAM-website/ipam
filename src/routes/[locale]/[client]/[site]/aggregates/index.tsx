@@ -135,7 +135,7 @@ export default component$(() => {
     })
 
     const handleOkay = $(() => {
-        console.log("ok");
+        // console.log("ok");
         addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
     })
 
