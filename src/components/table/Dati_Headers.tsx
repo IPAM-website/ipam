@@ -1,4 +1,4 @@
-import { component$, getLocale, useSignal, useTask$, useStore, $, useStyles$, useVisibleTask$, Slot, noSerialize } from "@builder.io/qwik";
+import { component$, getLocale, useSignal, useTask$, useStore, $, useStyles$, useVisibleTask$, Slot, noSerialize, QRL } from "@builder.io/qwik";
 import TableMaps from "~/tableMaps";
 import { server$ } from "@builder.io/qwik-city";
 import tableStyle from "./tableStyle.css?inline"
@@ -7,10 +7,10 @@ import ConfirmDialog from "~/components/ui/confirmDialog";
 import PopupModal from "../ui/PopupModal";
 
 interface LoaderState { [key: string]: boolean; }
-interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; funcReloadData?: () => any, onReloadRef?: (reloadFunc : ()=>void)=>void, noModify?:string, onRowClick?:(row:any)=>void }
+interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; funcReloadData?: () => any, onReloadRef?: (reloadFunc : ()=>void)=>void, noModify?:string, onRowClick?:(row:any)=>void, modifyWhen? : QRL<(r:any)=>boolean>, deleteWhen? : QRL<(r:any)=>boolean> }
 
 
-export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella, funcReloadData, onReloadRef, noModify = "", onRowClick=undefined}) => {
+export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = () => { }, DBTabella, funcReloadData, onReloadRef, noModify = "", onRowClick=undefined, modifyWhen, deleteWhen }) => {
     const modificaIT_EN = ["Modifica", "Edit"];
     useStyles$(tableStyle);
     const showDialog = useSignal(false);
@@ -46,8 +46,8 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
     const reloadData = $(async () => {
         store.globalLoading = true;
         try {
-            console.log("Reloading data for table:", nT.value);
             const freshData = funcReloadData ? await funcReloadData() : await server$(async () => {
+                //console.log("Fetching data from server for table:", nT.value);
                 const result = await sql`SELECT * FROM ${sql(nT.value)}`;
                 return Array.isArray(result) ? result : [];
             })();
@@ -112,7 +112,6 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
         }*/
 
         loadingStates[rowId] = false;
-
         OnDelete(row);
     });
 
@@ -153,6 +152,20 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
         settings.previewTableColumnsKey = [];
         settings.tableColumnsKey.map(x => settings.previewTableColumnsKey.push(x));
         settings.visible = false;
+    })
+
+    const mff = $((r:any)=>{
+        if(!modifyWhen)
+            return true;
+        else
+            return modifyWhen(r);
+    })
+
+    const dff = $((r:any)=>{
+        if(!deleteWhen)
+            return true;
+        else
+            return deleteWhen(r);
     })
 
     return (
@@ -242,7 +255,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                             {settings.tableColumnsHeader.map((header) => {
                                 const index = TableMaps[nT.value].headers[lang].indexOf(header);
                                 const key = TableMaps[nT.value].keys[index];
-                                console.log(key);
+                                //console.log(key);
                                 return (
                                     <div key={index} class="text-zinc-500 text-sm cursor-pointer font-semibold py-3 px-4 flex items-center flex-1" onClick$={() => { if (header == "") return; orderFilter[key] = ((orderFilter[key] + 2) % 3) - 1; reloadData() }}>
                                         {header}
@@ -264,7 +277,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                         {/* Righe della tabella */}
                         {
                             Array.isArray(store.dati) && store.dati.length > 0 ? (
-                                store.dati.map((row, rowIndex) => (
+                                store.dati.map(async(row, rowIndex) => (
                                     <div key={rowIndex} class={"flex border-t border-neutral-200 hover:bg-gray-50 transition-colors " + (onRowClick !=undefined ? "cursor-pointer" : "")} onClick$={()=>{
                                         if(onRowClick)
                                             onRowClick(row);
@@ -275,7 +288,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                                             </div>
                                         ))}
                                         <div class="text-black text-base font-medium font-['Inter'] leading-normal flex justify-end p-4 flex-1">
-                                            {noModify == "" &&  <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
+                                            {noModify == "" && (await mff(row)) &&  <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
                                                 onClick$={(e) => {e.stopPropagation();OnModify?.(row)}}>
                                                 <span class="tooltip">{lang === 'it' ? modificaIT_EN[0] : modificaIT_EN[1]}</span>
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="w-5 h-5">
@@ -286,7 +299,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
 
 
                                             {/* Pulsante Elimina */}
-                                            <button class={`relative w-8 h-8 rounded-md ml-2 inline-flex items-center justify-center has-tooltip
+                                            { (await dff(row)) &&<button class={`relative w-8 h-8 rounded-md ml-2 inline-flex items-center justify-center has-tooltip
                                             ${loadingStates[row[TableMaps[nT.value].keys[0]]] ? 'bg-red-400 cursor-wait' : 'bg-red-500 hover:bg-red-600 cursor-pointer'} transition-colors`}
                                                 onClick$={(e) => {e.stopPropagation();handleDelete(row)}}
                                                 disabled={loadingStates[row[TableMaps[nT.value].keys[0]]]}>
@@ -298,7 +311,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", no
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                                     </svg>
                                                 )}
-                                            </button>
+                                            </button>}
                                         </div>
                                     </div>
                                 ))

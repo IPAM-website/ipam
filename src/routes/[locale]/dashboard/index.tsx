@@ -4,18 +4,26 @@ import ClientList from "~/components/ListUtilities/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 import { getBaseURL, getUser } from "~/fnUtils";
 import { ClienteModel, TecnicoModel, UtenteModel } from "~/dbModels";
+import sql from "../../../../db";
 
 
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap }) => {
-
+    let correct = "";
     try {
         const user = await getUser();
         sharedMap.set("user", user);
+        //console.log(user)
+        const result = await sql`SELECT idcliente FROM usercliente WHERE emailucliente = ${user.mail}`
+        //console.log(result[0].idcliente.toString())
+        if (result.length != 0) {
+            correct=result[0].idcliente.toString();
+        }
     }
     catch (e) {
-        throw redirect(301, getBaseURL() + "login");
+        throw redirect(302, getBaseURL() + "login");
     }
-
+    if(correct != "")
+        throw redirect(301, getBaseURL() + correct);
 };
 
 export const useUser = routeLoader$(({ sharedMap }) => {

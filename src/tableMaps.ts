@@ -17,63 +17,69 @@ const TableMaps: { [key: string]: TableMap } = {
     "tecnici": {
         headers: {
             it: [
-                "ID",
                 "Nome",
                 "Cognome",
                 "Ruolo",
+                "Email",
+                "Telefono",
                 ""
             ],
             en: [
-                "ID",
                 "Name",
                 "Surname",
                 "Role",
+                "Email",
+                "Phone",
                 ""
             ]
         },
         keys: [
-            "idtecnico",
             "nometecnico",
             "cognometecnico",
-            "ruolo"
+            "ruolo",
+            "emailtecnico",
+            "telefonotecnico",
         ]
     },
     "clienti": {
         headers: {
             it: [
-                "ID",
                 "Nome",
+                "Telefono",
                 ""
             ],
             en: [
-                "ID",
                 "Name",
+                "Phone",
                 ""
             ]
         },
         keys: [
-            "idcliente",
-            "nomecliente"
+            "nomecliente",
+            "telefonocliente"
         ]
     },
-    "cliente_tecnico": {
+    "usercliente": {
         headers: {
             it:[
-                "Data Assegnazione",
-                "Nome Tecnico",
-                "Nome Cliente",
+                "Nome",
+                "Cognome",
+                "Email",
+                "Cliente",
                 ""
             ],
-            en:[               
-                "Assignment Date",
-                "Technician Name",
-                "Client name",
+            en:[          
+                "Name",
+                "Surname",
+                "Email",
+                "Client",
                 ""
             ]
         },
-        keys: [            
-            "data_assegnazione",
-            "nometecnico",
+        keys: [
+            "nomeucliente",
+            "cognomeucliente",
+            "emailucliente",
             "nomecliente"
         ]
     },
@@ -149,8 +155,8 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     "clienti": {
         keys: ["nomecliente"]
     },
-    "cliente_tecnico": {
-        keys: ["idcliente", "idtecnico"]
+    "usercliente": {
+        keys: ["iducliente", "nomeucliente", "cognomeucliente", "emailucliente", "pwducliente", "nomecliente"]
     },
     "indirizzi": {
         keys: [ "ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "idv" ]

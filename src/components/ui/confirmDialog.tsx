@@ -1,5 +1,5 @@
 import { component$, Slot, useSignal, useStyles$, JSXOutput } from '@builder.io/qwik';
-import dialogStyles from './ConfirmDialog.css?inline';
+import dialogStyles from './confirmDialog.css?inline';
 
 interface ConfirmDialogProps {
     title?: string;
