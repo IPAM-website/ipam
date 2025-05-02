@@ -6,7 +6,7 @@ export interface IndirizziModel{
     nome_dispositivo: string;
     brand_dispositivo: string;
     data_inserimento: Date;
-    idv: number;
+    vid: number;
 }
 
 export interface ClienteModel{

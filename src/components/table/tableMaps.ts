@@ -107,7 +107,7 @@ const TableMaps: { [key: string]: TableMap } = {
             "data_inserimento",
             "tipo_dispositivo",
             "n_prefisso",
-            "idv"
+            "vid"
         ]
     },
     "usercliente": {
@@ -148,7 +148,7 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
         keys: ["idcliente", "idtecnico"]
     },
     "indirizzi": {
-        keys: [ "ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "idv" ]
+        keys: [ "ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "vid" ]
     },
     "usercliente": {
         keys: [ "iducliente", "nomeucliente", "cognomeucliente", "emailucliente", "pwducliente" ]

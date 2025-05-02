@@ -30,7 +30,7 @@ export interface RowAddress {
     idrete?: number,
     idsito?: number,
     idsottosito?: number,
-    idv?: number,
+    vid?: number,
     ip?: string,
     n_prefisso?: number,
     nomerete?: string,

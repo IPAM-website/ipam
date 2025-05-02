@@ -30,7 +30,7 @@ export interface RowAddress {
     idrete?: number,
     idsito?: number,
     idsottosito?: number,
-    idv?: number,
+    vid?: number,
     ip?: string,
     n_prefisso?: number,
     nomerete?: string,
@@ -401,7 +401,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: VLANModel, relo
 
             <div class="m-2 flex w-full justify-center *:w-1/2 max-sm:*:my-2 gap-4 relative">
                 <FormBox title="Informazioni">
-                    <TextboxForm id="txtIDV" title="IDV: " placeholder="es. 10" value={formData.vid.toString()} OnInput$={(e) => { formData.vid = parseInt((e.target as HTMLOptionElement).value); }} />
+                    <TextboxForm id="txtIDV" title="VID: " placeholder="es. 10" value={formData.vid.toString()} OnInput$={(e) => { formData.vid = parseInt((e.target as HTMLOptionElement).value); }} />
                     <TextboxForm id="txtName" title={$localize`Nome VLAN`} value={formData.nomevlan} placeholder="Es. VLAN_Security" OnInput$={(e) => formData.nomevlan = (e.target as HTMLInputElement).value} />
                     <TextboxForm id="txtDescrizione" title={$localize`Descrizione VLAN`} value={formData.descrizionevlan} placeholder="Es. VLAN for CCTVs" OnInput$={(e) => formData.descrizionevlan = (e.target as HTMLInputElement).value} />
                 </FormBox>

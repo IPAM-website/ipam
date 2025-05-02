@@ -76,6 +76,7 @@ export const getAllVLAN = server$(async function () {
     let vlans: VLANModel[] = [];
     try {
         const query = await sql`SELECT * FROM vlan`
+        console.log(query)
         vlans = query as unknown as VLANModel[];
     }
     catch (e) {
@@ -249,6 +250,8 @@ export default component$(() => {
             let xIP = x.iprete.split('.');
             let formIP = formData.iprete.split('.');
 
+            console.log(xIP,formIP);
+
             return (
                 (x.prefissorete >= 24 && xIP[2] == formIP[2] && xIP[3] <= formIP[3])
                 ||
@@ -282,7 +285,8 @@ export default component$(() => {
         hasParent.value = formData.idretesup != undefined;
         netMode.value = 2;
         personalizedPrefix.value = false;
-        updateAddr1.value();
+        if(updateAddr1.value)
+            updateAddr1.value();
     })
 
     const getReloader = $((e: () => void) => {
@@ -290,7 +294,7 @@ export default component$(() => {
     })
 
     const handleRowClick = $((row: any) => {
-        nav(loc.url + "addresses/view?network=" + row.idrete);
+        nav(loc.url.pathname + "addresses/view?network=" + row.idrete);
     })
 
     const handleNavClick = $((e: PointerEvent) => {
@@ -335,7 +339,7 @@ export default component$(() => {
                                 vrf: 1,
                                 iprete: "",
                                 prefissorete: 0,
-                                idv: 1,
+                                vid: 1,
                                 idretesup: null
                             })
                             personalizedPrefix.value = false;
@@ -399,8 +403,9 @@ export default component$(() => {
         <PopupModal visible={netMode.value != 0} title={netMode.value == 1 ? $localize`Aggiunta network` : $localize`Aggiorna network`} onClosing$={() => { netMode.value = 0 }}>
             <Form onSubmit$={async () => {
                 if (netMode.value == 1) {
+                    
                     //@ts-ignore
-                    await insertAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.idv ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup })
+                    await insertAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.vid ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup })
                     if (insertAction.value?.success) {
                         netMode.value = 0;
                         reloadFN.value?.();
@@ -413,7 +418,7 @@ export default component$(() => {
                 }
                 else if (netMode.value == 2) {
                     //@ts-ignore
-                    await updateAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.idv ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup, idrete: formData.idrete })
+                    await updateAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.vid ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup, idrete: formData.idrete })
                     if (updateAction.value?.success) {
                         netMode.value = 0;
                         reloadFN.value?.();
@@ -467,10 +472,10 @@ export default component$(() => {
                     <AddressBox title={$localize`Indirizzo di broadcast`} forceUpdate$={e => updateAddr2.value = e} disabled={true} value={broadcastIP.value} ></AddressBox>
                 </div>
                 <div class="**:flex-1">
-                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 || personalizedPrefix.value ? prefixBox.value?.value : formData.prefissorete.toString()} title={$localize`Prefisso`} ref={prefixBox} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; personalizedPrefix.value = true }} />
+                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 || personalizedPrefix.value ? prefixBox.value?.value : formData.prefissorete.toString()} title={$localize`Prefisso`} ref={prefixBox} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; personalizedPrefix.value = true; updateAddr1.value()     }} />
                     {personalizedPrefix.value && (formData.prefissorete < 1 || formData.prefissorete > 31) && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
                 </div>
-                <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
+                <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { console.log((e.target as HTMLOptionElement).value);formData.vid = parseInt((e.target as HTMLOptionElement).value); }} listName="">
                     {vlans.value.map((x: VLANModel) => <option key={x.vid} about={x.descrizionevlan} value={x.vid}>{x.nomevlan}</option>)}
                 </SelectForm>
                 {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}

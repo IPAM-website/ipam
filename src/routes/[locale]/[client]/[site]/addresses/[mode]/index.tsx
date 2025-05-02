@@ -104,10 +104,10 @@ export const useAction = routeAction$(async (data) => {
     // console.log(data.data_inserimento);
     try {
         if (data.mode == "update") {
-            await sql`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, idv=${data.idv}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
+            await sql`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, vid=${data.vid}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
             type_message = 2;
         } else {
-            await sql`INSERT INTO indirizzi(ip,idrete,idv,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.idv},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
+            await sql`INSERT INTO indirizzi(ip,idrete,vid,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.vid},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
             type_message = 1;
         }
         success = true;
@@ -126,7 +126,7 @@ export const useAction = routeAction$(async (data) => {
     zod$({
         ip: z.string().min(8),
         idrete: z.number().positive(),
-        idv: z.number().positive(),
+        vid: z.number().positive(),
         n_prefisso: z.number().positive().max(31).min(0),
         to_ip: z.string(),
         mode: z.string(),
@@ -504,7 +504,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                         formData.prefix = "";
                     return;
                 }
-                await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, idv: formData.vid, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
+                await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, vid: formData.vid, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
                 if (action.value && action.value.success) {
                     await new Promise((resolve) => { setTimeout(resolve, 2000) });
                     window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");

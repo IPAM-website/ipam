@@ -53,6 +53,7 @@ export const getParentNetwork = server$(async (idrete: number) => {
 export const getChildrenNetworks = server$(async (idrete: number) => {
     try {
         const query = (await sql`SELECT * FROM rete WHERE rete.idretesup = ${idrete}`) as ReteModel[];
+        console.log(query);
         return query;
     }
     catch (e) {
@@ -93,6 +94,8 @@ export default component$(() => {
                 network.value = (await server$(async () => {
                     return (await sql`SELECT * FROM rete WHERE idrete=${idrete}`)[0] as ReteModel;
                 })())
+                childrenNetworks.value = await getChildrenNetworks(parseInt(idrete)) as ReteModel[];
+                parentNetwork.value = await getParentNetwork(parseInt(idrete)) as ReteModel;
                 nav("?network=" + idrete)
             }} id="" name="" value={loc.url.searchParams.get('network') ?? ""} >
                 {siteNetworks.value.map(x => <option value={x.idrete}>{x.nomerete}</option>)}
