@@ -103,7 +103,7 @@ export const getAllCountries = server$(async () => {
 export const getSitesByCity = server$(async (idcitta: string) => {
     try {
         const data = await sql`SELECT * FROM siti WHERE idcitta = ${idcitta}`;
-        console.log(idcitta);
+        // console.log(idcitta);
         return data as unknown as SiteModel[];
     } catch (e) {
         console.log(e);
@@ -115,10 +115,9 @@ export const getSitesByCity = server$(async (idcitta: string) => {
 export const getCityCountry = server$(async (idcitta: number) => {
     try {
         const data = await sql`SELECT * FROM citta INNER JOIN paesi ON citta.idpaese=paesi.idpaese WHERE idcitta = ${idcitta}`;
-        console.log(idcitta);
+        // console.log(idcitta);
         return data as unknown as (CittaModel & PaeseModel)[];
     } catch (e) {
-        console.log(e);
         return [];
     }
 })

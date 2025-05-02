@@ -65,7 +65,24 @@ export interface VRFModel{
 }
 
 export interface VLANModel{
-    idv: number;
+    vid: number;
     nomevlan: string;
     descrizionevlan: string;
+}
+
+export interface AggregatoModel{
+    idaggregato: number;
+    nomeaggregato: string;
+    descrizioneaggregato: string;
+    idrete: number;
+}
+
+export interface IntervalloModel{
+    idintervallo: number;
+    nomeintervallo: string;
+    iniziointervallo: string;
+    lunghezzaintervallo: number;
+    fineintervallo: string;
+    idrete: number;
+    descrizioneintervallo: string;
 }

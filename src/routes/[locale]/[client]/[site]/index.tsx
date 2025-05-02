@@ -1,10 +1,7 @@
 import { $, component$, getLocale, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { Form, routeAction$, server$, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
-import { getBaseURL } from "~/fnUtils";
 import sql from "../../../../../db";
-import { setClientName, setSiteName } from "~/components/layout/Sidebar";
-import { getAllSite } from "..";
 import { CittaModel, ClienteModel, ReteModel, SiteModel, VLANModel, VRFModel } from "~/dbModels";
 import Table from "~/components/table/Table";
 import Dati_Headers from "~/components/table/Dati_Headers";
@@ -15,6 +12,12 @@ import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import FMButton from "~/components/forms/formsComponents/FMButton";
 import CHKForms from "~/components/forms/formsComponents/CHKForms";
+import SelectFormLive from "~/components/forms/formsComponents/SelectFormLive";
+
+type Notification = {
+    message: string;
+    type: 'success' | 'error';
+};
 
 export const getSite = server$(async function (idsito: number) {
     let site: SiteModel = { idsito: -1, nomesito: '', datacenter: false, idcitta: 0, tipologia: '' };
@@ -132,7 +135,7 @@ export const insertNetwork = routeAction$(async function (data, e) {
     iprete: z.string(),
     prefissorete: z.any(),
     vid: z.number(),
-    idretesup: z.number().optional()
+    idretesup: z.number().optional().nullable()
 }))
 
 export const updateNetwork = routeAction$(async function (data, e) {
@@ -182,7 +185,10 @@ export default component$(() => {
     const site = useSignal<SiteModel>();
     const client = useSignal<ClienteModel>();
     const networks = useSignal<ReteModel[]>([]);
+    const filteredNetworks = useSignal<ReteModel[]>([]);
     const city = useSignal<CittaModel>();
+
+    const page = useSignal<string>("address")
 
     const insertAction = insertNetwork();
     const updateAction = updateNetwork();
@@ -203,9 +209,22 @@ export default component$(() => {
     const vrfs = useSignal<VRFModel[]>([]);
     const vlans = useSignal<VLANModel[]>([]);
 
+    const personalizedPrefix = useSignal<boolean>(false);
+
     const hasParent = useSignal<boolean>(false);
     const IPreteSup = useSignal<string>("");
     const reloadFN = useSignal<() => void | undefined>();
+
+    const notifications = useSignal<Notification[]>([]);
+
+    const updateAddr1 = useSignal<() => void>(() => { });
+    const updateAddr2 = useSignal<() => void>(() => { });
+    const updateParents = useSignal<() => void>(() => { });
+
+    const displayParent = $((row:any)=>{
+        const x = row as ReteModel;
+        return `${x.iprete}/${x.prefissorete.toString()} - ${x.nomerete}`
+    })
 
     useTask$(async () => {
         client.value = await getClient(parseInt(loc.params.client));
@@ -216,15 +235,54 @@ export default component$(() => {
         city.value = await getCity(parseInt(loc.params.site));
     })
 
-    const handleDelete = $((e: any) => {
-        deleteNetwork(e.idrete)
+    useTask$(({ track }) => {
+        track(() => formData.iprete)
+        track(() => formData.prefissorete)
+        track(() => networks.value)
+        // console.log("re caloclo")
+        filteredNetworks.value = networks.value.filter(x => {
+            if (!ipCompleted.value)
+                return true;
+            if (x.prefissorete >= formData.prefissorete)
+                return false;
+
+            let xIP = x.iprete.split('.');
+            let formIP = formData.iprete.split('.');
+
+            return (
+                (x.prefissorete >= 24 && xIP[2] == formIP[2] && xIP[3] <= formIP[3])
+                ||
+                (x.prefissorete >= 16 && x.prefissorete < 24 && xIP[1] == formIP[1] && xIP[2] <= formIP[2])
+                ||
+                (x.prefissorete >= 8 && x.prefissorete < 16 && xIP[0] == formIP[0] && xIP[1] <= formIP[1])
+                ||
+                (x.prefissorete < 8 && xIP[0] <= formIP[0])
+            )
+        })
+    })
+
+    const addNotification = $((message: string, type: 'success' | 'error') => {
+        notifications.value = [...notifications.value, { message, type }];
+        // Rimuovi la notifica dopo 3 secondi
+        setTimeout(() => {
+            notifications.value = notifications.value.filter(n => n.message !== message);
+        }, 3000);
+    });
+
+    const handleDelete = $(async (e: any) => {
+        if ((await deleteNetwork(e.idrete)).success)
+            addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
+        else
+            addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione", 'error');
+        // console.log("COME?")
     })
 
     const handleModify = $((e: any) => {
         Object.assign(formData, e);
         hasParent.value = formData.idretesup != undefined;
         netMode.value = 2;
-        console.log(formData.idretesup);
+        personalizedPrefix.value = false;
+        updateAddr1.value();
     })
 
     const getReloader = $((e: () => void) => {
@@ -235,75 +293,107 @@ export default component$(() => {
         nav(loc.url + "addresses/view?network=" + row.idrete);
     })
 
+    const handleNavClick = $((e: PointerEvent) => {
+        page.value = (e.target as HTMLOptionElement).value.toString() || "address";
+    })
+
+
+    const prefixBox = useSignal<HTMLInputElement>();
+
+
     return (<>
         <div class="size-full bg-white overflow-hidden">
+
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {notifications.value.map((notification, index) => (
+                    <div
+                        key={index}
+                        class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-red-500 text-white'
+                            }`}
+                    >
+                        {notification.message}
+                    </div>
+                ))}
+            </div>
+
             <Title haveReturn={true} url={loc.url.origin + "/" + lang + "/" + client.value?.idcliente} >{client.value?.nomecliente + " - " + site.value?.nomesito}</Title>
-            <div>
-                <Table title="Networks">
-                    <Dati_Headers DBTabella="rete" title={lang == 'en' ? "Networks" : "Reti"} dati={networks.value} nomeTabella={lang == 'en' ? "networks" : "reti"} onReloadRef={getReloader} funcReloadData={reloadData} OnModify={handleModify} OnDelete={handleDelete} onRowClick={handleRowClick} />
-                    <ButtonAdd nomePulsante={$localize`Aggiungi rete`} onClick$={() => {
-                        Object.assign(formData, {
-                            descrizione: "",
-                            idrete: 0,
-                            nomerete: "",
-                            vrf: 1,
-                            iprete: "",
-                            prefissorete: 0,
-                            idv: 1,
-                            idretesup: false
-                        })
-                        hasParent.value = false;
-                        broadcastIP.value = "";
-                        netMode.value = 1;
-                    }} ></ButtonAdd>
-                </Table>
-            </div>
-            <div class="flex  flex-col md:flex-row gap-8 mt-8">
+            <nav class="w-full flex cursor-pointer mt-2 rounded-lg *:p-2 *:px-4 *:hover:bg-gray-100 *:bg-gray-50">
+                <option value="address" onClick$={handleNavClick}>Table</option>
+                <option value="info" onClick$={handleNavClick}>Info</option>
+            </nav>
+            {page.value == 'address' &&
+                <div>
+                    <Table title="Networks">
+                        <Dati_Headers DBTabella="rete" title={lang == 'en' ? "Networks" : "Reti"} dati={networks.value} nomeTabella={lang == 'en' ? "networks" : "reti"} onReloadRef={getReloader} funcReloadData={reloadData} OnModify={handleModify} OnDelete={handleDelete} onRowClick={handleRowClick} />
+                        <ButtonAdd nomePulsante={$localize`Aggiungi rete`} onClick$={() => {
+                            Object.assign(formData, {
+                                descrizione: "",
+                                idrete: 0,
+                                nomerete: "",
+                                vrf: 1,
+                                iprete: "",
+                                prefissorete: 0,
+                                idv: 1,
+                                idretesup: null
+                            })
+                            personalizedPrefix.value = false;
+                            hasParent.value = false;
+                            broadcastIP.value = "";
+                            netMode.value = 1;
+                            if (updateAddr2.value)
+                                updateAddr2.value();
+                        }} ></ButtonAdd>
+                    </Table>
+                </div>}
+            {page.value == 'info' &&
+                <div class="flex  flex-col md:flex-row gap-8 mt-8">
 
-                <div class="flex-1 px-5 py-3  rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
-                    <div class="h-[50px] w-full flex items-center overflow-hidden">
-                        <div class="text-black text-lg font-semibold">{$localize`Informazioni sul sito`}</div>
-                    </div>
-                    <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
-                        <div class="justify-start text-black text-lg font-normal">{$localize`Nome`}</div>
-                        <div class="justify-start text-black text-lg font-normal">{site.value?.nomesito}</div>
-                    </div>
-                    <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
-                        <div class="justify-start text-black text-lg font-normal">{$localize`Posizione`}</div>
-                        <div class="justify-start text-black text-lg font-normal">{city.value?.nomecitta}</div>
-                    </div>
-                    <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
-                        <div class="justify-start text-black text-lg font-normal">{$localize`Reti presenti`}</div>
-                        <div class="justify-start text-black text-lg font-normal">{networks.value.length}</div>
-                    </div>
-                </div>
-
-                <div class="flex-initial max-md:w-60 mx-auto rounded-md border-1 border-[#cdcdcd]">
-                    <div class="flex-1 flex flex-col *:p-3 *:px-10 cursor-pointer">
-                        <div class="flex flex-1 border-b border-[#f3f3f3]">
-                            <div class="text-center w-full text-black text-base font-semibold font-['Inter']">{$localize`Viste`}</div>
+                    <div class="flex-1 px-5 py-3  rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
+                        <div class="h-[50px] w-full flex items-center overflow-hidden">
+                            <div class="text-black text-lg font-semibold">{$localize`Informazioni sul sito`}</div>
                         </div>
-                        <a href="addresses/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                            {$localize`Indirizzi IP`}
-                        </a>
-                        <a href="intervals/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                            {$localize`Intervalli IP`}
-                        </a>
-                        <a href="prefixes/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                            {$localize`Prefissi`}
-                        </a>
-                        <a href="aggregates/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                            {$localize`Aggregati`}
-                        </a>
-                        <a href="vfr/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                            VFR
-                        </a>
-                        <a href="vlan/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                            VLAN
-                        </a>
+                        <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
+                            <div class="justify-start text-black text-lg font-normal">{$localize`Nome`}</div>
+                            <div class="justify-start text-black text-lg font-normal">{site.value?.nomesito}</div>
+                        </div>
+                        <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
+                            <div class="justify-start text-black text-lg font-normal">{$localize`Posizione`}</div>
+                            <div class="justify-start text-black text-lg font-normal">{city.value?.nomecitta}</div>
+                        </div>
+                        <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
+                            <div class="justify-start text-black text-lg font-normal">{$localize`Reti presenti`}</div>
+                            <div class="justify-start text-black text-lg font-normal">{networks.value.length}</div>
+                        </div>
                     </div>
-                </div>
-            </div>
+
+                    <div class="flex-initial max-md:w-60 mx-auto rounded-md border-1 border-[#cdcdcd]">
+                        <div class="flex-1 flex flex-col *:p-3 *:px-10 cursor-pointer">
+                            <div class="flex flex-1 border-b border-[#f3f3f3]">
+                                <div class="text-center w-full text-black text-base font-semibold font-['Inter']">{$localize`Viste`}</div>
+                            </div>
+                            <a href="addresses/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                {$localize`Indirizzi IP`}
+                            </a>
+                            <a href="intervals/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                {$localize`Intervalli IP`}
+                            </a>
+                            <a href="prefixes/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                {$localize`Prefissi`}
+                            </a>
+                            <a href="aggregates/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                {$localize`Aggregati`}
+                            </a>
+                            <a href="vfr/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                VFR
+                            </a>
+                            <a href="vlan/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                                VLAN
+                            </a>
+                        </div>
+                    </div>
+                </div>}
         </div>
 
         <PopupModal visible={netMode.value != 0} title={netMode.value == 1 ? $localize`Aggiunta network` : $localize`Aggiorna network`} onClosing$={() => { netMode.value = 0 }}>
@@ -314,9 +404,12 @@ export default component$(() => {
                     if (insertAction.value?.success) {
                         netMode.value = 0;
                         reloadFN.value?.();
+                        addNotification("Network added successfully", "success");
                     }
-                    else
-                        console.log(insertAction.value?.message);
+                    else {
+                        // console.log(insertAction.value?.message);
+                        addNotification("Error during creation", "error");
+                    }
                 }
                 else if (netMode.value == 2) {
                     //@ts-ignore
@@ -324,9 +417,12 @@ export default component$(() => {
                     if (updateAction.value?.success) {
                         netMode.value = 0;
                         reloadFN.value?.();
+                        addNotification("Network updated successfully", "success");
                     }
-                    else
-                        console.log(updateAction.value?.message);
+                    else {
+                        // console.log(updateAction.value?.message);
+                        addNotification("Error during update", "error");
+                    }
                 }
 
             }}>
@@ -344,18 +440,22 @@ export default component$(() => {
                     ></textarea>
                 </div>
                 <div class="**:flex-1 w-full justify-between">
-                    <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} OnInput$={e => {
-                        console.log(e);
+                    <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} forceUpdate$={e => updateAddr1.value = e} OnInput$={e => {
                         ipErrors.value = e.errors
                         ipCompleted.value = e.complete;
+
                         if (e.complete) {
                             if (formData.prefissorete == 0)
                                 formData.prefissorete = parseInt(e.class)
                             broadcastIP.value = e.last;
-                            if (e.errors.length == 0 && ipCompleted.value) {
-                                formData.iprete = e.ip;
-                            }
-                            console.log(formData.iprete)
+                            updateAddr2.value();
+
+                            if (netMode.value == 2 && !e.exists)
+                                e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
+                            else if (netMode.value == 1 && e.exists)
+                                e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
+
+                            formData.iprete = e.ip;
                         }
 
                         networks.value = [...networks.value]
@@ -364,14 +464,14 @@ export default component$(() => {
 
                     }}></AddressBox>
                     {attempted.value && ipErrors.value.length > 0 && ipErrors.value.map(x => <p class="w-full text-red-500 text-end">{x}</p>)}
-                    <AddressBox title={$localize`Indirizzo di broadcast`} disabled={true} value={broadcastIP.value} ></AddressBox>
+                    <AddressBox title={$localize`Indirizzo di broadcast`} forceUpdate$={e => updateAddr2.value = e} disabled={true} value={broadcastIP.value} ></AddressBox>
                 </div>
                 <div class="**:flex-1">
-                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 ? "" : formData.prefissorete.toString()} title={$localize`Prefisso`} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; }} />
-                    {attempted.value && (formData.prefissorete < 1 || formData.prefissorete > 31) && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
+                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 || personalizedPrefix.value ? prefixBox.value?.value : formData.prefissorete.toString()} title={$localize`Prefisso`} ref={prefixBox} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; personalizedPrefix.value = true }} />
+                    {personalizedPrefix.value && (formData.prefissorete < 1 || formData.prefissorete > 31) && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
                 </div>
                 <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
-                    {vlans.value.map((x: VLANModel) => <option key={x.idv} about={x.descrizionevlan} value={x.idv}>{x.nomevlan}</option>)}
+                    {vlans.value.map((x: VLANModel) => <option key={x.vid} about={x.descrizionevlan} value={x.vid}>{x.nomevlan}</option>)}
                 </SelectForm>
                 {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
                 <SelectForm id="txtVRF" name="vrf" value={formData.vrf?.toString() || ""} title="VRF" OnClick$={(e) => { formData.vrf = parseInt((e.target as HTMLOptionElement).value) }}>
@@ -387,30 +487,14 @@ export default component$(() => {
                 </div>
                 {hasParent.value &&
                     <div class="flex flex-col border border-gray-200 justify-center items-center *:block w-full">
-                        <SelectForm id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }}>
-
-                            {networks.value.filter(x => {
-
-                                if (!ipCompleted.value)
-                                    return true;
-                                if (x.prefissorete >= formData.prefissorete)
-                                    return false;
-
-                                let xIP = x.iprete.split('.');
-                                let formIP = formData.iprete.split('.');
-
-                                return (
-                                    (x.prefissorete >= 24 && xIP[2] == formIP[2] && xIP[3] <= formIP[3])
-                                    ||
-                                    (x.prefissorete >= 16 && x.prefissorete < 24 && xIP[1] == formIP[1] && xIP[2] <= formIP[2])
-                                    ||
-                                    (x.prefissorete >= 8 && x.prefissorete < 16 && xIP[0] == formIP[0] && xIP[1] <= formIP[1])
-                                    ||
-                                    (x.prefissorete < 8 && xIP[0] <= formIP[0])
-                                )
-                                {/* @ts-ignore */ }
-                            }).map(x => <option value={x.idrete} about={x.descrizione}>{x.iprete}/{x.prefissorete.toString()}  - {x.nomerete}</option>)}
-                        </SelectForm>
+                        {/* <SelectForm id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }}>
+                            {filteredNetworks.value.length!=0 && filteredNetworks.value.map(x => (
+                                <option value={x.idrete} about={x.descrizione}>
+                                    {`${x.iprete}/${x.prefissorete.toString()} - ${x.nomerete}`}
+                                </option>
+                            ))}
+                        </SelectForm> */}
+                        <SelectFormLive data={filteredNetworks.value} valueMember="idrete" displayMember={displayParent} id="" value={formData.idretesup?.toString() ?? ""} name="" title={$localize`Rete Container`} OnClick$={(e) => { formData.idretesup = parseInt((e.target as HTMLOptionElement).value); IPreteSup.value = (e.target as HTMLOptionElement).innerText }} />
                     </div>}
                 <div class="w-full flex justify-end">
                     <input type="submit" class="rounded-md bg-black text-white disabled:bg-gray-600 disabled:cursor-default p-2 w-1/2 cursor-pointer hover:bg-gray-900 active:bg-gray-800" value={$localize`Conferma`} disabled={

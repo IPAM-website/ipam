@@ -51,8 +51,8 @@ export const useReload = server$(async function () {
 
 export const deleteRow = server$(async function(this,data){
   try{
-    console.log(data);
-    //await sql`DELETE FROM cliente_tecnico WHERE cliente_tecnico.idtecnico = ${data.idtecnico} AND cliente_tecnico.idcliente = ${data.idcliente}`;
+    // console.log(data);
+    await sql`DELETE FROM cliente_tecnico WHERE cliente_tecnico.idtecnico = ${data.idtecnico} AND cliente_tecnico.idcliente = ${data.idcliente}`;
     return true;
   }catch(e)
   {
@@ -77,7 +77,7 @@ export const useTecnici = server$(async () => {
 export const modCliente = routeAction$(async (data, requestEvent : RequestEventAction) => {
   try
   {
-    console.log(data);
+    // console.log(data);
     await sql`
       UPDATE clienti
       SET nomecliente = ${data.nome}
@@ -167,7 +167,7 @@ export const tecniciList = server$(async function (this) {
 
 export const addRelazione = routeAction$(async (data) => {
   try {
-    console.log("Aggiunta relazione:", data);
+    // console.log("Aggiunta relazione:", data);
     // Inserisci la nuova relazione tra tecnico e cliente
     /*await sql`
       INSERT INTO cliente_tecnico (idtecnico, idcliente, data_assegnazione)
@@ -240,7 +240,7 @@ export default component$(() => {
 
   const Modify = $((row:any)=>{
     const extractRowData = extractRow(row);
-    console.log(extractRowData);
+    // console.log(extractRowData);
     currentId.value = extractRowData.idtecnico;
     nome.value = extractRowData.nometecnico;
     currentTecnico.value = extractRowData.idtecnico;

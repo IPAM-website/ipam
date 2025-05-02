@@ -12,11 +12,11 @@ export default component$(({notifications}:{notifications:NotificationType[]}) =
     const manual = useSignal<number>(0);
     useVisibleTask$(({ track, cleanup }) => {
         // Track both the signal and the array length
-        console.log('Notifications component mounted');
+        // console.log('Notifications component mounted');
         track(() => renderNotifications.value);
         const timers = renderNotifications.value.map(notification => {
             const timer = setTimeout(() => {
-              console.log('Removing notification:', notification.id);
+              // console.log('Removing notification:', notification.id);
               renderNotifications.value = renderNotifications.value.filter(x=>x.id!=notification.id)
             }, 3000);
       
@@ -25,7 +25,7 @@ export default component$(({notifications}:{notifications:NotificationType[]}) =
       
           // Cleanup all timers
           cleanup(() => {
-            console.log('Cleaning up timers');
+            // console.log('Cleaning up timers');
             timers.forEach(timer => clearTimeout(timer));
           });
     });

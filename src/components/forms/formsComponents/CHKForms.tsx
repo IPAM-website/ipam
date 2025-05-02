@@ -5,7 +5,6 @@ interface TextBoxFormProps { id: string, value?: boolean, name: string, nameCHK:
 export default component$<TextBoxFormProps>(({ id, value, name, nameCHK, setValue }) => {
     useVisibleTask$(({track})=>{
         track(()=>value);
-        console.log(value);
         if(value)
             document.getElementById("chk"+id)?.setAttribute("checked","true");
         else

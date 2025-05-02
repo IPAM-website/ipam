@@ -84,10 +84,10 @@ CREATE TABLE Siti_Rete(
 );
 
 CREATE TABLE VLAN(
-    IDV SERIAL,
+    VID SERIAL,
     nomeVLAN VARCHAR(50) NOT NULL,
     descrizioneVLAN VARCHAR(255),
-    PRIMARY KEY (IDV)
+    PRIMARY KEY (VID)
 );
 
 CREATE TABLE VRF(
@@ -107,8 +107,41 @@ CREATE TABLE Indirizzi(
     brand_dispositivo VARCHAR(20),
     data_inserimento DATE,
 
-    IDV INTEGER,
+    VID INTEGER,
     PRIMARY KEY (IP),
+    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+);
+
+CREATE TABLE Aggregati (
+    IDAggregato SERIAL NOT NULL,
+    NomeAggregato VARCHAR(50) NOT NULL,
+
+    IDRete INTEGER NOT NULL,
+
+    PRIMARY KEY(IDAggregato),
+    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+);
+
+CREATE TABLE Aggregati_Rete(
+    IDAggregato INTEGER NOT NULL,
+    IDRete INTEGER NOT NULL,
+
+    PRIMARY KEY(IDAggregato,IDRete),
+    CONSTRAINT fk_aggregato FOREIGN KEY (IDAggregato) REFERENCES Aggregati(IDAggregato),
+    CONSTRAINT fk_aggregato_rete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+);
+
+CREATE TABLE Intervalli (
+    IDIntervallo SERIAL NOT NULL,
+    NomeIntervallo VARCHAR(50) NOT NULL,
+    InizioIntervallo VARCHAR(15) NOT NULL,
+    LunghezzaIntervallo INTEGER NOT NULL,
+    FineIntervallo VARCHAR(15),
+    descrizioneintervallo varchar(50),
+
+    IDRete INTEGER NOT NULL,
+
+    PRIMARY KEY(IDIntervallo),
     CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
 );
 
