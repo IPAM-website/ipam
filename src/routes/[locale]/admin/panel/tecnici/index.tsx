@@ -7,7 +7,7 @@ import TextBoxForm from "~/components/forms/formsComponents/TextboxForm";
 import styles from "../dialog.css?inline";
 import sql from "~/../db";
 import Dati from "~/components/table/Dati_Headers";
-import CHKForms from "~/components/forms/CHKForms";
+import CHKForms from "~/components/forms/formsComponents/CHKForms";
 import Import from "~/components/table/ImportCSV";
 // import { useNotify } from "~/services/notifications";
 import bcrypt from "bcryptjs";

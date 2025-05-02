@@ -14,7 +14,7 @@ import AddressBox from "~/components/forms/formsComponents/AddressBox";
 import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import FMButton from "~/components/forms/formsComponents/FMButton";
-import CHKForms from "~/components/forms/CHKForms";
+import CHKForms from "~/components/forms/formsComponents/CHKForms";
 
 export const getSite = server$(async function (idsito: number) {
     let site: SiteModel = { idsito: -1, nomesito: '', datacenter: false, idcitta: 0, tipologia: '' };

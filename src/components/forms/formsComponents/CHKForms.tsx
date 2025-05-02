@@ -7,7 +7,7 @@ export default component$<TextBoxFormProps>(({ id, value, name, nameCHK, setValu
         track(()=>value);
         console.log(value);
         if(value)
-            document.getElementById("chk"+id)?.setAttribute("checked","checked");
+            document.getElementById("chk"+id)?.setAttribute("checked","true");
         else
             document.getElementById("chk"+id)?.removeAttribute("checked");
     })
@@ -17,7 +17,7 @@ export default component$<TextBoxFormProps>(({ id, value, name, nameCHK, setValu
                     <label for={"chk"+id} class="select-none text-black font-semibold">
                         {nameCHK}
                     </label>
-                <input type="checkbox" id={"chk"+id} class="ml-4" checked={false} name={name} onClick$={(e)=>{
+                <input type="checkbox" id={"chk"+id} class="ml-4" bind:checked={setValue} name={name} onClick$={(e)=>{
                     let chk = (e.target as HTMLInputElement);
                     chk.toggleAttribute("checked");
                     if(setValue)

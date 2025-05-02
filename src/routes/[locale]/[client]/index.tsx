@@ -7,7 +7,7 @@ import { CittaModel, ClienteModel, PaeseModel, SiteModel } from "~/dbModels";
 import Accordion from "~/components/layout/Accordion/Accordion";
 import PopupModal from "~/components/ui/PopupModal";
 import SelectTextboxForm from "~/components/forms/formsComponents/SelectTextboxForm";
-import CHKForms from "~/components/forms/CHKForms";
+import CHKForms from "~/components/forms/formsComponents/CHKForms";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import FMButton from "~/components/forms/formsComponents/FMButton";
 import ConfirmDialog from "~/components/ui/confirmDialog";
@@ -344,10 +344,12 @@ export default component$(() => {
                                                 <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
                                                     onClick$={async () => {
                                                         Object.assign(selectedSite, x);
+                                                        console.log(selectedSite);
                                                         const cityCountry = (await getCityCountry(x.idcitta))[0];
                                                         selectedSite.idcitta = cityCountry.idcitta;
                                                         selectedSite.nomecitta = cityCountry.nomecitta;
                                                         selectedCountry.value = cityCountry.idpaese.toString();
+                                                        isDatacenter.value = x.datacenter;
                                                         siteAddMode.value = 2;
                                                     }}>
                                                     <span class="tooltip">{$localize`Modifica`}</span>
