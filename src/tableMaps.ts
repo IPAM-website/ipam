@@ -7,6 +7,11 @@ export type DBTableMap = {
     keys: string[]
 };
 
+export type CSVInfoDBTableMaps = {
+    keys: string[],
+    example?: string[]
+};
+
 interface LanguageMap {
     it: string[];
     en: string[];
@@ -80,7 +85,7 @@ const TableMaps: { [key: string]: TableMap } = {
             "nomeucliente",
             "cognomeucliente",
             "emailucliente",
-            "nomecliente"
+            "nomecliente",
         ]
     },
     "indirizzi": {
@@ -265,6 +270,43 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     },
     "indirizzi": {
         keys: ["ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "vid"]
+    },
+    "rete": {
+        keys: ['iprete', 'nomerete', 'descrizione', 'vrf', 'idrete']
+    },
+    "aggregati": {
+        keys: ['nomeaggregato', 'descrizioneaggregato', 'idaggregato', 'idrete']
+    },
+    "prefissi": {
+        keys: ['prefisso']
+    },
+    "vlan": {
+        keys: ['vid', 'nomevlan', 'descrizionevlan']
+    },
+    "vrf": {
+        keys: ['idvrf', 'nomevrf', 'descrizionevrf']
+    },
+    "intervalli": {
+        keys: ['idintervallo', 'nomeintervallo', 'iniziointervallo', 'lunghezzaintervallo', 'fineintervallo', 'idrete']
+    }
+};
+
+export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
+    "tecnici": {
+        keys: ['nometecnico', 'cognometecnico', 'ruolo', 'emailtecnico', 'telefonotecnico (opzionale)', 'pwdtecnico'],
+        example: [ "Mario", "Rossi", "Tecnico", "mario.rossi@example.com", "1234567890", "Password123"]
+    },
+    "clienti": {
+        keys: ["nomecliente"],
+        example: [ "Azienda Rossi" ]
+    },
+    "usercliente": {
+        keys: ["nomeucliente", "cognomeucliente", "emailucliente", "pwducliente"],
+        example: [ "Mario", "Rossi", "mario.rossi@example.com", "Password123" ]
+    },
+    "indirizzi": {
+        keys: ["ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "vid"],
+        example: [ "192.1678.1.1", "Server1", "DELL", "2025-04-29", "Server", "1234", "10"]
     },
     "rete": {
         keys: ['iprete', 'nomerete', 'descrizione', 'vrf', 'idrete']

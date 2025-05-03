@@ -32,10 +32,8 @@ CREATE TABLE Citta(
 CREATE TABLE Clienti(
     IDCliente SERIAL,
     nomeCliente VARCHAR(50) NOT NULL,
-    telefono VARCHAR(50),
-    IDutente INTEGER,
-    PRIMARY KEY (IDCliente),
-    CONSTRAINT fk_idUCliente FOREIGN KEY (IDutente) REFERENCES UserCliente(IDUCliente)
+    telefonocliente VARCHAR(50),
+    PRIMARY KEY (IDCliente)
 );
 
 CREATE TABLE UserCliente (

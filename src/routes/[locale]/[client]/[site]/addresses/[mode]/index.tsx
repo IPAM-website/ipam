@@ -14,6 +14,8 @@ import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
 import { getBaseURL } from "~/fnUtils";
 import SiteNavigator from "~/components/layout/SiteNavigator";
+import BtnInfoTable from "~/components/table/btnInfoTable";
+import TableInfoCSV from "~/components/table/tableInfoCSV";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -178,7 +180,7 @@ export const deleteIP = server$(async function (this, data) {
 type Notification = {
     message: string;
     type: 'success' | 'error';
-  };
+};
 
 export default component$(() => {
     // const notify = useNotify();
@@ -194,8 +196,9 @@ export default component$(() => {
     const txtQuickSearch = useSignal<HTMLInputElement>();
     const reloadFN = useSignal<(() => void) | null>(null);
     const notifications = useSignal<Notification[]>([]);
+    const showPreview = useSignal(false);
 
-    useTask$(async ({track}) => {
+    useTask$(async ({ track }) => {
         addressList.value = await useAddresses();
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
 
@@ -217,12 +220,12 @@ export default component$(() => {
     const handleError = $((error: any) => {
         console.log(error);
         addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
-      })
-    
-      const handleOkay = $(() => {
+    })
+
+    const handleOkay = $(() => {
         // console.log("ok");
         addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
-      })
+    })
 
     const handleModify = $((row: any) => {
         Object.assign(address, row as RowAddress);
@@ -233,10 +236,10 @@ export default component$(() => {
         if (await deleteIP({ address: row.ip }))
             addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", 'success');
         else
-         addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
+            addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
 
     });
-    
+
     const reloadData = $(async () => {
         if (filter.active)
             return await useAddresses(filter.params);
@@ -245,6 +248,10 @@ export default component$(() => {
     })
 
     const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
+
+    const showPreviewCSV = $(() => {
+        showPreview.value = true;
+    })
 
     return (
         <>
@@ -297,35 +304,43 @@ export default component$(() => {
                             <SiteNavigator />
 
                             <Table>
-                                <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
-                                    <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
-                                        filter.params.query = (e.target as HTMLInputElement).value;
-                                        filter.active = false;
-                                        for (let item in filter.params) {
-                                            if (filter.params[item] && filter.params[item] != '') {
-                                                filter.active = true;
-                                                break;
-                                            }
-                                        }
-                                        if (reloadFN)
-                                            reloadFN.value?.();
-                                    }} />
-                                    <div class="has-tooltip">
-                                        <button class="cursor-pointer p-1 rounded-md bg-black hover:bg-gray-700 text-white size-[32px] flex items-center justify-center" onClick$={() => filter.visible = true} >
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
-                                            </svg>
-                                        </button>
-                                        <span class="tooltip">
-                                            {$localize`Filters`}
-                                        </span>
+                                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-semibold text-lg text-gray-800">{$localize`Lista indirizzi`}</span>
+                                        <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
                                     </div>
-                                    {filter.active && <div class="has-tooltip"><button class="size-[24px] bg-red-500 cursor-pointer hover:bg-red-400 text-white flex justify-center items-center rounded ms-2" onClick$={() => { filter.active = false; for (const key in filter.params) filter.params[key] = ''; nav(loc.url.pathname); if (txtQuickSearch.value) txtQuickSearch.value.value = ""; reloadFN.value?.() }}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                        </svg>
-                                        <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
-                                    </button></div>}
+                                    <div class="flex items-center gap-2">
+                                        <TextboxForm id="txtfilter" search={true} value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
+                                            filter.params.query = (e.target as HTMLInputElement).value;
+                                            filter.active = false;
+                                            for (let item in filter.params) {
+                                                if (filter.params[item] && filter.params[item] != '') {
+                                                    filter.active = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (reloadFN)
+                                                reloadFN.value?.();
+                                        }} />
+                                        <div class="has-tooltip">
+                                            <button class="cursor-pointer p-1 rounded-md bg-black hover:bg-gray-700 text-white size-[32px] flex items-center justify-center" onClick$={() => filter.visible = true} >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                                                </svg>
+                                            </button>
+                                            <span class="tooltip">
+                                                {$localize`Filters`}
+                                            </span>
+                                        </div>
+                                        {filter.active && <div class="has-tooltip"><button class="size-[24px] bg-red-500 cursor-pointer hover:bg-red-400 text-white flex justify-center items-center rounded ms-2" onClick$={() => { filter.active = false; for (const key in filter.params) filter.params[key] = ''; nav(loc.url.pathname); if (txtQuickSearch.value) txtQuickSearch.value.value = ""; reloadFN.value?.() }}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                            </svg>
+                                            <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
+                                        </button></div>}
+                                    </div>
+                                </div>
+                                <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
                                 </Dati>
                                 <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
                                 <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="indirizzi" />
@@ -336,7 +351,25 @@ export default component$(() => {
                         </div>)
                     :
                     <CRUDForm data={address} reloadFN={reloadFN} />
+
+
             }
+
+            <PopupModal
+                visible={showPreview.value}
+                title={
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Formato richiesto per l'importazione CSV</span>
+                        <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
+                    </div>
+                }
+                onClosing$={() => { showPreview.value = false; }}
+            >
+                <TableInfoCSV tableName="indirizzi"></TableInfoCSV>
+            </PopupModal>
         </>);
 })
 
@@ -384,9 +417,9 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
     const networks = useSignal<ReteModel[]>([]);
     const vlans = useSignal<VLANModel[]>([]);
 
-    const updateIP = useSignal<()=>void>(()=>{});
+    const updateIP = useSignal<() => void>(() => { });
 
-    const handleFUpdate = $((e:()=>void)=>updateIP.value=e);
+    const handleFUpdate = $((e: () => void) => updateIP.value = e);
 
     useTask$(async () => {
 
@@ -466,7 +499,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                     <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
                     {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete))as ReteModel).prefissorete.toString(); updateIP.value()     }} listName="">
+                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete)) as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
                         {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}

@@ -10,7 +10,7 @@ interface LoaderState { [key: string]: boolean; }
 interface DatiProps { dati: any, title?: string, nomeTabella: string, OnModify?: (row: any) => void; OnDelete?: (row: any) => void; DBTabella: string; funcReloadData?: () => any, onReloadRef?: (reloadFunc : ()=>void)=>void, noModify?:string, onRowClick?:(row:any)=>void, modifyWhen? : QRL<(r:any)=>boolean>, deleteWhen? : QRL<(r:any)=>boolean> }
 
 
-export default component$<DatiProps>(({ dati: initialData, title = "TABELLA", nomeTabella, OnModify, OnDelete = null, DBTabella, funcReloadData, onReloadRef, noModify = "", onRowClick=undefined, modifyWhen, deleteWhen }) => {
+export default component$<DatiProps>(({ dati: initialData, title = "", nomeTabella, OnModify, OnDelete = null, DBTabella, funcReloadData, onReloadRef, noModify = "", onRowClick=undefined, modifyWhen, deleteWhen }) => {
     const modificaIT_EN = ["Modifica", "Edit"];
     useStyles$(tableStyle);
     const showDialog = useSignal(false);
