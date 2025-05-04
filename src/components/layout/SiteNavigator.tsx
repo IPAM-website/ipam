@@ -1,21 +1,35 @@
-import { $, component$ } from "@builder.io/qwik";
-import { useLocation, useNavigate } from "@builder.io/qwik-city";
+import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
+import { routeLoader$, server$, useLocation, useNavigate } from "@builder.io/qwik-city";
 import { getBaseURL } from "~/fnUtils";
+import SelectForm from "../forms/formsComponents/SelectForm";
+import { ReteModel } from "~/dbModels";
+import sql from "../../../db";
+
+export const useNetworks = server$(async function() {
+    return (await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito = ${this.params.site}`) as ReteModel[];
+})
 
 export default component$(() => {
 
     const nav = useNavigate();
     const loc = useLocation();
 
+    const siteNetworks = useSignal<ReteModel[]>([]);
+
     const siteURL = getBaseURL() + loc.params.client + "/" + loc.params.site;
+    const networkURL = getBaseURL() + loc.params.client + "/" + loc.params.site + "/" + loc.params.network;
 
     const smartRedirect = $((path: string) => {
         if (loc.url.href.includes(path)) return;
-        nav(siteURL + path + '/' + loc.url.search)
+        nav(networkURL + path)
+    })
+
+    useTask$(async ()=>{
+        siteNetworks.value = await useNetworks();
     })
 
     return (<div class="flex flex-col md:flex-row gap-8">
-        <div class="row">
+        <div class="flex">
             <nav class="bg-gray-50 rounded-xl mt-2">
                 <ul class="flex space-x-4">
                     <li>
@@ -44,6 +58,13 @@ export default component$(() => {
                     </li>
                 </ul>
             </nav>
+
+            <SelectForm OnClick$={async (e) => {
+                const idrete = (e.target as HTMLOptionElement).value;
+                nav(`${getBaseURL()}${loc.params.client}/${loc.params.site}/${idrete}/info`)
+            }} id="" name="" value={loc.url.searchParams.get('network') ?? ""} >
+                {siteNetworks.value.map(x => <option value={x.idrete}>{x.nomerete}</option>)}
+            </SelectForm>
         </div>
 
     </div>)

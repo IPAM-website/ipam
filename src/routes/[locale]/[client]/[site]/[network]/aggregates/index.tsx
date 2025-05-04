@@ -163,7 +163,7 @@ export default component$(() => {
 
     return (
         <>
-            <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("addresses")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} Aggregate</Title>
+            {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("addresses")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} Aggregate</Title> */}
             {
                 mode == "view"
                     ? (

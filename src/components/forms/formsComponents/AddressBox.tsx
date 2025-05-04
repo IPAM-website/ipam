@@ -14,11 +14,12 @@ interface AddressBoxProps {
     disabled?: boolean;
     currentIPNetwork?: number;
     currentID?: number;
+    siteID?: number;
     OnInput$?: (event: { ip: string, class: string, prefix: string, network: string, last: string, complete: boolean, errors: string[], exists: boolean }) => void;
     forceUpdate$?: (e: () => void) => void
 }
 
-export const getSameIPs = server$(async function (ip: string, network: number, prefix: number, type: string) {
+export const getSameIPs = server$(async function (ip: string, network: number, prefix: number, type: string, siteID:number) {
     try {
         if (isNaN(prefix)) return [];
         if (type == "host") {
@@ -26,7 +27,7 @@ export const getSameIPs = server$(async function (ip: string, network: number, p
             return query;
         }
         else if (type == "network") {
-            const query = await sql`SELECT * FROM rete WHERE iprete=${ip} AND prefissorete=${prefix}`
+            const query = await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete AND siti_rete.idsito=${siteID} WHERE iprete=${ip} AND prefissorete=${prefix}`
             return query;
         }
     }
@@ -86,7 +87,7 @@ export const getNetworkSpace = server$(async (idrete: number) => {
     }
 })
 
-export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, forceUpdate$, currentIPNetwork = -1 }) => {
+export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, forceUpdate$, currentIPNetwork = -1, siteID=-1 }) => {
 
     const input1 = useSignal<HTMLInputElement>();
     const input2 = useSignal<HTMLInputElement>();
@@ -243,7 +244,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
         if (checkAvailability) {
             let sameIP = [];
-            sameIP = await getSameIPs(ip, currentIPNetwork, parseInt(working_prefix), addressType) as any[];
+            sameIP = await getSameIPs(ip, currentIPNetwork, parseInt(working_prefix), addressType, siteID) as any[];
             // console.log(sameIP)
             exists = sameIP.length > 0
         }

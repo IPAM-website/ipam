@@ -244,7 +244,7 @@ export default component$(() => {
 
     return (
         <>
-            <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("vlan")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title>
+            {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("vlan")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
             {
                 mode == "view"
                     ? (
@@ -303,7 +303,7 @@ export default component$(() => {
                                 </div>
                             </PopupModal>
 
-                            <SiteNavigator />
+                            {/* <SiteNavigator /> */}
 
                             <Table>
                                 <Dati DBTabella="vlan" title={$localize`Lista VLAN`} dati={vlanList.value} nomeTabella={"vlan"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>

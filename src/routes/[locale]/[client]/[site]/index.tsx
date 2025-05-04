@@ -294,7 +294,7 @@ export default component$(() => {
     })
 
     const handleRowClick = $((row: any) => {
-        nav(loc.url.pathname + "addresses/view?network=" + row.idrete);
+        nav(loc.url.pathname + row.idrete + "/info");
     })
 
     const handleNavClick = $((e: PointerEvent) => {
@@ -445,7 +445,7 @@ export default component$(() => {
                     ></textarea>
                 </div>
                 <div class="**:flex-1 w-full justify-between">
-                    <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} forceUpdate$={e => updateAddr1.value = e} OnInput$={e => {
+                    <AddressBox addressType="network" currentID={formData.idrete} title={$localize`Indirizzo di rete`} value={formData.iprete} currentIPNetwork={formData.idretesup} prefix={formData.prefissorete.toString()} forceUpdate$={e => updateAddr1.value = e} siteID={parseInt(loc.params.site)} OnInput$={e => {
                         ipErrors.value = e.errors
                         ipCompleted.value = e.complete;
 

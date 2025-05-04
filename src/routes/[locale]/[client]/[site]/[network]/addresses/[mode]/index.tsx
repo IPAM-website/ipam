@@ -63,31 +63,31 @@ export const useAddresses = server$(async function (this, filter = { empty: 1 })
         return addresses;
     }
 
-    if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
+    // if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
 
 
         if (isNaN(parseInt(filter.query))) {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
+            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.params.network ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
             addresses = queryResult as unknown as IndirizziModel[];
         }
         else {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
+            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.params.network ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
             addresses = queryResult as unknown as IndirizziModel[];
         }
 
-    }
-    else {
+    // }
+    // else {
 
 
-        if (isNaN(parseInt(filter.query))) {
-            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
-        else {
-            const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.ip LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
-    }
+    //     if (isNaN(parseInt(filter.query))) {
+    //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.query}`;
+    //         addresses = queryResult as unknown as IndirizziModel[];
+    //     }
+    //     else {
+    //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.ip LIKE ${filter.query}`;
+    //         addresses = queryResult as unknown as IndirizziModel[];
+    //     }
+    // }
 
     return addresses;
 })
@@ -233,7 +233,7 @@ export default component$(() => {
         if (await deleteIP({ address: row.ip }))
             addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", 'success');
         else
-         addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
+            addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
 
     });
     
@@ -248,7 +248,7 @@ export default component$(() => {
 
     return (
         <>
-            <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("addresses")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title>
+            {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split('/info')[0].split('/').slice(0,4).join('/') : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
             {
                 mode == "view"
                     ? (
@@ -294,7 +294,7 @@ export default component$(() => {
                                 </div>
                             </PopupModal>
 
-                            <SiteNavigator />
+                            {/* <SiteNavigator /> */}
 
                             <Table>
                                 <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>

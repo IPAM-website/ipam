@@ -288,7 +288,7 @@ export default component$(() => {
 
     return (
         <>
-            <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("intervals")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} Intervals</Title>
+            {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("intervals")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} Intervals</Title> */}
             {
                 mode == "view"
                     ? (
@@ -334,7 +334,7 @@ export default component$(() => {
                                 </div>
                             </PopupModal> */}
 
-                            <SiteNavigator />
+                            {/* <SiteNavigator /> */}
 
                             <Table>
                                 <Dati DBTabella="intervalli" title={$localize`Lista intervalli`} dati={intervalList.value} nomeTabella={"intervalli"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
