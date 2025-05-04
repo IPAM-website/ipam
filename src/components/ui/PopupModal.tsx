@@ -1,6 +1,6 @@
-import { $, component$, Slot, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, JSXOutput, Slot, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 
-export default component$(({ visible = false, title = "", onClosing$ = $(() => { }) }: { visible?: boolean, title?: string, onClosing$?: () => void }) => {
+export default component$(({ visible = false, title = "", onClosing$ = $(() => { }) }: { visible?: boolean, title?: string | JSXOutput, onClosing$?: () => void }) => {
 
     const popup = useSignal<HTMLDivElement | undefined>();
     const mask = useSignal<HTMLDivElement | undefined>();
@@ -18,7 +18,7 @@ export default component$(({ visible = false, title = "", onClosing$ = $(() => {
             onClosing$();
     }}>
 
-        <div ref={popup} class="filter border border-gray-200 bg-white p-4 w-1/2 mx-auto shadow-2xl transition-all">
+        <div ref={popup} class="filter border border-gray-200 bg-white p-4 w-1/2 mx-auto shadow-2xl transition-all rounded-md">
             <div class="flex flex-row">
                 <h1 class="font-semibold mb-2 w-full">{title}</h1>
                 <button class="cursor-pointer" onClick$={onClosing$}>

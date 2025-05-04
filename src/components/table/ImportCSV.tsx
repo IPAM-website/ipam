@@ -136,7 +136,7 @@ export default component$<ButtonProps>(({ nomeImport, OnError, OnOk }) => {
 
                 <span class="tooltip" >
                  {$localize`Importazione CSV`}
-                 </span>
+                </span>
 
             </div>
         </>

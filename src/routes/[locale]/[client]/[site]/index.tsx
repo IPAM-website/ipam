@@ -13,6 +13,7 @@ import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import FMButton from "~/components/forms/formsComponents/FMButton";
 import CHKForms from "~/components/forms/formsComponents/CHKForms";
 import SelectFormLive from "~/components/forms/formsComponents/SelectFormLive";
+import BtnInfoTable from "~/components/table/btnInfoTable";
 
 type Notification = {
     message: string;
@@ -222,7 +223,7 @@ export default component$(() => {
     const updateAddr2 = useSignal<() => void>(() => { });
     const updateParents = useSignal<() => void>(() => { });
 
-    const displayParent = $((row:any)=>{
+    const displayParent = $((row: any) => {
         const x = row as ReteModel;
         return `${x.iprete}/${x.prefissorete.toString()} - ${x.nomerete}`
     })
@@ -329,8 +330,13 @@ export default component$(() => {
             </nav>
             {page.value == 'address' &&
                 <div>
-                    <Table title="Networks">
-                        <Dati_Headers DBTabella="rete" title={lang == 'en' ? "Networks" : "Reti"} dati={networks.value} nomeTabella={lang == 'en' ? "networks" : "reti"} onReloadRef={getReloader} funcReloadData={reloadData} OnModify={handleModify} OnDelete={handleDelete} onRowClick={handleRowClick} />
+                    <Table>
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-lg text-gray-800">{$localize`Networks`}</span>
+                            </div>
+                        </div>
+                        <Dati_Headers DBTabella="rete" dati={networks.value} nomeTabella={lang == 'en' ? "networks" : "reti"} onReloadRef={getReloader} funcReloadData={reloadData} OnModify={handleModify} OnDelete={handleDelete} onRowClick={handleRowClick} />
                         <ButtonAdd nomePulsante={$localize`Aggiungi rete`} onClick$={() => {
                             Object.assign(formData, {
                                 descrizione: "",

@@ -11,6 +11,9 @@ import Import from "~/components/table/ImportCSV";
 import sql from "~/../db";
 import { ClienteModel } from "~/dbModels";
 import bcrypt from "bcryptjs"
+import PopupModal from "~/components/ui/PopupModal";
+import BtnInfoTable from "~/components/table/btnInfoTable";
+import TableInfoCSV from "~/components/table/tableInfoCSV";
 
 // Aggiungi questo tipo per la notifica
 type Notification = {
@@ -19,7 +22,7 @@ type Notification = {
 };
 
 export interface FilterObject {
-  value ?: string;
+  value?: string;
 }
 
 export interface TableModel {
@@ -103,7 +106,7 @@ export const addUserCliente = routeAction$(async (data, requestEvent: RequestEve
         message: "Cliente inserito con successo"
       }
     }
-    else{
+    else {
       throw new Error("ID cliente non valido");
     }
   }
@@ -193,6 +196,7 @@ export default component$(() => {
   const currentIdUC = useSignal<string | number | null>(null);
   const filter = useSignal<FilterObject>({ value: '' });
   const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
+  const showPreview = useSignal(false);
 
   useTask$(async ({ track }) => {
     const query = await useUserCliente();
@@ -204,7 +208,7 @@ export default component$(() => {
   })
 
   const clients = $(async () => {
-    if(isEditing.value)
+    if (isEditing.value)
       clientList.value = await listaClienti();
     else
       clientList.value = await listaClientiExcept({ idcliente: currentIdC.value });
@@ -263,7 +267,7 @@ export default component$(() => {
     showDialog.value = true;
     currentIdC.value = null;
     currentTecnico.value = null;
-    if(!isEditing.value)
+    if (!isEditing.value)
       clientList.value = await listaClienti();
     else
       clientList.value = await listaClientiExcept({ idcliente: currentIdC.value });
@@ -296,6 +300,10 @@ export default component$(() => {
     reloadFN.value = e;
   })
 
+  const showPreviewCSV = $(() => {
+    showPreview.value = true;
+  })
+
   return (
     <>
       <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0">
@@ -305,8 +313,8 @@ export default component$(() => {
             <div
               key={index}
               class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-red-500 text-white'
+                ? 'bg-green-500 text-white'
+                : 'bg-red-500 text-white'
                 }`}
             >
               {notification.message}
@@ -315,71 +323,235 @@ export default component$(() => {
         </div>
 
         <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{$localize`Admin Panel`}</Title>
-        <Table title={$localize`Lista relazioni`}>
-          <TextBoxForm id="txtfilter" value={filter.value.value} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
-            filter.value.value = (e.target as HTMLInputElement).value;
-            if (reloadFN)
-              reloadFN.value?.();
-          }} />
-          <Dati dati={dati.value} title={$localize`Lista relazioni`} nomeTabella={$localize`relations`} OnModify={Modify} OnDelete={Delete} DBTabella="usercliente" onReloadRef={reload2} funcReloadData={reload}></Dati>
-          <ButtonAdd nomePulsante={$localize`Aggiungi relazione/i`} onClick$={openClientiDialog}></ButtonAdd>
-          <Import nomeImport="usercliente" OnError={handleError} OnOk={handleOkay}></Import>
+        <Table>
+          {/* Header: titolo + preview CSV + ricerca */}
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-lg text-gray-800">{$localize`Lista relazioni`}</span>
+              <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+            </div>
+            <div class="flex items-center gap-2">
+              <TextBoxForm
+                id="txtfilter"
+                value={filter.value.value}
+                ref={txtQuickSearch}
+                placeholder={$localize`Ricerca rapida`}
+                OnInput$={(e) => {
+                  filter.value.value = (e.target as HTMLInputElement).value;
+                  if (reloadFN) reloadFN.value?.();
+                }}
+                search={true}
+              />
+            </div>
+          </div>
+
+          {/* Tabella dati */}
+          <Dati
+            dati={dati.value}
+            nomeTabella={$localize`relations`}
+            OnModify={Modify}
+            OnDelete={Delete}
+            DBTabella="usercliente"
+            onReloadRef={reload2}
+            funcReloadData={reload}
+          />
+
+          {/* Bottoni azione in basso a sinistra */}
+          <ButtonAdd
+            nomePulsante={$localize`Aggiungi relazione/i`}
+            onClick$={openClientiDialog}
+          />
+          <Import
+            nomeImport="usercliente"
+            OnError={handleError}
+            OnOk={handleOkay}
+          />
         </Table>
       </div>
 
       {showDialog.value && (
         <div class="dialog-overlayAdmin openAdmin">
           <div class="dialog-contentAdmin">
-            <div class="absolute top-4 right-4 cursor-pointer" onClick$={closeClientiDialog}>
+            <div class="absolute top-4 right-4 cursor-pointer hover:bg-gray-200 rounded-md transition-all duration-300" onClick$={closeClientiDialog}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             </div>
-            <Form action={formAction.value} onSubmit$={reloadTable}>
-              <h3 class="dialog-titleAdmin">{isEditing.value ? $localize`Modifica tecnico` : $localize`Aggiungi tecnico`}</h3>
-              <div class="dialog-messageAdmin">
-                <hr class="text-neutral-200 mb-4 w-11/12" />
-                <div class="w-11/12">
-                  <input type="hidden" name="idcliente" id="idC" value={currentIdC.value} />
-                  <input type="hidden" name="iducliente" id="idUC" value={currentIdUC.value} />
-                  <br />
-                  <SelectForm value="" OnClick$={(e) => { (document.getElementsByName("idcliente")[0] as HTMLInputElement).value = (e.target as HTMLOptionElement).value }} id="idUC" name="idcliente" title="Cliente" listName="">
-                    {!isEditing.value && <option value="0" selected>{$localize`No selected`}</option>}
-                    {clientList.value && clientList.value?.map((row: any) => {
-                      return (
-                        <option value={row.idcliente}>{row.nomecliente}</option>
-                      )
-                    })}
-                  </SelectForm>
-                  <TextBoxForm error={formAction.value.value} id="NomeCU" placeholder={$localize`Inserire il nome dell'utente`} nameT="nome" title={$localize`Nome` + "*"} value={nome.value}></TextBoxForm>
-                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Name not valid" : "Nome non valido"}</div>)}
-                  <TextBoxForm error={formAction.value.value} id="CognomeCU" placeholder={$localize`Inserire il cognome dell'utente`} nameT="cognome" title={$localize`Cognome` + "*"} value={cognome.value}></TextBoxForm>
-                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.cognome && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Surname not valid" : "Cognome non valido"}</div>)}
-                  <TextBoxForm error={formAction.value.value} id="EmailCU" placeholder={$localize`Inserire la mail dell'utente`} nameT="email" title={$localize`Email` + "*"} value={email.value}></TextBoxForm>
-                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.email && (<div class="text-sm text-red-600 font-semibold ms-32">{formAction.value.value?.fieldErrors.email}</div>)}
-                  {!isEditing.value && <TextBoxForm error={formAction.value.value} id="PwdT" placeholder={$localize`Inserire la password dell'uente`} nameT="pwd" title={$localize`Password` + "*"} value={password.value}></TextBoxForm>}
-                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.pwd && (<div class="text-sm text-red-600 font-semibold ms-32">{lang === "en" ? "Password not valid" : "Password non valido"}</div>)}
+            <Form action={formAction.value} onSubmit$={reloadTable} class="max-w-xl mx-auto bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 animate-fade-in">
+              {/* Titolo */}
+              <div class="flex items-center gap-3 mb-6">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-100">
+                  <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
                 </div>
+                <h3 class="text-2xl font-extrabold text-gray-800 tracking-tight">
+                  {isEditing.value ? $localize`Modifica tecnico` : $localize`Aggiungi tecnico`}
+                </h3>
+                <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 text-xs font-semibold tracking-wide border border-cyan-200">Form</span>
               </div>
-              <div class="dialog-actionsAdmin">
+
+              {/* Separatore */}
+              <hr class="border-cyan-100 mb-8" />
+
+              {/* Corpo del form */}
+              <div class="space-y-6">
+                {/* Hidden fields */}
+                <input type="hidden" name="idcliente" id="idC" value={currentIdC.value} />
+                <input type="hidden" name="iducliente" id="idUC" value={currentIdUC.value} />
+
+                {/* Cliente */}
+                <div>
+                  <SelectForm
+                    value=""
+                    OnClick$={(e) => {
+                      (document.getElementsByName("idcliente")[0] as HTMLInputElement).value = (e.target as HTMLOptionElement).value;
+                    }}
+                    id="idUC"
+                    name="idcliente"
+                    title={$localize`Cliente`}
+                    listName=""
+                  >
+                    {!isEditing.value && <option value="0" selected>{$localize`No selected`}</option>}
+                    {clientList.value && clientList.value?.map((row: any) => (
+                      <option value={row.idcliente}>{row.nomecliente}</option>
+                    ))}
+                  </SelectForm>
+                </div>
+
+                {/* Nome */}
+                <div>
+                  <TextBoxForm
+                    error={formAction.value.value}
+                    id="NomeCU"
+                    placeholder={$localize`Inserire il nome dell'utente`}
+                    nameT="nome"
+                    title={$localize`Nome` + "*"}
+                    value={nome.value}
+                  />
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.nome && (
+                    <div class="flex items-center gap-2 mt-1 text-xs text-red-600 font-semibold animate-shake">
+                      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                      </svg>
+                      {lang === "en" ? "Name not valid" : "Nome non valido"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cognome */}
+                <div>
+                  <TextBoxForm
+                    error={formAction.value.value}
+                    id="CognomeCU"
+                    placeholder={$localize`Inserire il cognome dell'utente`}
+                    nameT="cognome"
+                    title={$localize`Cognome` + "*"}
+                    value={cognome.value}
+                  />
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.cognome && (
+                    <div class="flex items-center gap-2 mt-1 text-xs text-red-600 font-semibold animate-shake">
+                      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                      </svg>
+                      {lang === "en" ? "Surname not valid" : "Cognome non valido"}
+                    </div>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <TextBoxForm
+                    error={formAction.value.value}
+                    id="EmailCU"
+                    placeholder={$localize`Inserire la mail dell'utente`}
+                    nameT="email"
+                    title={$localize`Email` + "*"}
+                    value={email.value}
+                  />
+                  {formAction.value.value?.failed && formAction.value.value?.fieldErrors.email && (
+                    <div class="flex items-center gap-2 mt-1 text-xs text-red-600 font-semibold animate-shake">
+                      <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                      </svg>
+                      {formAction.value.value?.fieldErrors.email}
+                    </div>
+                  )}
+                </div>
+
+                {/* Password (solo in aggiunta) */}
+                {!isEditing.value && (
+                  <div>
+                    <TextBoxForm
+                      error={formAction.value.value}
+                      id="PwdT"
+                      placeholder={$localize`Inserire la password dell'uente`}
+                      nameT="pwd"
+                      title={$localize`Password` + "*"}
+                      value={password.value}
+                    />
+                    {formAction.value.value?.failed && formAction.value.value?.fieldErrors.pwd && (
+                      <div class="flex items-center gap-2 mt-1 text-xs text-red-600 font-semibold animate-shake">
+                        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+                        </svg>
+                        {lang === "en" ? "Password not valid" : "Password non valido"}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Azioni */}
+              <div class="flex justify-end gap-4 mt-10">
                 <button
-                  type='button'
+                  type="button"
                   onClick$={closeClientiDialog}
-                  class="dialog-buttonAdmin cancelAdmin cursor-pointer"
+                  class="cursor-pointer px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-100 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-200"
                 >
+                  <svg class="w-5 h-5 inline-block mr-1 -mt-1 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                   {$localize`Annulla`}
                 </button>
                 <button
-                  class="dialog-buttonAdmin text-white bg-green-500 hover:bg-green-600 cursor-pointer"
-                  type='submit'
+                  class="cursor-pointer px-6 py-2 rounded-lg bg-green-500 to-cyan-500 text-white font-semibold hover:bg-green-600 transition shadow-lg focus:outline-none focus:ring-2 focus:ring-green-200"
+                  type="submit"
                 >
+                  <svg class="w-5 h-5 inline-block mr-1 -mt-1 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
                   {$localize`Conferma`}
                 </button>
               </div>
             </Form>
+
+
           </div>
         </div>
       )}
+        <PopupModal
+          visible={showPreview.value}
+          title={
+            <div class="flex items-center gap-2">
+              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Formato richiesto per l'importazione CSV</span>
+              <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
+            </div>
+          }
+          onClosing$={() => { showPreview.value = false; }}
+        >
+        <TableInfoCSV tableName="usercliente"></TableInfoCSV>
+        </PopupModal>
+      )
+
+
     </>
   )
 })
