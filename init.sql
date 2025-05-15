@@ -79,8 +79,8 @@ CREATE TABLE Siti_Rete(
     IDSito INTEGER NOT NULL,
     IDRete INTEGER NOT NULL,
     PRIMARY KEY (IDSito,IDRete),
-    CONSTRAINT fk_idSito FOREIGN KEY (IDSito) REFERENCES Siti(IDSito),
-    CONSTRAINT fk_idRete_Siti FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+    CONSTRAINT fk_idSito FOREIGN KEY (IDSito) REFERENCES Siti(IDSito) ON DELETE CASCADE,
+    CONSTRAINT fk_idRete_Siti FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
 
 CREATE TABLE VLAN(
@@ -108,8 +108,8 @@ CREATE TABLE Indirizzi(
     data_inserimento DATE,
 
     VID INTEGER,
-    PRIMARY KEY (IP, IDRete),
-    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+    PRIMARY KEY (IP),
+    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
 
 CREATE TABLE Aggregati (
@@ -119,7 +119,7 @@ CREATE TABLE Aggregati (
     IDRete INTEGER NOT NULL,
 
     PRIMARY KEY(IDAggregato),
-    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
 
 CREATE TABLE Aggregati_Rete(
@@ -127,8 +127,8 @@ CREATE TABLE Aggregati_Rete(
     IDRete INTEGER NOT NULL,
 
     PRIMARY KEY(IDAggregato,IDRete),
-    CONSTRAINT fk_aggregato FOREIGN KEY (IDAggregato) REFERENCES Aggregati(IDAggregato),
-    CONSTRAINT fk_aggregato_rete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+    CONSTRAINT fk_aggregato FOREIGN KEY (IDAggregato) REFERENCES Aggregati(IDAggregato) ON DELETE CASCADE,
+    CONSTRAINT fk_aggregato_rete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
 
 CREATE TABLE Intervalli (
@@ -142,7 +142,7 @@ CREATE TABLE Intervalli (
     IDRete INTEGER NOT NULL,
 
     PRIMARY KEY(IDIntervallo),
-    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
 
 INSERT INTO vrf (nomevrf,descrizionevrf) VALUES ('default','default virtual routing table');

@@ -3,13 +3,12 @@ import { Form, routeAction$, server$, useLocation, z, zod$ } from "@builder.io/q
 import sql from "~/../db";
 import Title from "~/components/layout/Title";
 import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
-import { CittaModel, ClienteModel, PaeseModel, SiteModel } from "~/dbModels";
+import { CittaModel, ClienteModel, PaeseModel, ReteModel, SiteModel } from "~/dbModels";
 import Accordion from "~/components/layout/Accordion/Accordion";
 import PopupModal from "~/components/ui/PopupModal";
 import SelectTextboxForm from "~/components/forms/formsComponents/SelectTextboxForm";
 import CHKForms from "~/components/forms/formsComponents/CHKForms";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
-import FMButton from "~/components/forms/formsComponents/FMButton";
 import ConfirmDialog from "~/components/ui/confirmDialog";
 import { isUserClient } from "~/fnUtils";
 
@@ -31,18 +30,6 @@ export const getAllSite = server$(async function (iddc: number) {
     }
 
     return siteList;
-})
-
-export const getCountries = server$(async function () {
-    try {
-        const query = await sql`SELECT * FROM paesi`
-        return query as unknown as PaeseModel[];
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    return [];
 })
 
 export const getCitiesOfClients = server$(async function (idcliente: number) {
@@ -79,7 +66,7 @@ export const getCitiesHints = server$(async function () {
     }
 })
 
-export const deleteSite = server$(async function (idsito:number) {
+export const deleteSite = server$(async function (idsito: number) {
     try {
         const data = await sql`DELETE FROM siti WHERE idsito=${idsito}`;
         return true;
@@ -93,6 +80,16 @@ export const deleteSite = server$(async function (idsito:number) {
 export const getAllCountries = server$(async () => {
     try {
         const data = await sql`SELECT * FROM paesi ORDER BY nomepaese`;
+        return data as unknown as PaeseModel[];
+    } catch (e) {
+        console.log(e);
+        return [];
+    }
+})
+
+export const getClientCountries = server$(async (idcliente: number) => {
+    try {
+        const data = await sql`SELECT DISTINCT paesi.* FROM paesi INNER JOIN citta ON paesi.idpaese=citta.idpaese INNER JOIN siti ON citta.idcitta=siti.idcitta WHERE siti.idcliente=${idcliente} ORDER BY nomepaese`;
         return data as unknown as PaeseModel[];
     } catch (e) {
         console.log(e);
@@ -122,12 +119,25 @@ export const getCityCountry = server$(async (idcitta: number) => {
     }
 })
 
+export const cleanCities = server$(async () => {
+    try {
+        await sql`DELETE FROM citta WHERE citta.idcitta NOT IN (SELECT siti.idcitta FROM siti)`;
+    } catch (e) {
+        console.log(e);
+    }
+})
+
 export const useCreateSite = routeAction$(async (data) => {
     try {
-
         if (data.idcitta == '') {
-            await sql`INSERT INTO citta(nomecitta,idpaese) VALUES (${data.nomecitta[0].toUpperCase() + data.nomecitta.substring(1)},${data.idpaese})`;
-            data.idcitta = (await sql`SELECT idcitta FROM citta ORDER BY idcitta DESC LIMIT 1`)[0].idcitta;
+            const rows = await sql`SELECT idcitta FROM citta WHERE nomecitta=${data.nomecitta} AND idpaese=${data.idpaese}`;
+            if (rows.length > 0) {
+                data.idcitta = rows[0].idcitta;
+            }
+            else {
+                await sql`INSERT INTO citta(nomecitta,idpaese) VALUES (${data.nomecitta.toLowerCase()},${data.idpaese})`;
+                data.idcitta = (await sql`SELECT idcitta FROM citta ORDER BY idcitta DESC LIMIT 1`)[0].idcitta;
+            }
         }
 
         await sql`INSERT INTO siti(nomesito,idcitta,datacenter,tipologia,idcliente) VALUES (${data.nomesito},${parseInt(data.idcitta)},${data.datacenter == "on"},
@@ -144,19 +154,32 @@ export const useCreateSite = routeAction$(async (data) => {
         datacenter: z.string().optional(),
         tipologia: z.string(),
         idcliente: z.string().min(1),
-        nomecitta: z.string(),
+        nomecitta: z.string().min(2),
         idpaese: z.string()
     }))
 
 export const useUpdateSite = routeAction$(async (data) => {
     try {
-
         if (data.idcitta == '') {
-            await sql`INSERT INTO citta(nomecitta,idpaese) VALUES (${data.nomecitta[0].toUpperCase() + data.nomecitta.substring(1)},${data.idpaese})`;
-            data.idcitta = (await sql`SELECT idcitta FROM citta ORDER BY idcitta DESC LIMIT 1`)[0].idcitta;
+            if (data.nomecitta.toLowerCase() != '') {
+                await sql`INSERT INTO citta(nomecitta,idpaese) VALUES (${data.nomecitta.toLowerCase()},${data.idpaese})`;
+                data.idcitta = (await sql`SELECT idcitta FROM citta ORDER BY idcitta DESC LIMIT 1`)[0].idcitta;
+            }
+            else {
+                throw new Error("Nome citta non valido");
+            }
+        }
+        else {
+            const results = await sql`SELECT * FROM citta WHERE citta.idcitta=${data.idcitta}`;
+
+            if (results.length > 0 && results[0].idpaese != data.idpaese) {
+                await sql`INSERT INTO citta(nomecitta,idpaese) VALUES (${results[0].nomecitta.toLowerCase()},${data.idpaese})`
+            }
+            data.idcitta = (await sql`SELECT idcitta FROM citta WHERE citta.nomecitta=${results[0].nomecitta.toLowerCase()} AND citta.idpaese=${data.idpaese}`)[0].idcitta
         }
 
         await sql`UPDATE siti SET nomesito=${data.nomesito}, idcitta=${data.idcitta}, datacenter=${data.datacenter == "on"}, tipologia=${data.tipologia} WHERE idsito=${parseInt(data.idsito)}`;
+        cleanCities();
         return { success: true };
     } catch (e) {
         console.log(e);
@@ -170,7 +193,7 @@ export const useUpdateSite = routeAction$(async (data) => {
         datacenter: z.string().optional(),
         tipologia: z.string(),
         idcliente: z.string().min(1),
-        nomecitta: z.string(),
+        nomecitta: z.string().min(2),
         idpaese: z.string()
     }))
 
@@ -186,7 +209,7 @@ export default component$(() => {
     const selected = useSignal<number>(-1);
     const client = useSignal<ClienteModel>();
     const countries = useSignal<PaeseModel[]>();
-    const countriesHints = useSignal<PaeseModel[]>();
+    const clientCountries = useSignal<PaeseModel[]>();
     const selectedCountry = useSignal<string>("");
     const cities = useSignal<CittaModel[]>();
     const citiesHints = useSignal<{ text: string, value: any }[]>();
@@ -209,15 +232,19 @@ export default component$(() => {
     const showDialog = useSignal(false);
 
     const isClient = useSignal(false);
+    const cityName = useSignal('');
+
+    useTask$(async () => {
+        countries.value = await getAllCountries();
+        client.value = await getClient(parseInt(loc.params.client));
+        isClient.value = await isUserClient();
+    })
 
     useTask$(async ({ track }) => {
         track(() => updateTable.value);
-        client.value = await getClient(parseInt(loc.params.client));
         cities.value = await getCitiesOfClients(parseInt(loc.params.client));
-        countries.value = await getCountries();
-        countriesHints.value = await getAllCountries();
         citiesHints.value = await getCitiesHints();
-        isClient.value = await isUserClient();
+        clientCountries.value = await getClientCountries(parseInt(loc.params.client));
     })
 
     useTask$(async ({ track }) => {
@@ -245,11 +272,17 @@ export default component$(() => {
 
     const handleSubmit = $(async () => {
         if (siteAddMode.value == 1) {
+            if (createSite.value?.failed) {
+                return;
+            }
             if (createSite.value?.success)
                 addNotification(lang == "en" ? "Creation successful" : "Creazione avvenuta con successo", 'success');
             else
                 addNotification(lang == "en" ? "Error during creation" : "Errore durante la creazione", 'error');
         } else {
+            if (updateSite.value?.failed) {
+                return;
+            }
             if (updateSite.value?.success)
                 addNotification(lang == "en" ? "Update successful" : "Modifica avvenuta con successo", 'success');
             else
@@ -257,6 +290,8 @@ export default component$(() => {
         }
 
         siteAddMode.value = 0;
+        clientCountries.value = []; // force reload
+        cities.value = [];
         updateTable.value = !updateTable.value;
     })
 
@@ -272,6 +307,8 @@ export default component$(() => {
     const cancelDelete = $(() => {
         showDialog.value = false;
     });
+
+
 
     return (
         <>
@@ -290,22 +327,31 @@ export default component$(() => {
             </div>
             <Title haveReturn={!isClient.value} url={loc.url.origin}>{client.value?.nomecliente}</Title>
             <br />
+            {/* VISUALIZZAZIONE DELLE CITTA E PAESI */}
             <div class="flex flex-col gap-2 md:flex-row">
                 <div class="md:w-1/4 mx-auto md:h-[60vh] flex flex-col shadow p-2 md:p-3 rounded-md border border-gray-200">
                     <p class="font-medium flex justify-between text-sm py-2">
                         {$localize`Location`}
+                        <button onClick$={() => siteAddMode.value = 1} class="active:bg-gray-100 p-0.5 rounded-lg has-tooltip hover:bg-gray-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 cursor-pointer">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            <span class="tooltip">
+                                {$localize`Aggiungi sito`}
+                            </span>
+                        </button>
                     </p>
                     <hr class="text-gray-300 mb-2" />
                     <div class="space-y-1 overflow-y-auto">
                         {
-                            cities.value && countries.value && cities.value?.length > 0 ? countries.value.map((x: PaeseModel) => {
+                            cities.value && clientCountries.value && cities.value?.length > 0 ? clientCountries.value.map((x: PaeseModel) => {
 
                                 const filterCity = cities.value?.filter(j => x.idpaese == j.idpaese);
                                 if (filterCity?.length == 0)
                                     return;
 
                                 return (<Accordion title={x.nomepaese}>
-                                    {filterCity?.map(j => <button class="w-full py-0.5 px-3 outline-0 rounded-md cursor-pointer text-start hover:bg-gray-50 focus:bg-gray-100" onClick$={() => selected.value = j.idcitta}>{j.nomecitta}</button>)}
+                                    {filterCity?.map(j => <button class="w-full py-0.5 px-3 outline-0 rounded-md cursor-pointer text-start hover:bg-gray-50 focus:bg-gray-100" onClick$={() => { selected.value = j.idcitta; cityName.value = j.nomecitta }}>{j.nomecitta[0].toUpperCase() + j.nomecitta.slice(1).toLowerCase()}</button>)}
                                 </Accordion>)
                             })
                                 :
@@ -317,17 +363,23 @@ export default component$(() => {
                 </div>
                 <div class="md:w-3/4 md:h-[60vh] mx-5 flex flex-col shadow p-3 rounded-md border border-gray-200">
                     <p class="font-medium flex justify-between text-sm py-2">
-                        {$localize`All Sites`}
-                        {!isClient.value && <button onClick$={handleSiteClick} class="rounded-[50%] cursor-pointer p-1" style={{ backgroundColor: siteUpdateMode.value ? "#ddd" : "" }}>
+                        {$localize`All Sites`}{selected.value !== -1 ? ": " + sites.value.length : ""}
+                        {!isClient.value && <button onClick$={handleSiteClick} class="has-tooltip hover:bg-gray-200 rounded-[50%] cursor-pointer p-1" style={{ backgroundColor: siteUpdateMode.value ? "#ddd" : "" }}>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                             </svg>
+                            <span class="tooltip">
+                                {$localize`Edit`}
+                            </span>
                         </button>}
                     </p>
                     <hr class="border-gray-200 mb-2" />
                     {selected.value !== -1 ? (
-
                         <div class="space-y-1 h-full">
+                            <span class="text-sm text-gray-400 ms-1">
+                                {cityName.value[0].toUpperCase() + cityName.value.slice(1).toLowerCase()}
+                            </span>
+                            <br />
                             {sites.value.length > 0 ? sites.value.map((x: SiteModel) => (
                                 <div class="flex items-center ms-2 justify-between">
 
@@ -343,7 +395,6 @@ export default component$(() => {
                                                 <button class="bg-amber-500 w-8 h-8 rounded-md inline-flex items-center justify-center cursor-pointer hover:bg-amber-600 transition-colors has-tooltip"
                                                     onClick$={async () => {
                                                         Object.assign(selectedSite, x);
-                                                        console.log(selectedSite);
                                                         const cityCountry = (await getCityCountry(x.idcitta))[0];
                                                         selectedSite.idcitta = cityCountry.idcitta;
                                                         selectedSite.nomecitta = cityCountry.nomecitta;
@@ -382,14 +433,14 @@ export default component$(() => {
                         (!siteUpdateMode.value && <div class="w-full flex justify-center items-center h-full text-gray-400 mb-5">
                             {$localize`Seleziona una città nel menù a sinistra`}
                         </div>)}
-                    {
+                    {/* {
                         siteUpdateMode.value &&
                         (
                             <div class="w-full mt-2 flex justify-center">
                                 <button onClick$={() => siteAddMode.value = 1} class="bg-black hover:bg-gray-900 active:bg-gray-700 text-white cursor-pointer p-2 px-4 rounded-sm text-sm">Aggiungi sito</button>
                             </div>
                         )
-                    }
+                    } */}
                 </div>
             </div>
 
@@ -404,13 +455,23 @@ export default component$(() => {
                 cancelText={$localize`Annulla`}
             />
 
-            <PopupModal visible={siteAddMode.value > 0} onClosing$={() => siteAddMode.value = 0}>
+            <PopupModal visible={siteAddMode.value > 0} onClosing$={() => siteAddMode.value = 0} title={siteAddMode.value == 1 ? "Aggiungi sito" : "Modifica sito"}>
                 <Form action={siteAddMode.value == 1 ? createSite : updateSite} onSubmit$={handleSubmit}>
+
                     <TextboxForm id="txtNomeSito" nameT="nomesito" value={selectedSite.nomesito} placeholder="Nome del sito" title="Nome sito:" />
-                    <input type="hidden" name="idsito" value={selectedSite.idsito} />
-                    <input type="hidden" name="idcitta" value={selectedSite.idcitta} />
-                    <input type="hidden" name="idpaese" value="-1" />
-                    <input type="hidden" name="nomecitta" />
+                    {siteAddMode.value == 1 ? createSite.value?.failed && createSite.value?.fieldErrors?.nomesito && (
+                        <div class="text-sm text-red-600 ms-2">
+                            {createSite.value?.fieldErrors?.nomesito}
+                        </div>
+                    ) : updateSite.value?.failed && updateSite.value?.fieldErrors?.nomesito && (
+                        <div class="text-sm text-red-600 ms-2">
+                            {updateSite.value?.fieldErrors?.nomesito}
+                        </div>
+                    )}
+                    <input type="hidden" name="idsito" value={selectedSite.idsito} required />
+                    <input type="hidden" name="idcitta" value={selectedSite.idcitta} required />
+                    <input type="hidden" name="idpaese" value="-1" required />
+                    <input type="hidden" name="nomecitta" value={selectedSite.nomecitta} />
                     <div class="flex md:flex-row flex-col ">
                         <SelectTextboxForm id="txtCitta" title="Città:" value={selectedSite.nomecitta} OnSelectedValue$={async (e) => {
                             const input = document.getElementsByName("idcitta")[0] as HTMLInputElement;
@@ -422,9 +483,22 @@ export default component$(() => {
                                     return (await sql`SELECT idpaese FROM citta WHERE idcitta = ${e.value}`)[0].idpaese.toString();
                                 })()
                             }
+                        }} OnInput$={(e) => {
+                            const input = document.getElementsByName("nomecitta")[0] as HTMLInputElement;
+                            input.value = e.target.value;
                         }} name="nomecitta" values={citiesHints.value} />
+                        {createSite.value?.failed && createSite.value?.fieldErrors?.nomecitta && (
+                            <div class="text-sm text-red-600 ms-2">
+                                {createSite.value?.fieldErrors?.nomecitta}
+                            </div>
+                        )}
+                        {updateSite.value?.failed && updateSite.value?.fieldErrors?.nomecitta && (
+                            <div class="text-sm text-red-600 ms-2">
+                                {updateSite.value?.fieldErrors?.nomecitta}
+                            </div>
+                        )}
                         <SelectForm id="cmbPaese" title="Paese: " value={selectedCountry.value} name="nomepaese" OnClick$={(e) => { (document.getElementsByName("idpaese")[0] as HTMLInputElement).value = (e.target as HTMLOptionElement).value }} >
-                            {countriesHints.value?.map(x => {
+                            {countries.value?.map(x => {
                                 const renderedText = x.nomepaese.length > 16 ? x.nomepaese.substring(0, 17) + "..." : x.nomepaese;
                                 return <option value={x.idpaese}>{renderedText}</option>
                             })}
@@ -448,7 +522,7 @@ export default component$(() => {
                         )}
                     </SelectForm>
                     <input type="number" class="hidden" name="idcliente" value={loc.params.client} />
-                    <button class="bg-black p-2 px-4 me-4 cursor-pointer text-white hover:bg-gray-900 active:bg-gray-800 rounded-sm">{siteAddMode.value == 1 ? "Aggiungi" : "Modifica"}</button>
+                    <button class="bg-black disabled:bg-gray-700 disabled:text-gray-100 p-2 px-4 me-4 cursor-pointer text-white hover:bg-gray-900 active:bg-gray-800 rounded-sm">{siteAddMode.value == 1 ? "Aggiungi" : "Modifica"}</button>
                 </Form>
             </PopupModal>
         </>

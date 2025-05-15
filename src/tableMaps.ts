@@ -92,32 +92,32 @@ const TableMaps: { [key: string]: TableMap } = {
         headers: {
             it: [
                 "Indirizzo",
+                "Prefisso",
                 "Nome",
                 "Modello",
                 "Data Inserimento",
                 "Tipo",
-                "Prefisso",
                 "VLAN",
                 ""
             ],
             en: [
                 "Address",
+                "Prefix",
                 "Name",
                 "Brand",
                 "Insert Date",
                 "Type",
-                "Prefix",
                 "VLAN",
                 ""
             ]
         },
         keys: [
             "ip",
+            "n_prefisso",
             "nome_dispositivo",
             "brand_dispositivo",
             "data_inserimento",
             "tipo_dispositivo",
-            "n_prefisso",
             "vid"
         ]
     },
