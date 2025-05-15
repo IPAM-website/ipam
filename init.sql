@@ -108,7 +108,7 @@ CREATE TABLE Indirizzi(
     data_inserimento DATE,
 
     VID INTEGER,
-    PRIMARY KEY (IP),
+    PRIMARY KEY (IP, IDRete),
     CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
 );
 
