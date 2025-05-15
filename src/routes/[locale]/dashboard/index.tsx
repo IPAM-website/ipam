@@ -9,8 +9,9 @@ import { ClienteModel, TecnicoModel } from "~/dbModels";
 import { parseCSV } from "~/components/utils/parseCSV";
 import sql from "../../../../db";
 import { listaClienti } from "../admin/panel/utenti_clienti";
+import { time } from "node:console";
 
-const clientSchema = z.object({
+/*const clientSchema = z.object({
     clientType: z.enum(['new', 'existing']),
     clienteTXT: z.string().optional(),
     clientId: z.string().optional(),
@@ -26,7 +27,7 @@ const clientSchema = z.object({
         message: "Seleziona o crea un cliente",
         path: ['clientType']
     }
-);
+);*/
 
 export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAction) => {
     try {
@@ -92,6 +93,7 @@ export default component$(() => {
     const fileInputRefSiti = useSignal<HTMLInputElement>();
     const fileInputRefNetwork = useSignal<HTMLInputElement>();
     const fileInputRefIP = useSignal<HTMLInputElement>();
+    const feedBackSVG = useSignal<null | { type: "success" | "error" | "loading", import: 'siti' | 'network' | 'ip', message: string }>(null);
 
     const user: TecnicoModel = useUser().value;
     const showModalCSV = useSignal(false);
@@ -108,7 +110,7 @@ export default component$(() => {
         clientList.value = await listaClienti();
         track(() => showModalCSV.value);
         track(() => formAction.value);
-        if(!formAction.value?.failed){
+        if (formAction.value?.failed) {
             importState.files.siti = null;
             importState.files.network = null;
             importState.files.ip = null;
@@ -124,8 +126,11 @@ export default component$(() => {
             currentIdC.value = '';
             clientType.value = 'new';
             selectedClient.value = '';
-            //(document.getElementById("idC") as HTMLInputElement).value = '';
-            //(document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
+            feedBackSVG.value = null;
+            /*(document.getElementById("idC") as HTMLInputElement).value = '';
+            (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
+            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;*/
             if (fileInputRefIP.value) fileInputRefIP.value.value = '';
             if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
             if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
@@ -146,8 +151,11 @@ export default component$(() => {
             currentIdC.value = '';
             clientType.value = 'new';
             selectedClient.value = '';
+            feedBackSVG.value = null;
             (document.getElementById("idC") as HTMLInputElement).value = '';
             (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
+            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
             if (fileInputRefIP.value) fileInputRefIP.value.value = '';
             if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
             if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
@@ -155,18 +163,46 @@ export default component$(() => {
     })
 
     const handleUpload = $(async (e: Event, feedbackSignal: typeof sitiFeedback, type: 'siti' | 'network' | 'ip') => {
+        feedBackSVG.value = {
+            type: "loading",
+            import: type,
+            message: "Caricamento in corso..."
+        };
+        //await new Promise(resolve => setTimeout(resolve, 5000));
         try {
             const fileInput = e.target as HTMLInputElement;
             const file = fileInput.files?.[0];
 
+            
+
             if (!file) {
                 feedbackSignal.value = { message: "Nessun file selezionato", type: "error" };
+                feedBackSVG.value = {
+                    type: "error",
+                    import: type,
+                    message: "Nessun file selezionato"
+                };
                 return;
             }
 
             // Verifica estensione e tipo file
             if (!file.name.endsWith('.csv') || !['text/csv', 'application/vnd.ms-excel'].includes(file.type)) {
                 feedbackSignal.value = { message: "Il file deve essere un CSV", type: "error" };
+                feedBackSVG.value = {
+                    type: "error",
+                    import: type,
+                    message: "Il file deve essere un CSV"
+                };
+                return;
+            }
+
+            if (!file || file.size === 0) { // <--- Controllo dimensione file
+                feedbackSignal.value = { message: "Il file e' vuoto", type: "error" };
+                feedBackSVG.value = {
+                    type: "error",
+                    import: type,
+                    message: "Il file e' vuoto"
+                };
                 return;
             }
 
@@ -176,6 +212,11 @@ export default component$(() => {
             // Verifica headers
             if (csvData.headers.length === 0) {
                 feedbackSignal.value = { message: "Il file CSV è vuoto", type: "error" };
+                feedBackSVG.value = {
+                    type: "error",
+                    import: type,
+                    message: "Il file CSV è vuoto"
+                };
                 return;
             }
 
@@ -187,20 +228,28 @@ export default component$(() => {
                 };
                 return;
             }*/
-
             feedbackSignal.value = {
                 message: `File csv caricato con successo!`,
                 type: "success"
+            };
+            feedBackSVG.value = {
+                type: "success",
+                import: type,
+                message: "File csv caricato con successo!"
             };
         } catch (err) {
             feedbackSignal.value = {
                 message: "Errore durante l'elaborazione del file",
                 type: "error"
             };
+            feedBackSVG.value = {
+                type: "error",
+                import: type,
+                message: "Errore durante l'elaborazione del file"
+            };
+            console.log(err)
         }
-
         setTimeout(() => (feedbackSignal.value = null), 2500);
-        setTimeout(() => (showModalCSV.value = false), 2500);
     });
 
     const showPopUpCSV = $(() => {
@@ -277,6 +326,7 @@ export default component$(() => {
                                             clientType.value = 'new';
                                             currentIdC.value = '';
                                         }}
+                                        id="clientTypeIDNew"
                                     />
                                     Crea nuovo cliente
                                 </label>
@@ -290,6 +340,7 @@ export default component$(() => {
                                         onChange$={() => {
                                             clientType.value = 'existing';
                                         }}
+                                        id="clientTypeIDExisting"
                                     />
                                     Seleziona esistente
                                 </label>
@@ -328,7 +379,33 @@ export default component$(() => {
                         {/* Sezione File con feedback visivo */}
                         {['siti', 'network', 'ip'].map((section) => (
                             <div key={section} class="space-y-4">
-                                <h2 class="text-xl font-semibold capitalize">Importa {section}</h2>
+                                <h2 class="text-xl font-semibold flex items-center gap-2">Importa {section}
+                                    {feedBackSVG.value?.import === section && (
+                                        <span class="inline-flex ">
+                                            {feedBackSVG.value?.type === "success" && (
+                                                <div class="has-tooltip">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                    </svg>
+                                                    <span class="tooltip">Importazione avvenuta con successo</span>
+                                                </div>
+                                            )}
+                                            {feedBackSVG.value?.type === "error" && (
+                                                <div class="has-tooltip">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                                    </svg>
+                                                    <span class="tooltip">{feedBackSVG.value?.message}</span>
+                                                </div>
+                                            )}
+                                            {feedBackSVG.value?.type === "loading" && (
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                                </svg>
+                                            )}
+                                        </span>
+                                    )}
+                                </h2>
 
                                 <div class="relative">
                                     <input
@@ -353,14 +430,6 @@ export default component$(() => {
                                                 {files[section] ? files[section].name : `Trascina CSV o clicca per selezionare`}
                                             </span>
                                         </div>
-
-                                        {files[section] && (
-                                            <span class="text-green-600">
-                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                                </svg>
-                                            </span>
-                                        )}
                                     </label>
                                 </div>
                             </div>
@@ -392,8 +461,11 @@ export default component$(() => {
                                 currentIdC.value = '';
                                 clientType.value = 'new';
                                 selectedClient.value = '';
+                                feedBackSVG.value = null;
                                 (document.getElementById("idC") as HTMLInputElement).value = '';
                                 (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
+                                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+                                (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
                                 if (fileInputRefIP.value) fileInputRefIP.value.value = '';
                                 if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
                                 if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
@@ -404,31 +476,6 @@ export default component$(() => {
                     </Form>
 
                 </div>
-                {/* Feedback Caricamento
-                                                <span class="ml-4 flex items-center animate-fade-in bg-blue-100 border border-blue-400 text-blue-700 rounded px-3 py-1 text-base font-semibold shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-                                </svg>
-                                Attendi caricamento...
-                            </span>
-                    */}
-                {                    /* Feedback errore 
-                            <span class="ml-4 flex items-center animate-fade-in bg-red-100 border border-red-400 text-red-700 rounded px-3 py-1 text-base font-semibold shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                                </svg>
-                                Errore durante l'importazione!
-                            </span>
-                    */}
-                {/* Feedback successo
-                    
-                                                <span class="ml-4 flex items-center animate-fade-in bg-green-100 border border-green-400 text-green-700 rounded px-3 py-1 text-base font-semibold shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                </svg>
-                                File caricato con successo!
-                            </span>
-                    */}
             </PopupModal>
 
         </>
