@@ -94,6 +94,8 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
     const input3 = useSignal<HTMLInputElement>();
     const input4 = useSignal<HTMLInputElement>();
 
+    const parentNetwork = useSignal<ReteModel>();
+
     const assembleIP = $(async () => {
         if (disabled)
             return;
@@ -258,8 +260,25 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
         forceValue.value = [...forceValue.value]
     })
 
-    useVisibleTask$(({ track }) => {
+    
+
+    useVisibleTask$(async ({ track }) => {
         track(() => currentIPNetwork)
+        parentNetwork.value = await getNetwork(currentIPNetwork) as ReteModel;
+
+        let inputs = [input4,input3,input2,input1];
+        let int_prefix = parseInt(prefix);
+        console.log(int_prefix);
+        while(int_prefix>=8)
+        {
+            const inp = inputs[Math.floor(int_prefix/8)];
+            if(inp.value && parentNetwork.value){
+                inp.value.disabled = true;
+                inp.value.value = parentNetwork.value.iprete.split('.')[3-Math.floor(int_prefix/8)];
+            }
+            int_prefix-=8;
+        }
+
         assembleIP();
     });
 

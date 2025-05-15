@@ -60,7 +60,7 @@ export const useAddresses = server$(async function (this, filter = { empty: 1 })
     let addresses: IndirizziModel[] = [];
 
     if (filter.empty == 1) {
-        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site}`;
+        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND siti_rete.idrete=${this.params.network}`;
         addresses = queryResult as unknown as IndirizziModel[];
         return addresses;
     }
@@ -68,14 +68,14 @@ export const useAddresses = server$(async function (this, filter = { empty: 1 })
     // if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
 
 
-        if (isNaN(parseInt(filter.query))) {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.params.network ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
-        else {
-            const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.params.network ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
-            addresses = queryResult as unknown as IndirizziModel[];
-        }
+    if (isNaN(parseInt(filter.query))) {
+        const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.params.network ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
+        addresses = queryResult as unknown as IndirizziModel[];
+    }
+    else {
+        const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.params.network ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
+        addresses = queryResult as unknown as IndirizziModel[];
+    }
 
     // }
     // else {
@@ -152,20 +152,6 @@ export const getAllVLAN = server$(async function () {
     return vlans;
 })
 
-export const getAllNetworksBySite = server$(async function (idsito: number) {
-    let networks: ReteModel[] = [];
-    try {
-        const query = await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
-                                WHERE siti_rete.idsito=${idsito}`
-        networks = query as unknown as ReteModel[];
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    return networks;
-})
-
 export const deleteIP = server$(async function (this, data) {
     try {
         await sql`DELETE FROM indirizzi WHERE ip=${data.address}`;
@@ -186,7 +172,7 @@ export default component$(() => {
     // const notify = useNotify();
     const lang = getLocale("en");
     const addressList = useSignal<IndirizziModel[]>([]);
-    const networks = useSignal<ReteModel[]>([]);
+    const network = useSignal<ReteModel>();
     const loc = useLocation();
     const nav = useNavigate();
     const address = useStore<RowAddress>({});
@@ -198,9 +184,16 @@ export default component$(() => {
     const notifications = useSignal<Notification[]>([]);
     const showPreview = useSignal(false);
 
-    useTask$(async ({ track }) => {
+    useTask$(({track})=>{
+        track(()=>loc.params.network);
+        if(reloadFN.value)
+            reloadFN.value();
+    })
+
+    useTask$(async () => {
+
         addressList.value = await useAddresses();
-        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
+        network.value = await getNetwork(parseInt(loc.params.network)) as ReteModel;
 
         for (const [key, value] of loc.url.searchParams.entries()) {
             filter.params[key] = value;
@@ -260,7 +253,7 @@ export default component$(() => {
                 mode == "view"
                     ? (
                         <div>
-                            <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
+                            {/* <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
                                 <div class="flex">
                                     <div class="w-full">
                                         <span class="ms-2">Network</span>
@@ -299,7 +292,7 @@ export default component$(() => {
                                         Search</button>
 
                                 </div>
-                            </PopupModal>
+                            </PopupModal> */}
 
                             {/* <SiteNavigator /> */}
 
@@ -322,7 +315,7 @@ export default component$(() => {
                                             if (reloadFN)
                                                 reloadFN.value?.();
                                         }} />
-                                        <div class="has-tooltip">
+                                        {/* <div class="has-tooltip">
                                             <button class="cursor-pointer p-1 rounded-md bg-black hover:bg-gray-700 text-white size-[32px] flex items-center justify-center" onClick$={() => filter.visible = true} >
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
@@ -337,7 +330,8 @@ export default component$(() => {
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                                             </svg>
                                             <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
-                                        </button></div>}
+                                        </button>
+                                        </div>} */}
                                     </div>
                                 </div>
                                 <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
@@ -414,17 +408,22 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
     const attempted = useSignal<boolean>(false);
     const changeIP = useSignal<boolean>(false);
 
-    const networks = useSignal<ReteModel[]>([]);
+    const network = useSignal<ReteModel>();
     const vlans = useSignal<VLANModel[]>([]);
 
     const updateIP = useSignal<() => void>(() => { });
 
+    const createMode = useSignal<boolean>(false);
+
     const handleFUpdate = $((e: () => void) => updateIP.value = e);
 
-    useTask$(async () => {
+    useTask$(async ({track}) => {
+        track(()=>loc.params.network)
+        formData.idrete = parseInt(loc.params.network);
 
-        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
+        network.value = await getNetwork(parseInt(loc.params.network)) as ReteModel;
         vlans.value = await getAllVLAN();
+
 
         if (loc.params.mode == "update") {
             Object.assign(formData, data);
@@ -452,65 +451,85 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                     <TextboxForm id="txtModel" title={$localize`Marca Dispositivo`} value={formData.brand_dispositivo} placeholder="Es. Dell" OnInput$={(e) => formData.brand_dispositivo = (e.target as HTMLInputElement).value} />
                     <DatePicker id="dpData" name={$localize`Data inserimento`} value={formData.data_inserimento} OnInput$={(e) => formData.data_inserimento = (e.target as HTMLInputElement).value} />
                 </FormBox>
-                <FormBox title="Dettagli">
+                {/* <div> */}
+                    <FormBox title="Dettagli">
 
-                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" forceUpdate$={handleFUpdate} currentIPNetwork={formData.idrete ?? -1} value={data?.ip} prefix={formData.prefix} OnInput$={(e) => {
+                        <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" forceUpdate$={handleFUpdate} currentIPNetwork={network.value?.idrete ?? -1} value={data?.ip} prefix={network.value?.prefissorete.toString() || ""} OnInput$={(e) => {
 
 
-                        if (e.complete) {
-                            if (loc.params.mode == "update" && !e.exists)
-                                e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
-                            else if (loc.params.mode == "insert" && e.exists)
-                                e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
-                            else
-                                formData.ip = e.ip;
+                            if (e.complete) {
+                                if (loc.params.mode == "update" && !e.exists)
+                                    e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
+                                else if (loc.params.mode == "insert" && e.exists)
+                                    e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
+                                else
+                                    formData.ip = e.ip;
+                            }
+                            if (formData.prefix == "")
+                                formData.prefix = e.prefix;
+
+                            ipErrors.value = e.errors;
+                        }} />
+                        {attempted.value && !formData.ip && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
+
+                        {ipErrors.value && <span class="text-red-600">{ipErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
+
+                        {
+                            //#region ChangeIP
+                            loc.params.mode === "update"
+                            &&
+                            changeIP.value
+                            &&
+                            <div class="flex flex-col">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 lg:ms-8 md:ms-6 sm:ms-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
+                                </svg>
+                                <AddressBox title="IP Dest" value={formData.ip} prefix={formData.prefix} currentIPNetwork={formData.idrete ?? -1} OnInput$={(e) => {
+                                    if (e.complete && e.errors.length == 0)
+                                        formData.ipDest = e.ip;
+                                    if (formData.prefix == "")
+                                        formData.prefix = e.prefix;
+
+                                    ipDestErrors.value = e.errors;
+                                }} />
+                            </div>
+                            //#endregion
                         }
-                        if (formData.prefix == "")
-                            formData.prefix = e.prefix;
 
-                        ipErrors.value = e.errors;
-                    }} />
-                    {attempted.value && !formData.ip && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
+                        <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
+                        {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
 
-                    {ipErrors.value && <span class="text-red-600">{ipErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
+                        {/* <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete)) as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
+                            {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
+                        </SelectForm> */}
+                        <TextboxForm id="txtNetwork" value={network.value?.iprete} disabled="disabled" title={$localize`Rete Associata`} placeholder="Network" OnInput$={(e) => { formData.idrete = parseInt((e.target as any).value); }} />
+                        {/* {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>} */}
 
-                    {
-                        //#region ChangeIP
-                        loc.params.mode === "update"
-                        &&
-                        changeIP.value
-                        &&
-                        <div class="flex flex-col">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 lg:ms-8 md:ms-6 sm:ms-4">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
-                            </svg>
-                            <AddressBox title="IP Dest" value={formData.ip} prefix={formData.prefix} currentIPNetwork={formData.idrete ?? -1} OnInput$={(e) => {
-                                if (e.complete && e.errors.length == 0)
-                                    formData.ipDest = e.ip;
-                                if (formData.prefix == "")
-                                    formData.prefix = e.prefix;
+                        <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || "1"} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
+                            {vlans.value.map((x: VLANModel) => <option key={x.vid} value={x.vid}>{x.nomevlan}</option>)}
+                        </SelectForm>
+                        {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
 
-                                ipDestErrors.value = e.errors;
-                            }} />
+                    </FormBox>
+                    {/* <FormBox title="Selettore">
+                        <div class="p-2">
+                            { Array(Math.pow(2,32-network.value!.prefissorete)).fill(0).map((x,i)=> 
+                            <button key={i} class="p-2 w-[16px] h-[16px] border border-black" onClick$={() => { 
+                                let ip = network.value?.iprete.split('.').map(x=>parseInt(x)) as number[];
+                                ip[3]+=i;
+                                for(let i=2;i>=0;i--)
+                                {
+                                    if(ip[i+1]>255)
+                                    {
+                                        ip[i+1]=0;
+                                        ip[i-1]++;
+                                    }
+                                }
+                             }}>{i}</button>
+                            ) }
                         </div>
-                        //#endregion
-                    }
-
-                    <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
-                    {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
-
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete)) as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
-                        {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
-                    </SelectForm>
-                    {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
-
-                    <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
-                        {vlans.value.map((x: VLANModel) => <option key={x.vid} value={x.vid}>{x.nomevlan}</option>)}
-                    </SelectForm>
-                    {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
-
-
-                </FormBox>
+                    </FormBox> */}
+                {/* </div> */}
                 {loc.params.mode === "update"
                     &&
                     <button class="absolute top-16 -right-8" onClick$={() => { changeIP.value = !changeIP.value }}>
