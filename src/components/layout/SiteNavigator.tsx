@@ -5,11 +5,11 @@ import SelectForm from "../forms/formsComponents/SelectForm";
 import { ReteModel } from "~/dbModels";
 import sql from "../../../db";
 
-export const useNetworks = server$(async function() {
+export const useNetworks = server$(async function () {
     return (await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito = ${this.params.site}`) as ReteModel[];
 })
 
-export default component$(() => {
+export default component$(({networkChange$}: {networkChange$?: (idrete: string) => void}) => {
 
     const nav = useNavigate();
     const loc = useLocation();
@@ -24,12 +24,12 @@ export default component$(() => {
         nav(networkURL + path)
     })
 
-    useTask$(async ()=>{
+    useTask$(async () => {
         siteNetworks.value = await useNetworks();
     })
 
     return (<div class="flex flex-col md:flex-row gap-8">
-        <div class="flex">
+        <div class="flex justify-between items-center w-full">
             <nav class="bg-gray-50 rounded-xl mt-2">
                 <ul class="flex space-x-4">
                     <li>
@@ -59,12 +59,23 @@ export default component$(() => {
                 </ul>
             </nav>
 
-            <SelectForm OnClick$={async (e) => {
-                const idrete = (e.target as HTMLOptionElement).value;
-                nav(`${getBaseURL()}${loc.params.client}/${loc.params.site}/${idrete}/info`)
-            }} id="" name="" value={loc.url.searchParams.get('network') ?? ""} >
-                {siteNetworks.value.map(x => <option value={x.idrete}>{x.nomerete}</option>)}
-            </SelectForm>
+            <div class="flex items-center gap-0">
+
+                <span class="text-sm">
+                    Network:
+                </span>
+                <SelectForm value={loc.params.network} noPointer={true} OnClick$={async (e) => {
+                    if (!(e.target instanceof HTMLOptionElement))
+                        return;
+                    const idrete = (e.target as HTMLOptionElement).value;
+                    const urlParts = loc.url.pathname.split('/');
+                    nav(`${getBaseURL()}${loc.params.client}/${loc.params.site}/${idrete}/${urlParts.slice(5).join('/')}`)
+                    if(networkChange$)
+                        networkChange$(idrete);
+                }} id="" name="" >
+                    {siteNetworks.value.map(x => <option value={x.idrete}>{x.nomerete}</option>)}
+                </SelectForm>
+            </div>
         </div>
 
     </div>)

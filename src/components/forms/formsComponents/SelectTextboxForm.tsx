@@ -9,10 +9,11 @@ interface SelectFormProps {
     disabled?: boolean;
     values?: { value: any, text: string }[];
     OnSelectedValue$?: (event: { value: any, text: string }) => void;
+    OnInput$?: (event: any) => void;
     OnClick$?: (event: PointerEvent) => void;
 }
 
-export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, listName, disabled = false, values, OnSelectedValue$ }) => {
+export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, listName, disabled = false, values, OnSelectedValue$, OnInput$ }) => {
 
     const lang = getLocale("en");
     const clicked = useSignal(false);
@@ -36,11 +37,12 @@ export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, 
         if (!values)
             return;
         hints.value = values.filter(x => {
-            if (textbox.value && x.text.includes(textbox.value.value)) {
+            if (textbox.value && x.text.toLowerCase().startsWith(textbox.value.value.toLowerCase())) {
                 clicked.value = true;
                 return true;
             }
         })
+        OnInput$?.({ target: { value: textbox.value?.value } });
     });
 
     const handleClick = $((event:PointerEvent) => {
@@ -58,20 +60,20 @@ export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, 
     })
 
     return (<div class="flex flex-row items-center py-2 px-2  w-full bg-white" >
-        <label class="font-semibold w-40" for={id}>{title}</label>
+        {title && <label class="font-semibold w-40" for={id}>{title}</label>}
         <div class="relative bg-white w-full" style={{ backgroundColor: disabled ? '#f5f5f5' : '', color: disabled ? '#ddd' : '' }}>
             <input type="text" ref={textbox} id={id} name={id} tabIndex={0} onFocusOut$={() => {
                 if (optRef.value) optRef.value.style.background = ""; setTimeout(() => {
                     clicked.value = false;
-                    var value = "";
+                    let value :string = "";
                     values?.forEach(x => {
-                        if (x.text == textbox.value?.value) {
-                            value = x.value;
+                        if (x.text.toLowerCase() == textbox.value?.value.toLowerCase()) {
+                            value = x.value.toLowerCase();
                             return;
                         }
                     });
 
-                    OnSelectedValue$?.({ value, text: textbox.value?.value ?? "" });
+                    OnSelectedValue$?.({ value, text: textbox.value?.value.toLowerCase() ?? "" });
 
                 }, 80)
             }} onKeyDown$={(e) => {
