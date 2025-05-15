@@ -38,7 +38,6 @@ export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAct
 }, zod$({
     clientType: z.enum(['new', 'existing']),
     clienteTXT: z.string().optional(),
-    clientId: z.string().optional(),
     idcliente: z.string().optional(),
     csvsiti: z.instanceof(File).optional(),
     csvnetwork: z.instanceof(File).optional(),
@@ -93,7 +92,11 @@ export default component$(() => {
     const fileInputRefSiti = useSignal<HTMLInputElement>();
     const fileInputRefNetwork = useSignal<HTMLInputElement>();
     const fileInputRefIP = useSignal<HTMLInputElement>();
-    const feedBackSVG = useSignal<null | { type: "success" | "error" | "loading", import: 'siti' | 'network' | 'ip', message: string }>(null);
+    const feedBackSVG = useStore<{ [key: string]: { type: string; message?: string } | null }>({
+        siti: null,
+        network: null,
+        ip: null,
+    });
 
     const user: TecnicoModel = useUser().value;
     const showModalCSV = useSignal(false);
@@ -126,7 +129,9 @@ export default component$(() => {
             currentIdC.value = '';
             clientType.value = 'new';
             selectedClient.value = '';
-            feedBackSVG.value = null;
+            Object.keys(feedBackSVG).forEach((key) => {
+                feedBackSVG[key] = null;
+            });
             /*(document.getElementById("idC") as HTMLInputElement).value = '';
             (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
             (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
@@ -151,7 +156,9 @@ export default component$(() => {
             currentIdC.value = '';
             clientType.value = 'new';
             selectedClient.value = '';
-            feedBackSVG.value = null;
+            Object.keys(feedBackSVG).forEach((key) => {
+                feedBackSVG[key] = null;
+            });
             (document.getElementById("idC") as HTMLInputElement).value = '';
             (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
             (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
@@ -163,23 +170,18 @@ export default component$(() => {
     })
 
     const handleUpload = $(async (e: Event, feedbackSignal: typeof sitiFeedback, type: 'siti' | 'network' | 'ip') => {
-        feedBackSVG.value = {
-            type: "loading",
-            import: type,
-            message: "Caricamento in corso..."
-        };
-        //await new Promise(resolve => setTimeout(resolve, 5000));
+        feedBackSVG[type] = { type: "loading", message: "Caricamento in corso..." };
+        //await new Promise(resolve => setTimeout(resolve, 10000));
         try {
             const fileInput = e.target as HTMLInputElement;
             const file = fileInput.files?.[0];
 
-            
+
 
             if (!file) {
                 feedbackSignal.value = { message: "Nessun file selezionato", type: "error" };
-                feedBackSVG.value = {
+                feedBackSVG[type] = {
                     type: "error",
-                    import: type,
                     message: "Nessun file selezionato"
                 };
                 return;
@@ -188,9 +190,8 @@ export default component$(() => {
             // Verifica estensione e tipo file
             if (!file.name.endsWith('.csv') || !['text/csv', 'application/vnd.ms-excel'].includes(file.type)) {
                 feedbackSignal.value = { message: "Il file deve essere un CSV", type: "error" };
-                feedBackSVG.value = {
+                feedBackSVG[type] = {
                     type: "error",
-                    import: type,
                     message: "Il file deve essere un CSV"
                 };
                 return;
@@ -198,9 +199,8 @@ export default component$(() => {
 
             if (!file || file.size === 0) { // <--- Controllo dimensione file
                 feedbackSignal.value = { message: "Il file e' vuoto", type: "error" };
-                feedBackSVG.value = {
+                feedBackSVG[type] = {
                     type: "error",
-                    import: type,
                     message: "Il file e' vuoto"
                 };
                 return;
@@ -212,9 +212,8 @@ export default component$(() => {
             // Verifica headers
             if (csvData.headers.length === 0) {
                 feedbackSignal.value = { message: "Il file CSV è vuoto", type: "error" };
-                feedBackSVG.value = {
+                feedBackSVG[type] = {
                     type: "error",
-                    import: type,
                     message: "Il file CSV è vuoto"
                 };
                 return;
@@ -232,9 +231,8 @@ export default component$(() => {
                 message: `File csv caricato con successo!`,
                 type: "success"
             };
-            feedBackSVG.value = {
+            feedBackSVG[type] = {
                 type: "success",
-                import: type,
                 message: "File csv caricato con successo!"
             };
         } catch (err) {
@@ -242,9 +240,8 @@ export default component$(() => {
                 message: "Errore durante l'elaborazione del file",
                 type: "error"
             };
-            feedBackSVG.value = {
+            feedBackSVG[type] = {
                 type: "error",
-                import: type,
                 message: "Errore durante l'elaborazione del file"
             };
             console.log(err)
@@ -380,31 +377,29 @@ export default component$(() => {
                         {['siti', 'network', 'ip'].map((section) => (
                             <div key={section} class="space-y-4">
                                 <h2 class="text-xl font-semibold flex items-center gap-2">Importa {section}
-                                    {feedBackSVG.value?.import === section && (
-                                        <span class="inline-flex ">
-                                            {feedBackSVG.value?.type === "success" && (
-                                                <div class="has-tooltip">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                    </svg>
-                                                    <span class="tooltip">Importazione avvenuta con successo</span>
-                                                </div>
-                                            )}
-                                            {feedBackSVG.value?.type === "error" && (
-                                                <div class="has-tooltip">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                                                    </svg>
-                                                    <span class="tooltip">{feedBackSVG.value?.message}</span>
-                                                </div>
-                                            )}
-                                            {feedBackSVG.value?.type === "loading" && (
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                    <span class="inline-flex ">
+                                        {feedBackSVG[section]?.type === "success" && (
+                                            <div class="has-tooltip">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                                 </svg>
-                                            )}
-                                        </span>
-                                    )}
+                                                <span class="tooltip">Importazione avvenuta con successo</span>
+                                            </div>
+                                        )}
+                                        {feedBackSVG[section]?.type === "error" && (
+                                            <div class="has-tooltip">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                                </svg>
+                                                <span class="tooltip">{feedBackSVG[section]?.message}</span>
+                                            </div>
+                                        )}
+                                        {feedBackSVG[section]?.type === "loading" && (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                            </svg>
+                                        )}
+                                    </span>
                                 </h2>
 
                                 <div class="relative">
@@ -438,6 +433,7 @@ export default component$(() => {
                         <button
                             type="submit"
                             class="w-full py-3 px-6 bg-gray-600 text-white rounded-lg hover:bg-gray-700 duration-250 transition-all cursor-pointer"
+                            disabled={importState.validation.siti.valid || (importState.validation.network.valid && importState.validation.siti.valid) || (importState.validation.siti.valid && importState.validation.network.valid && importState.validation.ip.valid)}
                         >
                             Conferma Importazione
                         </button>
@@ -461,7 +457,9 @@ export default component$(() => {
                                 currentIdC.value = '';
                                 clientType.value = 'new';
                                 selectedClient.value = '';
-                                feedBackSVG.value = null;
+                                Object.keys(feedBackSVG).forEach((key) => {
+                                    feedBackSVG[key] = null;
+                                });
                                 (document.getElementById("idC") as HTMLInputElement).value = '';
                                 (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
                                 (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
