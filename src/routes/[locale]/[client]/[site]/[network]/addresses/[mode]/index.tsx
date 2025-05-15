@@ -16,6 +16,7 @@ import { getBaseURL } from "~/fnUtils";
 import SiteNavigator from "~/components/layout/SiteNavigator";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
+import { addAbortListener } from "events";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -60,7 +61,7 @@ export const useAddresses = server$(async function (this, filter = { empty: 1 })
     let addresses: IndirizziModel[] = [];
 
     if (filter.empty == 1) {
-        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND siti_rete.idrete=${this.params.network}`;
+        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND siti_rete.idrete=${this.params.network} `;
         addresses = queryResult as unknown as IndirizziModel[];
         return addresses;
     }

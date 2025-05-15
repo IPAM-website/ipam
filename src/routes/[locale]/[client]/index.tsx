@@ -18,20 +18,6 @@ type Notification = {
     type: 'success' | 'error';
 };
 
-
-export const getAllSite = server$(async function (iddc: number) {
-    let siteList: SiteModel[] = [];
-    try {
-        const query = await sql`SELECT * FROM siti WHERE siti.iddc=${iddc}`
-        siteList = query as unknown as SiteModel[];
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    return siteList;
-})
-
 export const getCitiesOfClients = server$(async function (idcliente: number) {
     try {
         const query = await sql`SELECT DISTINCT citta.* FROM citta INNER JOIN siti ON citta.idcitta=siti.idcitta WHERE siti.idcliente=${idcliente}`;
@@ -97,9 +83,9 @@ export const getClientCountries = server$(async (idcliente: number) => {
     }
 })
 
-export const getSitesByCity = server$(async (idcitta: string) => {
+export const getSitesByCity = server$(async (idcitta: string, idcliente: number) => {
     try {
-        const data = await sql`SELECT * FROM siti WHERE idcitta = ${idcitta}`;
+        const data = await sql`SELECT * FROM siti WHERE idcitta = ${idcitta} AND idcliente = ${idcliente}`;
         // console.log(idcitta);
         return data as unknown as SiteModel[];
     } catch (e) {
@@ -142,10 +128,10 @@ export const useCreateSite = routeAction$(async (data) => {
 
         await sql`INSERT INTO siti(nomesito,idcitta,datacenter,tipologia,idcliente) VALUES (${data.nomesito},${parseInt(data.idcitta)},${data.datacenter == "on"},
                     ${data.tipologia},${parseInt(data.idcliente)})`;
-        return { success: true };
+        return { success: true, site: data };
     } catch (e) {
         console.log(e);
-        return { success: false };
+        return { success: false, site: {} };
     }
 },
     zod$({
@@ -180,10 +166,10 @@ export const useUpdateSite = routeAction$(async (data) => {
 
         await sql`UPDATE siti SET nomesito=${data.nomesito}, idcitta=${data.idcitta}, datacenter=${data.datacenter == "on"}, tipologia=${data.tipologia} WHERE idsito=${parseInt(data.idsito)}`;
         cleanCities();
-        return { success: true };
+        return { success: true, site: data };
     } catch (e) {
         console.log(e);
-        return { success: false };
+        return { success: false, site: {} };
     }
 },
     zod$({
@@ -217,7 +203,10 @@ export default component$(() => {
 
     const siteUpdateMode = useSignal<boolean>(false);
     const siteAddMode = useSignal<number>(0);
-    const selectedSite = useStore<SiteModel & { nomecitta: string, nomepaese: string }>({
+
+    type fmData = SiteModel & { nomecitta: string, nomepaese: string };
+
+    const selectedSite = useStore<fmData>({
         datacenter: false,
         idcitta: 0,
         idsito: 0,
@@ -234,10 +223,21 @@ export default component$(() => {
     const isClient = useSignal(false);
     const cityName = useSignal('');
 
+    const isSearching = useSignal(false);
+
     useTask$(async () => {
         countries.value = await getAllCountries();
         client.value = await getClient(parseInt(loc.params.client));
         isClient.value = await isUserClient();
+    })
+
+    useVisibleTask$(async({track,cleanup})=>{
+        track(() => updateTable.value);
+        let tm = setTimeout(()=>{
+            document.getElementById("btn"+selected.value)?.focus();
+        },300);
+
+        cleanup(()=>tm);
     })
 
     useTask$(async ({ track }) => {
@@ -250,7 +250,7 @@ export default component$(() => {
     useTask$(async ({ track }) => {
         track(() => updateTable.value);
         track(() => selected.value)
-        sites.value = await getSitesByCity(selected.value.toString());
+        sites.value = await getSitesByCity(selected.value.toString(),parseInt(loc.params.client));
     })
 
     const handleSiteClick = $(() => {
@@ -275,22 +275,27 @@ export default component$(() => {
             if (createSite.value?.failed) {
                 return;
             }
-            if (createSite.value?.success)
+            if (createSite.value?.success){
                 addNotification(lang == "en" ? "Creation successful" : "Creazione avvenuta con successo", 'success');
-            else
+                selected.value = (createSite.value.site as fmData).idcitta;
+                cityName.value = (createSite.value.site as fmData).nomecitta;
+            }else
                 addNotification(lang == "en" ? "Error during creation" : "Errore durante la creazione", 'error');
         } else {
             if (updateSite.value?.failed) {
                 return;
             }
-            if (updateSite.value?.success)
+            if (updateSite.value?.success){
                 addNotification(lang == "en" ? "Update successful" : "Modifica avvenuta con successo", 'success');
-            else
+                selected.value = (updateSite.value.site as fmData).idcitta;
+                cityName.value = (updateSite.value.site as fmData).nomecitta;
+            }else
                 addNotification(lang == "en" ? "Error during update" : "Errore durante la modifica", 'error');
         }
 
         siteAddMode.value = 0;
         clientCountries.value = []; // force reload
+        
         cities.value = [];
         updateTable.value = !updateTable.value;
     })
@@ -301,7 +306,10 @@ export default component$(() => {
         else
             addNotification(lang == "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
         showDialog.value = false;
-        updateTable.value = !updateTable.value;
+        selected.value = -1;
+        cleanCities().then(()=>{
+            window.location.reload()
+        });
     });
 
     const cancelDelete = $(() => {
@@ -349,9 +357,8 @@ export default component$(() => {
                                 const filterCity = cities.value?.filter(j => x.idpaese == j.idpaese);
                                 if (filterCity?.length == 0)
                                     return;
-
-                                return (<Accordion title={x.nomepaese}>
-                                    {filterCity?.map(j => <button class="w-full py-0.5 px-3 outline-0 rounded-md cursor-pointer text-start hover:bg-gray-50 focus:bg-gray-100" onClick$={() => { selected.value = j.idcitta; cityName.value = j.nomecitta }}>{j.nomecitta[0].toUpperCase() + j.nomecitta.slice(1).toLowerCase()}</button>)}
+                                return (<Accordion title={x.nomepaese} isVisible={filterCity?.find(x=>x.idcitta==selected.value)!=undefined}>
+                                    {filterCity?.map(j => <button id={"btn"+j.idcitta} class="w-full py-0.5 px-3 outline-0 rounded-md cursor-pointer text-start hover:bg-gray-50 focus:bg-gray-100" onClick$={() => { selected.value = j.idcitta; cityName.value = j.nomecitta }} key={j.idcitta}>{j.nomecitta[0].toUpperCase() + j.nomecitta.slice(1).toLowerCase()}</button>)}
                                 </Accordion>)
                             })
                                 :
@@ -364,7 +371,7 @@ export default component$(() => {
                 <div class="md:w-3/4 md:h-[60vh] mx-5 flex flex-col shadow p-3 rounded-md border border-gray-200">
                     <p class="font-medium flex justify-between text-sm py-2">
                         {$localize`All Sites`}{selected.value !== -1 ? ": " + sites.value.length : ""}
-                        {!isClient.value && <button onClick$={handleSiteClick} class="has-tooltip hover:bg-gray-200 rounded-[50%] cursor-pointer p-1" style={{ backgroundColor: siteUpdateMode.value ? "#ddd" : "" }}>
+                        {!isClient.value && selected.value!==-1 && <button onClick$={handleSiteClick} class="has-tooltip hover:bg-gray-200 rounded-[50%] cursor-pointer p-1" style={{ backgroundColor: siteUpdateMode.value ? "#ddd" : "" }}>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                             </svg>
@@ -476,16 +483,25 @@ export default component$(() => {
                         <SelectTextboxForm id="txtCitta" title="Città:" value={selectedSite.nomecitta} OnSelectedValue$={async (e) => {
                             const input = document.getElementsByName("idcitta")[0] as HTMLInputElement;
                             input.value = e.value;
+                            console.log(e.value)
                             const input2 = document.getElementsByName("nomecitta")[0] as HTMLInputElement;
                             input2.value = e.text;
                             if (e.value != "") {
-                                selectedCountry.value = await server$(async () => {
-                                    return (await sql`SELECT idpaese FROM citta WHERE idcitta = ${e.value}`)[0].idpaese.toString();
-                                })()
+                                if (isSearching.value) {
+                                    isSearching.value = true;
+                                    setTimeout(async () => {
+                                        selectedCountry.value = await server$(async () => {
+                                            return (await sql`SELECT idpaese FROM citta WHERE idcitta = ${e.value}`)[0].idpaese.toString();
+                                        })()
+                                        isSearching.value = false;
+                                    }, 1000);
+                                }
                             }
                         }} OnInput$={(e) => {
                             const input = document.getElementsByName("nomecitta")[0] as HTMLInputElement;
                             input.value = e.target.value;
+                            const input1 = document.getElementsByName("idcitta")[0] as HTMLInputElement;
+                            input1.value = "";
                         }} name="nomecitta" values={citiesHints.value} />
                         {createSite.value?.failed && createSite.value?.fieldErrors?.nomecitta && (
                             <div class="text-sm text-red-600 ms-2">

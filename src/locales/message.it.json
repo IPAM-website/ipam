@@ -135,7 +135,6 @@
     "6171800019221993676": "Colonne visibili",
     "2159130950882492111": "Annulla",
     "3768927257183755959": "Salva",
-
     "1055774069201755823": "Sottoreti",
     "8289183638321568096": "Container",
     "1098183012452224446": "Componenti relativi",
@@ -144,16 +143,18 @@
     "1295583686306078459": "Spazio di allocazione totale",
     "512712988274106243": "IP",
     "929461297727179075": "Informazioni sulla rete",
-
-    "992968791413049732":"Sottorete",
-    "2647430869851738467":"Indirizzo di broadcast",
+    "992968791413049732": "Sottorete",
+    "2647430869851738467": "Indirizzo di broadcast",
     "6872460696360696779": "Indirizzo di rete",
-    "4632812886328588949" : "Inserisci una descrizione",
-    "9179334982462659411" : "Descrizione",
-    "5021061879881767137" : "Nome della rete",
-    "4535790493030880957" : "Aggiorna network",
-    "7332177833601012505" : "Aggiungi rete"
-
-
+    "4632812886328588949": "Inserisci una descrizione",
+    "9179334982462659411": "Descrizione",
+    "5021061879881767137": "Nome della rete",
+    "4535790493030880957": "Aggiorna network",
+    "7332177833601012505": "Aggiungi rete",
+    "471816275243265264": "Luogo",
+    "6677504139670570611": "Aggiungi sito",
+    "6748771373390597225": "Non ci sono paesi con almeno un sito",
+    "7585826646011739428": "Edit",
+    "6955185897935995536": "Seleziona una città nel menù a sinistra"
   }
 }

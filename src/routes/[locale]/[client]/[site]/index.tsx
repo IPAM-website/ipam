@@ -23,7 +23,7 @@ type Notification = {
 export const getSite = server$(async function (idsito: number) {
     let site: SiteModel = { idsito: -1, nomesito: '', datacenter: false, idcitta: 0, tipologia: '' };
     try {
-        const query = await sql`SELECT * FROM siti WHERE siti.idsito=${idsito}`
+        const query = await sql`SELECT * FROM siti WHERE siti.idsito=${idsito}`;
         site = query[0] as SiteModel;
     }
     catch (e) {
@@ -142,7 +142,6 @@ export const insertNetwork = routeAction$(async function (data, e) {
 
 export const updateNetwork = routeAction$(async function (data, e) {
     try {
-
         if (data.idretesup)
             await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, vrf = ${data.vrf}, prefissorete = ${data.prefissorete}, idretesup = ${data.idretesup} , iprete = ${data.iprete}, vid = ${data.vid} WHERE idrete = ${data.idrete}`;
         else
@@ -410,7 +409,6 @@ export default component$(() => {
             <Form onSubmit$={async () => {
                 if (netMode.value == 1) {
                     
-                    //@ts-ignore
                     await insertAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.vid ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup })
                     if (insertAction.value?.success) {
                         netMode.value = 0;
@@ -423,7 +421,7 @@ export default component$(() => {
                     }
                 }
                 else if (netMode.value == 2) {
-                    //@ts-ignore
+                    
                     await updateAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.vid ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup, idrete: formData.idrete })
                     if (updateAction.value?.success) {
                         netMode.value = 0;

@@ -68,7 +68,7 @@ export default component$<SelectFormProps>(({ id, name, title, value, OnClick$, 
                     let value :string = "";
                     values?.forEach(x => {
                         if (x.text.toLowerCase() == textbox.value?.value.toLowerCase()) {
-                            value = x.value.toLowerCase();
+                            value = x.value;
                             return;
                         }
                     });
