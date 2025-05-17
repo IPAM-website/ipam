@@ -328,5 +328,11 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
     }
 };
 
+export const CSVInfoDashboardDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
+    "siti": {
+        keys: ['nomesito', 'citta', 'paese', 'datacenter', 'tipologia'],
+        example: ["Nome Sito", "Città", "Paese", "true | false", "Tipologia"]
+    },
+};
 
 export default TableMaps

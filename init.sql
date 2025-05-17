@@ -1,9 +1,25 @@
+ -- Eliminazione tabelle in ordine inverso di dipendenza
+DROP TABLE IF EXISTS Aggregati_Rete CASCADE;
+DROP TABLE IF EXISTS Intervalli CASCADE;
+DROP TABLE IF EXISTS Aggregati CASCADE;
+DROP TABLE IF EXISTS Indirizzi CASCADE;
+DROP TABLE IF EXISTS Siti_Rete CASCADE;
+DROP TABLE IF EXISTS Rete CASCADE;
+DROP TABLE IF EXISTS VLAN CASCADE;
+DROP TABLE IF EXISTS VRF CASCADE;
+DROP TABLE IF EXISTS Siti CASCADE;
+DROP TABLE IF EXISTS UserCliente CASCADE;
+DROP TABLE IF EXISTS Clienti CASCADE;
+DROP TABLE IF EXISTS Citta CASCADE;
+DROP TABLE IF EXISTS Paesi CASCADE;
+DROP TABLE IF EXISTS Tecnici CASCADE;
+ 
  CREATE TABLE Tecnici (
      IDTecnico SERIAL,
      nomeTecnico VARCHAR(50) NOT NULL,
      cognomeTecnico VARCHAR(50) NOT NULL,
      ruolo VARCHAR(50),
-     emailTecnico VARCHAR(50) NOT NULL,
+     emailTecnico VARCHAR(50) NOT NULL UNIQUE,
      telefonoTecnico VARCHAR(50),
      pwdTecnico VARCHAR(100) NOT NULL,
      "admin" BOOLEAN NOT NULL,
@@ -17,7 +33,7 @@ INSERT INTO Tecnici(nomeTecnico,cognomeTecnico,ruolo,emailTecnico,telefonoTecnic
 
 CREATE TABLE Paesi(
     IDPaese VARCHAR(15) NOT NULL,
-    nomePaese VARCHAR(50) NOT NULL,
+    nomePaese VARCHAR(50) NOT NULL UNIQUE,
     PRIMARY KEY (IDPaese)
 );
 
@@ -26,12 +42,14 @@ CREATE TABLE Citta(
     nomeCitta VARCHAR(50) NOT NULL,
     IDPaese VARCHAR(15) NOT NULL,
     PRIMARY KEY (IDCitta),
-    CONSTRAINT fk_idPaese_Citta FOREIGN KEY (IDPaese) REFERENCES Paesi(IDPaese)
+    CONSTRAINT fk_idPaese_Citta 
+        FOREIGN KEY (IDPaese) REFERENCES Paesi(IDPaese)
+        ON DELETE CASCADE
 );
 
 CREATE TABLE Clienti(
     IDCliente SERIAL,
-    nomeCliente VARCHAR(50) NOT NULL,
+    nomeCliente VARCHAR(50) NOT NULL UNIQUE,
     telefonocliente VARCHAR(50),
     PRIMARY KEY (IDCliente)
 );
@@ -40,12 +58,14 @@ CREATE TABLE UserCliente (
      IDUCliente SERIAL,
      nomeUCliente VARCHAR(50) NOT NULL,
      cognomeUCliente VARCHAR(50) NOT NULL,
-     emailUCliente VARCHAR(50) NOT NULL,
+     emailUCliente VARCHAR(50) NOT NULL UNIQUE,
      pwdUCliente VARCHAR(100) NOT NULL,
      FA VARCHAR(255),
      IDCliente INTEGER,
      PRIMARY KEY (IDUCliente),
-     CONSTRAINT fk_idCliente_UserCliente FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+     CONSTRAINT fk_idCliente_UserCliente 
+        FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+        ON DELETE CASCADE
  );
 
 
@@ -58,8 +78,12 @@ CREATE TABLE Siti(
     tipologia VARCHAR(50) NOT NULL,
     IDCliente INTEGER NOT NULL,
     PRIMARY KEY (IDSito),
-    CONSTRAINT fk_idCitta FOREIGN KEY (IDCitta) REFERENCES Citta(IDCitta),
-    CONSTRAINT fk_idCliente_Sito FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+    CONSTRAINT fk_idCitta 
+        FOREIGN KEY (IDCitta) REFERENCES Citta(IDCitta)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_idCliente_Sito 
+        FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+        ON DELETE CASCADE
 );
 
 CREATE TABLE Rete(

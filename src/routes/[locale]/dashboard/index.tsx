@@ -4,36 +4,123 @@ import ClientList from "~/components/ListUtilities/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 import PopupModal from "~/components/ui/PopupModal";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
+import TextBoxForm from "~/components/forms/formsComponents/TextboxForm";
 import { getBaseURL, getUser } from "~/fnUtils";
 import { ClienteModel, TecnicoModel } from "~/dbModels";
 import { parseCSV } from "~/components/utils/parseCSV";
 import sql from "../../../../db";
 import { listaClienti } from "../admin/panel/utenti_clienti";
-import { time } from "node:console";
+import countries from 'i18n-iso-countries';
+import it from 'i18n-iso-countries/langs/it.json';
+import { CSVInfoDashboardDBTableMaps } from "~/tableMaps";
+import BtnInfoTable from "~/components/table/btnInfoTable";
 
-/*const clientSchema = z.object({
-    clientType: z.enum(['new', 'existing']),
-    clienteTXT: z.string().optional(),
-    clientId: z.string().optional(),
-    idcliente: z.string().optional(),
-    csvsiti: z.instanceof(File).optional(),
-    csvnetwork: z.instanceof(File).optional(),
-    csvip: z.instanceof(File).optional(),
-}).refine(
-    (data) =>
-        (data.clientType === 'new' && data.clienteTXT) ||
-        (data.clientType === 'existing' && data.clientId && data.idcliente && data.csvsiti && data.csvnetwork && data.csvip),
-    {
-        message: "Seleziona o crea un cliente",
-        path: ['clientType']
-    }
-);*/
+type Notification = {
+    message: string;
+    type: 'success' | 'error';
+};
 
 export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAction) => {
+    const translateCountry = (input: string): string => {
+        const code = countries.getAlpha2Code(input, 'it'); // Cerca in italiano
+        if (!code) throw new Error(`Paese non riconosciuto: ${input}`);
+        return countries.getName(code, 'en')!; // Restituisce nome in inglese
+    };
     try {
-        console.log("Dati validati:", data);
+        let idClientePrivate: number | undefined;
+        //console.log("Dati validati:", data);
+
+        if (data.clientType == "existing" && data.csvsiti == undefined && data.csvnetwork == undefined && data.csvip == undefined)
+            return { error: "Errore durante l'importazione", success: false }
+        // Caricamento/Ricerca cliente
+        if (data.clientType == "new" && data.clienteTXT != undefined && data.clienteTXT != "") {
+            let clienteExist = await sql`SELECT * FROM clienti WHERE nomecliente = ${data.clienteTXT}`
+            if (clienteExist.length != 0)
+                idClientePrivate = clienteExist[0].idcliente
+            else {
+                await sql`INSERT INTO clienti (nomecliente) VALUES (${data.clienteTXT})`
+                const result = await sql`SELECT idcliente FROM clienti WHERE nomecliente = ${data.clienteTXT}`
+                idClientePrivate = result[0].idcliente
+            }
+            //console.log(data.idcliente)  Dati inserire nome del cliente
+        }
+        else if (data.clientType == "existing" && data.idcliente != undefined) {
+            idClientePrivate = parseInt(data.idcliente)
+            //console.log(idClientePrivate)
+        }
+        else
+            return { error: "Errore durante l'importazione del cliente", success: false };
+
+        //console.log(idClientePrivate)
+
+        // Importazione siti
+        if (data.csvsiti != undefined) {
+            const csv = await data.csvsiti.text();
+            const rows = csv.split("\n").filter(row => row.trim() !== '');
+            //console.log(rows)
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                try {
+                    // Parsing manuale della riga CSV
+                    const [nomeSitoRaw, cittaRaw, paeseRaw, datacenterRaw, tipologiaRaw] = row.split(',');
+                    const nomeSito = nomeSitoRaw.replace(/^"|"$/g, '').trim();
+                    const citta = cittaRaw.replace(/^"|"$/g, '').trim();
+                    const paese = paeseRaw.replace(/^"|"$/g, '').trim();
+                    const datacenter = datacenterRaw.toLowerCase() === 'true';
+                    const tipologia = tipologiaRaw.replace(/^"|"$/g, '').trim();
+
+                    //console.log(nomeSito, citta, paese, datacenter, tipologia)
+                    //console.log(paese)
+
+                    // 1. Verifica esistenza paese
+                    const paeseResult = await sql`SELECT idpaese FROM paesi where nomePaese = ${translateCountry(paese)}`;
+                    //console.log(paeseResult)
+
+                    if (!paeseResult.count) {
+                        return { error: `Paese '${paese}' non trovato`, success: false }
+                    }
+                    const idPaese = paeseResult[0].idpaese;
+
+                    // 2. Trova o crea città
+                    let cittaResult = await sql`
+                        SELECT idcitta FROM citta 
+                        WHERE nomecitta = ${citta} AND idpaese = ${idPaese}
+                    `;
+
+                    let idCitta: number;
+                    if (cittaResult.count === 0) {
+                        cittaResult = await sql`
+                            INSERT INTO citta (nomecitta, idpaese)
+                            VALUES (${citta}, ${idPaese})
+                            RETURNING idcitta
+                        `;
+                        idCitta = cittaResult[0].idcitta;
+                    } else {
+                        idCitta = cittaResult[0].idcitta;
+                    }
+
+                    // 3. Inserisci sito
+                    if (idClientePrivate === undefined) {
+                        return { error: `Cliente non trovato`, success: false }
+                    }
+                    await sql`
+                        INSERT INTO siti (nomesito, idcitta, datacenter, tipologia, idcliente)
+                        VALUES (${nomeSito}, ${idCitta}, ${datacenter}, ${tipologia}, ${idClientePrivate})
+                    `;
+                } catch (err) {
+                    return { error: `Riga ${i}: ${err}`, success: false }
+                }
+            }
+        }
+        else
+            return { error: "Errore durante l'importazione dei siti", success: false };
+
+
+
+        return { success: true }
     } catch (e) {
         console.log(e)
+        return { error: "Errore durante l'importazione", success: false }
     }
 }, zod$({
     clientType: z.enum(['new', 'existing']),
@@ -69,20 +156,13 @@ export const useUser = routeLoader$(({ sharedMap }) => {
 });
 
 export default component$(() => {
-    const importState = useStore({
-        cliente: '',
-        files: {
-            siti: null as File | null,
-            network: null as File | null,
-            ip: null as File | null,
-        },
-        validation: {
-            siti: { valid: false, error: '' },
-            network: { valid: false, error: '' },
-            ip: { valid: false, error: '' },
-        },
-        isSubmitting: false,
+    const clientListRefresh = useSignal(0);
+    const showInfoTable = useStore<{ [key: string]: boolean }>({
+        siti: false,
+        network: false,
+        ip: false,
     });
+    const lang = getLocale("en")
     // Stati di feedback per ogni sezione
     const sitiFeedback = useSignal<null | { message: string; type: "success" | "error" }>(null);
     const networkFeedback = useSignal<null | { message: string; type: "success" | "error" }>(null);
@@ -92,82 +172,37 @@ export default component$(() => {
     const fileInputRefSiti = useSignal<HTMLInputElement>();
     const fileInputRefNetwork = useSignal<HTMLInputElement>();
     const fileInputRefIP = useSignal<HTMLInputElement>();
+    const notifications = useSignal<Notification[]>([]);
     const feedBackSVG = useStore<{ [key: string]: { type: string; message?: string } | null }>({
         siti: null,
         network: null,
         ip: null,
     });
 
+    const clienteTXT = useSignal('');
     const user: TecnicoModel = useUser().value;
     const showModalCSV = useSignal(false);
     const formAction = CSVInsert();
     const clientType = useSignal<'new' | 'existing'>('new');
-    const selectedClient = useSignal('');
-    const files = useStore<{ [key: string]: File | null }>({
+    const files = useStore<{ [key: string]: { name: string; size: number } | null }>({
         siti: null,
         network: null,
         ip: null,
     });
 
     useTask$(async ({ track }) => {
-        clientList.value = await listaClienti();
-        track(() => showModalCSV.value);
+        track(() => clientType.value);
         track(() => formAction.value);
-        if (formAction.value?.failed) {
-            importState.files.siti = null;
-            importState.files.network = null;
-            importState.files.ip = null;
-            importState.validation.siti.valid = false;
-            importState.validation.network.valid = false;
-            importState.validation.ip.valid = false;
-            importState.validation.siti.error = '';
-            importState.validation.network.error = '';
-            importState.validation.ip.error = '';
-            sitiFeedback.value = null;
-            networkFeedback.value = null;
-            ipFeedback.value = null;
-            currentIdC.value = '';
-            clientType.value = 'new';
-            selectedClient.value = '';
-            Object.keys(feedBackSVG).forEach((key) => {
-                feedBackSVG[key] = null;
-            });
-            /*(document.getElementById("idC") as HTMLInputElement).value = '';
-            (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
-            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
-            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;*/
-            if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-            if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-            if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
-        }
-        if (showModalCSV.value) {
-            importState.files.siti = null;
-            importState.files.network = null;
-            importState.files.ip = null;
-            importState.validation.siti.valid = false;
-            importState.validation.network.valid = false;
-            importState.validation.ip.valid = false;
-            importState.validation.siti.error = '';
-            importState.validation.network.error = '';
-            importState.validation.ip.error = '';
-            sitiFeedback.value = null;
-            networkFeedback.value = null;
-            ipFeedback.value = null;
-            currentIdC.value = '';
-            clientType.value = 'new';
-            selectedClient.value = '';
-            Object.keys(feedBackSVG).forEach((key) => {
-                feedBackSVG[key] = null;
-            });
-            (document.getElementById("idC") as HTMLInputElement).value = '';
-            (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
-            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
-            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-            if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-            if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-            if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
-        }
+        track(() => clientList.value);
     })
+
+    const addNotification = $((message: string, type: 'success' | 'error') => {
+        notifications.value = [...notifications.value, { message, type }];
+        // Rimuovi la notifica dopo 3 secondi
+        setTimeout(() => {
+            notifications.value = notifications.value.filter(n => n.message !== message);
+        }, 3000);
+    });
 
     const handleUpload = $(async (e: Event, feedbackSignal: typeof sitiFeedback, type: 'siti' | 'network' | 'ip') => {
         feedBackSVG[type] = { type: "loading", message: "Caricamento in corso..." };
@@ -184,6 +219,7 @@ export default component$(() => {
                     type: "error",
                     message: "Nessun file selezionato"
                 };
+                addNotification("Nessun file selezionato", 'error');
                 return;
             }
 
@@ -194,6 +230,7 @@ export default component$(() => {
                     type: "error",
                     message: "Il file deve essere un CSV"
                 };
+                addNotification("Il file deve essere un CSV", 'error');
                 return;
             }
 
@@ -203,6 +240,7 @@ export default component$(() => {
                     type: "error",
                     message: "Il file e' vuoto"
                 };
+                addNotification("Il file e' vuoto", 'error');
                 return;
             }
 
@@ -216,17 +254,25 @@ export default component$(() => {
                     type: "error",
                     message: "Il file CSV è vuoto"
                 };
+                addNotification("Il file CSV è vuoto", 'error');
                 return;
             }
 
-            /*const requiredHeaders = ['nomeSito', 'nomeCitta', 'nomePaese', 'datacenter', 'tipologia', 'nomeCliente'];
-            if (!requiredHeaders.every(h => csvData.headers.includes(h))) {
-                feedbackSignal.value = {
-                    message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`,
-                    type: "error"
-                };
-                return;
-            }*/
+            if (type == 'siti') {
+                const requiredHeaders = ['nomeSito', 'citta', 'paese', 'datacenter', 'tipologia'];
+                if (!requiredHeaders.every(h => csvData.headers.includes(h))) {
+                    feedbackSignal.value = {
+                        message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`,
+                        type: "error"
+                    };
+                    feedBackSVG[type] = {
+                        type: "error",
+                        message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`
+                    };
+                    addNotification(`Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`, 'error');
+                    return;
+                }
+            }
             feedbackSignal.value = {
                 message: `File csv caricato con successo!`,
                 type: "success"
@@ -235,7 +281,16 @@ export default component$(() => {
                 type: "success",
                 message: "File csv caricato con successo!"
             };
+            if (file) {
+                // Salva solo i metadati, non l'intero oggetto File
+                files[type] = {
+                    name: file.name,
+                    size: file.size
+                };
+            }
+            addNotification("File caricato con successo", 'success');
         } catch (err) {
+            files[type] = null;
             feedbackSignal.value = {
                 message: "Errore durante l'elaborazione del file",
                 type: "error"
@@ -244,20 +299,85 @@ export default component$(() => {
                 type: "error",
                 message: "Errore durante l'elaborazione del file"
             };
+            addNotification("Errore durante l'elaborazione del file", 'error');
             console.log(err)
         }
         setTimeout(() => (feedbackSignal.value = null), 2500);
     });
 
     const showPopUpCSV = $(() => {
-        if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-        if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-        if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
+        files['siti'] = null;
+        files['network'] = null;
+        files['ip'] = null;
+        showModalCSV.value = false;
+        fileInputRefIP.value = undefined;
+        fileInputRefNetwork.value = undefined;
+        fileInputRefSiti.value = undefined;
+        sitiFeedback.value = null;
+        networkFeedback.value = null;
+        ipFeedback.value = null;
+        clienteTXT.value = "";
+        feedBackSVG['siti'] = null;
+        feedBackSVG['network'] = null;
+        feedBackSVG['ip'] = null;
+        currentIdC.value = "";
+        (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+        (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+        clientType.value = "new";
         showModalCSV.value = true
+    })
+
+    const reloadClients = $(async () => {
+        if (formAction.value?.success) {
+            clientList.value = await listaClienti();
+
+            showModalCSV.value = false;
+            files['siti'] = null;
+            files['network'] = null;
+            files['ip'] = null;
+            fileInputRefIP.value = undefined;
+            fileInputRefNetwork.value = undefined;
+            fileInputRefSiti.value = undefined;
+            sitiFeedback.value = null;
+            networkFeedback.value = null;
+            ipFeedback.value = null;
+            clienteTXT.value = "";
+            feedBackSVG['siti'] = null;
+            feedBackSVG['network'] = null;
+            feedBackSVG['ip'] = null;
+            currentIdC.value = "";
+            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+            clientType.value = "new";
+            clientListRefresh.value++
+            if (clientListRefresh.value > 255)
+                clientListRefresh.value = 0;
+            addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo", 'success');
+        }
+        else
+            addNotification(formAction.value?.error ?? "Errore durante la modifica", 'error');
+    })
+
+    const showPreviewSection = $(async (section: 'siti' | 'network' | 'ip') => {
+
     })
 
     return (
         <>
+            {/* Aggiungi questo div per le notifiche */}
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {notifications.value.map((notification, index) => (
+                    <div
+                        key={index}
+                        class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-red-500 text-white'
+                            }`}
+                    >
+                        {notification.message}
+                    </div>
+                ))}
+            </div>
             <div class="size-full lg:px-40 px-24">
                 <Title>{$localize`: @@dbTitle:Client Selection Page`}
                     <button onClick$={showPopUpCSV} class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 bg-black text-white rounded hover:bg-gray-800 transition-colors text-sm ml-4">
@@ -267,7 +387,7 @@ export default component$(() => {
                         {$localize`Import CSV`}
                     </button>
                 </Title>
-                <ClientList />
+                <ClientList refresh={clientListRefresh.value} />
 
 
                 {user.admin && (
@@ -305,11 +425,11 @@ export default component$(() => {
                 </div>}
             >
                 <div class="w-full flex justify-center items-center">
-                    <Form action={formAction} class="bg-white shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
+                    <Form action={formAction} onSubmit$={reloadClients} class="bg-white shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
                         {/* Sezione Cliente - Modificata */}
                         <div class="space-y-4">
                             <h2 class="text-xl font-semibold">Cliente</h2>
-
+                            Trascina
                             <div class="flex gap-4">
                                 {/* Radio per scegliere tra nuovo cliente o esistente */}
                                 <label class="flex items-center gap-2">
@@ -345,25 +465,31 @@ export default component$(() => {
 
                             {/* Input testo per nuovo cliente */}
                             {clientType.value === 'new' && (
-                                <input
-                                    type="text"
-                                    name="clienteTXT"
-                                    class="w-full px-4 py-2 border rounded-lg"
-                                    placeholder="Nome nuovo cliente"
+                                <TextBoxForm
+                                    error={formAction.value?.error}
                                     id="clienteTXTid"
-                                />)}
-
+                                    placeholder={$localize`Inserire il nome del cliente`}
+                                    nameT="clienteTXT"
+                                    title=""
+                                    value={clienteTXT.value}
+                                    OnInput$={(event: InputEvent) => {
+                                        clienteTXT.value = (event.target as HTMLInputElement).value;
+                                    }}
+                                />
+                            )}
                             {/* Select per clienti esistenti */}
                             <input type="hidden" name="idcliente" id="idC" value={currentIdC.value} />
                             {clientType.value === 'existing' && (
                                 <SelectForm
                                     value=""
                                     OnClick$={(e) => {
-                                        (document.getElementsByName("idcliente")[0] as HTMLInputElement).value = (e.target as HTMLOptionElement).value;
+                                        const val = (e.target as HTMLSelectElement).value;
+                                        currentIdC.value = val;
+                                        (document.getElementsByName("idcliente")[0] as HTMLInputElement).value = val;
                                     }}
                                     id="idUC"
                                     name="idcliente"
-                                    title={$localize`Cliente`}
+                                    title=""
                                     listName=""
                                 >
                                     {clientList.value && clientList.value?.map((row: any) => (
@@ -376,8 +502,24 @@ export default component$(() => {
                         {/* Sezione File con feedback visivo */}
                         {['siti', 'network', 'ip'].map((section) => (
                             <div key={section} class="space-y-4">
-                                <h2 class="text-xl font-semibold flex items-center gap-2">Importa {section}
-                                    <span class="inline-flex ">
+                                <h2 class="text-xl font-semibold flex items-center gap-3">
+                                    <span class="flex items-center gap-2">
+                                        Importa {section}
+                                        <button
+                                            type="button"
+                                            class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                            onClick$={() => showPreviewSection(section as 'siti' | 'network' | 'ip')}
+                                        >
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                            </svg>
+                                            <span class="tooltip">
+                                                {$localize`Info tabella`}
+                                            </span>
+                                        </button>
+                                    </span>
+
+                                    <span class="inline-flex">
                                         {feedBackSVG[section]?.type === "success" && (
                                             <div class="has-tooltip">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
@@ -404,18 +546,28 @@ export default component$(() => {
 
                                 <div class="relative">
                                     <input
+                                        disabled={section === 'siti' && clienteTXT.value.trim() === '' && currentIdC.value.trim() === ''
+                                            || section === 'network' && !files.siti
+                                            || section === 'ip' && !files.network}
                                         type="file"
                                         id={`csv-${section}`}
                                         name={`csv${section}`}
                                         class="hidden"
                                         onChange$={(e) => handleUpload(e, sitiFeedback, section as 'siti' | 'network' | 'ip')}
                                         accept=".csv"
-                                        ref={section === 'siti' ? fileInputRefSiti : section === 'network' ? fileInputRefNetwork : fileInputRefIP}
                                     />
 
                                     <label
                                         htmlFor={`csv-${section}`}
-                                        class="flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 rounded-lg border-2 border-dashed cursor-pointer transition-colors"
+                                        class={`
+                                                flex items-center justify-between px-6 py-4 rounded-lg transition-all 
+                                                border-1 border-gray-200 bg-gray-50
+                                                ${(section === 'siti' && !clienteTXT.value.trim() && !currentIdC.value.trim())
+                                                || (section === 'network' && !files.siti)
+                                                || (section === 'ip' && !files.network)
+                                                ? 'cursor-not-allowed opacity-75'
+                                                : 'cursor-pointer hover:bg-gray-100'}
+        `}
                                     >
                                         <div class="flex items-center gap-3">
                                             <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -430,44 +582,40 @@ export default component$(() => {
                             </div>
                         ))}
 
+
                         <button
                             type="submit"
-                            class="w-full py-3 px-6 bg-gray-600 text-white rounded-lg hover:bg-gray-700 duration-250 transition-all cursor-pointer"
-                            disabled={importState.validation.siti.valid || (importState.validation.network.valid && importState.validation.siti.valid) || (importState.validation.siti.valid && importState.validation.network.valid && importState.validation.ip.valid)}
+                            class="w-full py-3 px-6 bg-gray-600 text-white rounded-lg duration-250 transition-all cursor-pointer not-disabled:bg-gray-800 disabled:cursor-not-allowed"
+                            disabled={
+                                (clientType.value === 'new' && clienteTXT.value.trim() === '') ||
+                                (clientType.value === 'existing' && currentIdC.value.trim() === '')
+                            }
                         >
                             Conferma Importazione
                         </button>
                         <button
                             type="button"
-                            class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
                             onClick$={() => {
+                                files['siti'] = null;
+                                files['network'] = null;
+                                files['ip'] = null;
                                 showModalCSV.value = false;
-                                importState.files.siti = null;
-                                importState.files.network = null;
-                                importState.files.ip = null;
-                                importState.validation.siti.valid = false;
-                                importState.validation.network.valid = false;
-                                importState.validation.ip.valid = false;
-                                importState.validation.siti.error = '';
-                                importState.validation.network.error = '';
-                                importState.validation.ip.error = '';
+                                fileInputRefIP.value = undefined;
+                                fileInputRefNetwork.value = undefined;
+                                fileInputRefSiti.value = undefined;
                                 sitiFeedback.value = null;
                                 networkFeedback.value = null;
                                 ipFeedback.value = null;
-                                currentIdC.value = '';
-                                clientType.value = 'new';
-                                selectedClient.value = '';
-                                Object.keys(feedBackSVG).forEach((key) => {
-                                    feedBackSVG[key] = null;
-                                });
-                                (document.getElementById("idC") as HTMLInputElement).value = '';
-                                (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
-                                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+                                clienteTXT.value = "";
+                                feedBackSVG['siti'] = null;
+                                feedBackSVG['network'] = null;
+                                feedBackSVG['ip'] = null;
+                                currentIdC.value = "";
                                 (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-                                if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-                                if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-                                if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
+                                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+                                clientType.value = "new";
                             }}
+                            class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
                         >
                             Annulla
                         </button>
