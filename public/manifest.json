@@ -1,9 +1,21 @@
 {
   "$schema": "https://json.schemastore.org/web-manifest-combined.json",
-  "name": "qwik-project-name",
-  "short_name": "Welcome to Qwik",
-  "start_url": ".",
+  "name": "IPNova: Addresses solution",
+  "short_name": "IPNova",
+  "start_url": "/en/login",
   "display": "standalone",
   "background_color": "#fff",
-  "description": "A Qwik project app."
+  "description": "IPNova is a fast and modern-looking app for storing IP addresses",
+  "icons": [
+    {
+      "src": "images/ipnova_icon_192x192.png",
+      "sizes": "192x192",
+      "type": "images/png"
+    },
+    {
+      "src": "images/ipnova_icon_512x512.png",
+      "sizes": "512x512",
+      "type": "images/png"
+    }
+  ]
 }

@@ -19,7 +19,7 @@ interface AddressBoxProps {
     forceUpdate$?: (e: () => void) => void
 }
 
-export const getSameIPs = server$(async function (ip: string, network: number, prefix: number, type: string, siteID:number) {
+export const getSameIPs = server$(async function (ip: string, network: number, prefix: number, type: string, siteID: number) {
     try {
         if (isNaN(prefix)) return [];
         if (type == "host") {
@@ -87,7 +87,7 @@ export const getNetworkSpace = server$(async (idrete: number) => {
     }
 })
 
-export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, forceUpdate$, currentIPNetwork = -1, siteID=-1 }) => {
+export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host", disabled = false, title = "IPv4", currentID, local = true, prefix = "", checkAvailability = true, OnInput$ = (e) => { }, value, forceUpdate$, currentIPNetwork = -1, siteID = -1 }) => {
 
     const input1 = useSignal<HTMLInputElement>();
     const input2 = useSignal<HTMLInputElement>();
@@ -135,8 +135,8 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
         let parsedIP = ip.split('.').map(segment => parseInt(segment));
 
-        for(let ip of parsedIP)
-            if(ip<0 || ip>255)
+        for (let ip of parsedIP)
+            if (ip < 0 || ip > 255)
                 errors.push("Invalid IP");
 
         let parsedPrefix = parseInt(working_prefix);
@@ -233,7 +233,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
                 }
             }
 
-            
+
 
             // console.log(lastIP,networkIP);
             if (!(networkIP.join('.') >= parentNetwork.iprete && lastIP.join('.') <= parentLastIp.join('.')) && complete)
@@ -260,23 +260,26 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
         forceValue.value = [...forceValue.value]
     })
 
-    
+
 
     useVisibleTask$(async ({ track }) => {
         track(() => currentIPNetwork)
         parentNetwork.value = await getNetwork(currentIPNetwork) as ReteModel;
 
-        let inputs = [input4,input3,input2,input1];
+        let inputs = [input1, input2, input3, input4];
         let int_prefix = parseInt(prefix);
         console.log(int_prefix);
-        while(int_prefix>=8)
-        {
-            const inp = inputs[Math.floor(int_prefix/8)];
-            if(inp.value && parentNetwork.value){
+        let i = 0;
+        while (int_prefix >= 8) {
+            const inp = inputs[i];
+            if (inp.value && parentNetwork.value) {
                 inp.value.disabled = true;
-                inp.value.value = parentNetwork.value.iprete.split('.')[3-Math.floor(int_prefix/8)];
+                inp.value.value = parentNetwork.value.iprete.split('.')[i];
+                inp.value.style.backgroundColor = "#eee";
+                inp.value.style.color = "#555";
             }
-            int_prefix-=8;
+            int_prefix -= 8;
+            i++;
         }
 
         assembleIP();
@@ -336,19 +339,120 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
     })
 
 
-
+    // *:w-[48px] gap-1 *:border *:border-gray-300 *:rounded-md *:outline-0 *:p-0.5 *:px-2 *:hover:border-black *:focus:border-black
     return (
-        <div class="flex items-center px-2 py-1">
+        <div class="flex items-center px-2 py-1 mb-2 relative">
             <p class="font-semibold">{title}</p>
-            <div class={"w-full flex *:w-[48px] gap-1 *:border *:border-gray-300 *:rounded-md *:outline-0 *:p-0.5 *:px-2 *:hover:border-black *:focus:border-black " + (disabled ? " *:bg-gray-300 " : "")}>
-                <input type="text" ref={input1} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
-                .
-                <input type="text" ref={input2} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
-                .
-                <input type="text" ref={input3} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
-                .
-                <input type="text" ref={input4} class="only-numbers address" onInput$={assembleIP} disabled={disabled} />
+            <div class={"w-full *:float-start min-w-[240px] " + (disabled ? " **:bg-gray-300 " : "")}>
+                <div class="relative w-[48px]">
+                    <input type="text" ref={input1} class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2 hover:border-black focus:border-black" onInput$={assembleIP} disabled={disabled} />
+                    <div class="absolute -top-9 left-1/2 -translate-x-1/2 z-20 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all pointer-events-none
+                       bg-gray-900 text-white text-xs rounded px-3 py-1 shadow">
+                        Questo ottetto non è modificabile perché fa parte della porzione di rete
+                        <div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+                    </div>
+                </div>
+                <span class="w-[10px] text-center">.</span>
+                <div class="relative block w-[48px]">
+                    <input type="text" ref={input2} class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2 hover:border-black focus:border-black" onInput$={assembleIP} disabled={disabled} />
+                    <div class="absolute -top-9 left-1/2 -translate-x-1/2 z-20 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all pointer-events-none
+                       bg-gray-900 text-white text-xs rounded px-3 py-1 shadow">
+                        Questo ottetto non è modificabile perché fa parte della porzione di rete
+                        <div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+                    </div>
+                </div>
+                <span class="w-[10px] text-center">.</span>
+                <div class="relative">
+                    <input type="text" ref={input3} class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2 hover:border-black focus:border-black" onInput$={assembleIP} disabled={disabled} />
+                    <div class="absolute -top-9 left-1/2 -translate-x-1/2 z-20 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all pointer-events-none
+                       bg-gray-900 text-white text-xs rounded px-3 py-1 shadow">
+                        Questo ottetto non è modificabile perché fa parte della porzione di rete
+                        <div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+                    </div>
+                </div>
+                <span class="w-[10px] text-center">.</span>
+                <div class="relative">
+                    <input type="text" ref={input4} class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2 hover:border-black focus:border-black" onInput$={assembleIP} disabled={disabled} />
+                    <div class="absolute -top-9 left-1/2 -translate-x-1/2 z-20 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all pointer-events-none
+                       bg-gray-900 text-white text-xs rounded px-3 py-1 shadow">
+                        Questo ottetto non è modificabile perché fa parte della porzione di rete
+                        <div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+                    </div>
+                </div>
+
             </div>
         </div>
+
+        // <div class="flex items-center px-2 py-1 relative">
+        //     <p class="font-semibold">{title}</p>
+        //     <div class="w-full flex gap-1">
+        //         {/* Primo ottetto con tooltip */}
+        //         <div class="relative group">
+        //             <input
+        //                 type="text"
+        //                 ref={input1}
+        //                 class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2 bg-gray-200 text-gray-500 cursor-not-allowed"
+        //                 onInput$={assembleIP}
+        //                 disabled
+        //                 tabIndex={-1}
+        //                 aria-label="Ottetto di rete non modificabile"
+        //             />
+        //             <div class="absolute -top-9 left-1/2 -translate-x-1/2 z-20 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all pointer-events-none
+        //           bg-gray-900 text-white text-xs rounded px-3 py-1 shadow">
+        //                 Questo ottetto non è modificabile perché fa parte della porzione di rete
+        //                 <div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+        //             </div>
+        //         </div>
+        //         <span class="text-gray-400 font-bold text-base leading-none select-none">.</span>
+        //         {/* Secondo ottetto con tooltip */}
+        //         <div class="relative group">
+        //             <input
+        //                 type="text"
+        //                 ref={input2}
+        //                 class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2 bg-gray-200 text-gray-500 cursor-not-allowed"
+        //                 onInput$={assembleIP}
+        //                 disabled
+        //                 tabIndex={-1}
+        //                 aria-label="Ottetto di rete non modificabile"
+        //             />
+        //             <div class="absolute -top-9 left-1/2 -translate-x-1/2 z-20 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all pointer-events-none
+        //           bg-gray-900 text-white text-xs rounded px-3 py-1 shadow">
+        //                 Questo ottetto non è modificabile perché fa parte della porzione di rete
+        //                 <div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+        //             </div>
+        //         </div>
+        //         <span class="text-gray-400 font-bold text-base leading-none select-none">.</span>
+        //         {/* Terzo ottetto con tooltip */}
+        //         <div class="relative group">
+        //             <input
+        //                 type="text"
+        //                 ref={input3}
+        //                 class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2 bg-gray-200 text-gray-500 cursor-not-allowed"
+        //                 onInput$={assembleIP}
+        //                 disabled
+        //                 tabIndex={-1}
+        //                 aria-label="Ottetto di rete non modificabile"
+        //             />
+        //             <div class="absolute -top-9 left-1/2 -translate-x-1/2 z-20 invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-all pointer-events-none
+        //           bg-gray-900 text-white text-xs rounded px-3 py-1 shadow">
+        //                 Questo ottetto non è modificabile perché fa parte della porzione di rete
+        //                 <div class="absolute left-1/2 -bottom-2 -translate-x-1/2 w-3 h-3 bg-gray-900 rotate-45"></div>
+        //             </div>
+        //         </div>
+        //         <span class="text-gray-400 font-bold text-base leading-none select-none">.</span>
+        //         {/* Quarto ottetto (modificabile) */}
+        //         <input
+        //             type="text"
+        //             ref={input4}
+        //             class="only-numbers address w-[48px] border border-gray-300 rounded-md outline-0 p-0.5 px-2"
+        //             onInput$={assembleIP}
+        //             disabled={disabled}
+        //         />
+        //     </div>
+        // </div>
+
+
+
+
     )
 })

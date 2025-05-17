@@ -40,6 +40,12 @@
     transition: transform 0.3s ease;
 }
 
+@media screen and (max-width:768px){
+    .dialog-contentAdmin {
+    width:100%
+}
+}
+
 .dialog-overlayAdmin.openAdmin.dialog-contentAdmin {
     transform: scale(1);
 }

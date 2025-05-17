@@ -1,12 +1,12 @@
-import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useTask$, useVisibleTask$ } from "@builder.io/qwik";
 import { RequestHandler, routeLoader$, server$, useLocation, useNavigate } from "@builder.io/qwik-city";
 import sql from "~/../db";
 import { ReteModel } from "~/dbModels";
 
 
-export const onRequest : RequestHandler = ({redirect,params,url})=>{
-    if(params.mode!="view")
-        throw redirect(301,url.pathname.replace(params.mode,'view'));
+export const onRequest: RequestHandler = ({ redirect, params, url }) => {
+    if (params.mode != "view")
+        throw redirect(301, url.pathname.replace(params.mode, 'view'));
 }
 
 export const useSiteName = routeLoader$(async ({ params }) => {
@@ -27,7 +27,7 @@ export const getNetworkSpace = server$(async (idrete: number) => {
         let result = 0;
 
         for (const r of query) {
-            result += Math.pow(2, r.prefissorete);
+            result += Math.pow(2, 32 - r.prefissorete);
         }
         result += (await sql`SELECT * FROM indirizzi WHERE indirizzi.idrete = ${idrete}`).length;
 
@@ -63,15 +63,17 @@ export const getChildrenNetworks = server$(async (idrete: number) => {
 
 export default component$(() => {
     const loc = useLocation();
+    const nav = useNavigate();
     const network = useSignal<ReteModel>();
     const allocatedSpace = useSignal<number>(0);
     const parentNetwork = useSignal<ReteModel>();
     const childrenNetworks = useSignal<ReteModel[]>();
     const totalSpace = useSignal<number>(0);
 
+    const lengthBar = useSignal(400);
 
-    useTask$(async ({track}) => {
-        track(()=>loc.url)
+    useTask$(async ({ track }) => {
+        track(() => loc.url)
         network.value = await useNet();
         if (network.value) {
             allocatedSpace.value = await getNetworkSpace(network.value.idrete) as number;
@@ -82,17 +84,25 @@ export default component$(() => {
         }
     })
 
+    const loading = useSignal(true);
+
+    useVisibleTask$(() => {
+        if (lengthBar.value > window.innerWidth - 40)
+            lengthBar.value = window.innerWidth - 40
+        loading.value = false;
+    })
+
     return (
         <div>
             {/* <Title haveReturn={true} url={loc.url.pathname.split('/info')[0].split('/').slice(0,4).join('/')} > {sitename.value.toString()} IP</Title> */}
             {/* <SiteNavigator /> */}
 
-            
+
 
             {network.value ?
-                <div class="flex flex-col w-full gap-4">
-                    <div class="flex gap-4">
-                        <div class="flex-1 px-5 py-3 mt-4 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
+                <div class="flex flex-col w-full gap-4 p-1">
+                    <div class="flex md:flex-row flex-col gap-4">
+                        <div class="flex-1 px-5 py-3 mt-4 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1 shadow-md">
                             <div class="h-[50px] w-full flex items-center overflow-hidden">
                                 <div class="text-black text-lg font-semibold">{$localize`Informazioni sulla rete`}</div>
                             </div>
@@ -117,36 +127,68 @@ export default component$(() => {
                                 <div class="justify-start text-black text-lg font-normal">{totalSpace.value - allocatedSpace.value}</div>
                             </div>
                         </div>
-                        <div class="flex-1 px-5 py-3 mt-4 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1">
+                        <div class="flex-1 px-5 py-3 mt-4 rounded-md border-1 border-gray-300 inline-flex flex-col justify-start items-start gap-1 shadow-md">
                             <div class="h-[50px] w-full flex items-center overflow-hidden">
                                 <div class="text-black text-lg font-semibold">{$localize`Relatives components`}</div>
                             </div>
                             {parentNetwork.value && <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
                                 <div class="justify-start text-black text-lg font-normal">{$localize`Parent Network`}</div>
-                                <div class="justify-start text-black text-lg font-normal">{parentNetwork.value?.iprete}</div>
+                                <div class="justify-start text-blue-500 cursor-pointer hover:text-blue-700 text-lg font-normal" onClick$={() => {
+                                    let url_rete = loc.url.pathname.split('/');
+                                    url_rete[4] = parentNetwork.value!.idrete.toString()
+                                    nav(url_rete.join('/'));
+                                }}>{parentNetwork.value?.iprete}</div>
                             </div>}
                             {childrenNetworks.value && childrenNetworks.value.length > 0 &&
                                 <div class="px-2 py-2.5 border-t w-full border-gray-300 inline-flex justify-between items-center overflow-hidden">
                                     <div class="justify-start text-black text-lg font-normal">{$localize`Childrens`}</div>
                                     <div class="justify-start text-black text-lg font-normal">
-                                        {childrenNetworks.value.map(x => <p>{x.iprete}</p>)}
+                                        {childrenNetworks.value.map(x => <p class="text-blue-500 cursor-pointer hover:text-blue-700" onClick$={() => {
+                                            let url_rete = loc.url.pathname.split('/');
+                                            url_rete[4] = x.idrete.toString();
+                                            nav(url_rete.join('/'));
+                                        }}>{x.iprete}</p>)}
                                     </div>
                                 </div>}
+                            {
+                                !(parentNetwork.value || (childrenNetworks.value && childrenNetworks.value.length > 0)) &&
+                                <div class="size-full">
+                                    There are no relatives components
+                                </div>
+                            }
                         </div>
                     </div>
-                    <div class="flex gap-4">
-                        <div class="p-2 border border-gray-300 rounded-md w-[520px]">
-                            <h2 class="font-semibold text-[16pt] m-2 mb-1">Network Usage</h2>
-                            <div class="relative">
-                                <div class="w-[400px] absolute top-0 left-0 z-10 bg-gray-400 rounded-2xl h-[40px]">
+                    <div class="flex gap-4 w-1/2 max-sm:w-full sm:min-w-[620px]">
+                        <div class="p-3 border border-gray-300 rounded-md w-full shadow-md flex">
+                            <div class="flex-1 relative me-5">
+                                <h2 class="font-semibold text-[16pt] m-2 mb-1">Network Usage</h2>
+                                {!loading.value ? <div class="relative">
+                                    <div class="absolute top-0 left-0 z-10 bg-gray-400 rounded-2xl h-[40px]" style={{ width: lengthBar.value }}>
 
-                                </div>
-                                <div class="absolute top-0 left-0 bg-green-500 z-20 rounded-2xl h-[40px]" style={{ width: allocatedSpace.value / totalSpace.value * 400 }}>
+                                    </div>
+                                    <div class="absolute top-0 left-0 bg-green-500 z-20 rounded-2xl h-[40px]" style={{ width: allocatedSpace.value / totalSpace.value * lengthBar.value }}>
 
-                                </div>
+                                    </div>
+                                </div> :
+                                    <div class="absolute animate-pulse w-full">
+                                        <div class="bg-gray-300 rounded-2xl h-[40px]"></div>
+                                    </div>}
+                                <div class="mt-[48px]"></div>
+                                <p>There are {allocatedSpace.value} of {totalSpace.value} addresses in use</p>
                             </div>
-                            <div class="mt-[48px]"></div>
-                            <p>There are {allocatedSpace.value} of {totalSpace.value} addresses in use</p>
+                            { lengthBar.value>=400 && <div class="me-4 mt-1 flex flex-col justify-center">
+                                <div class="flex  items-center gap-2">
+                                    <div class="size-[8px] bg-green-500">
+
+                                    </div>
+                                    {$localize`Spazio occupato`}
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="size-[8px] bg-gray-400">
+                                    </div>
+                                    {$localize`Spazio libero`}
+                                </div>
+                            </div>}
                         </div>
                     </div>
 

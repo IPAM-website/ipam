@@ -119,7 +119,7 @@ export default component$<ButtonProps>(({ nomeImport, OnError, OnOk }) => {
 
     return (
         <>
-            <div class="inline-flex border-1 border-gray-300 rounded-md p-2 hover:translate-y-1 transition-all duration-200 cursor-pointer relative mt-4 has-tooltip"
+            <div class="inline-flex border-1 border-gray-300 h-[40px] rounded-md p-2 hover:translate-y-1 transition-all duration-200 cursor-pointer relative mt-4 has-tooltip"
             onMouseEnter$={() => showTooltip.value = true}
             onMouseLeave$={() => showTooltip.value = false}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">

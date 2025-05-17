@@ -84,15 +84,15 @@ pnpm i
 ```
 Start development mode:
 ```shell
-pnpm run dev
+pnpm dev
 ```
 Preview production mode:
 ```shell
-pnpm run preview
+pnpm preview
 ```
 Build the static site:
 ```shell
-pnpm run build
+pnpm build
 ```
 The output will be in the dist/ folder 📁.
 
@@ -120,3 +120,15 @@ docker pull postgres:17-alpine
 ## 🙌 Credits
 
 Made with 💙 by Ricks & L0rexist
+
+## Static Site Generator (Node.js)
+
+```shell
+pnpm build.server
+```
+
+## Static Site Generator (Node.js)
+
+```shell
+pnpm build.server
+```

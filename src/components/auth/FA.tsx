@@ -136,7 +136,7 @@ export default component$<LoginData>((props) => {
             if (firstTime.value) {
                 const update = await QRupdateDB({ "userP": utente.value, "secret": secret.value, "tabella": tabella.value });
             }
-
+            // console.log("worka");
             //console.log(cookie)
             await fetch("/api/cookie", {
                 method: "POST",
@@ -147,6 +147,7 @@ export default component$<LoginData>((props) => {
                 credentials: "include"
             })
             nav("/"+getLocale("en")+"/dashboard");
+            // window.location.href = "/"+getLocale("en")+"/dashboard";
 
         } else {
             console.log("Errore nella verifica dell'OTP");

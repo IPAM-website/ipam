@@ -61,7 +61,8 @@ export const useAddresses = server$(async function (this, filter = { empty: 1 })
     let addresses: IndirizziModel[] = [];
 
     if (filter.empty == 1) {
-        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND siti_rete.idrete=${this.params.network} `;
+        const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete 
+        INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND siti_rete.idrete=${this.params.network}`;
         addresses = queryResult as unknown as IndirizziModel[];
         return addresses;
     }
@@ -185,9 +186,9 @@ export default component$(() => {
     const notifications = useSignal<Notification[]>([]);
     const showPreview = useSignal(false);
 
-    useTask$(({track})=>{
-        track(()=>loc.params.network);
-        if(reloadFN.value)
+    useTask$(({ track }) => {
+        track(() => loc.params.network);
+        if (reloadFN.value)
             reloadFN.value();
     })
 
@@ -337,8 +338,10 @@ export default component$(() => {
                                 </div>
                                 <Dati DBTabella="indirizzi" title={$localize`Lista indirizzi IP`} dati={addressList.value} nomeTabella={"indirizzi"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
                                 </Dati>
-                                <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
-                                <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="indirizzi" />
+                                <div class="flex">
+                                    <ButtonAddLink nomePulsante={$localize`Aggiungi indirizzo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
+                                    <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="indirizzi" />
+                                </div>
                             </Table>
 
 
@@ -371,7 +374,7 @@ export default component$(() => {
 
 export const FormBox = component$(({ title }: { title?: string }) => {
     return (<>
-        <div class="rounded-lg border border-gray-300">
+        <div class="rounded-lg border border-gray-300 shadow-sm">
             {
                 title &&
                 <div class="w-full p-2 border-b-1 border-gray-200">
@@ -418,8 +421,8 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
 
     const handleFUpdate = $((e: () => void) => updateIP.value = e);
 
-    useTask$(async ({track}) => {
-        track(()=>loc.params.network)
+    useTask$(async ({ track }) => {
+        track(() => loc.params.network)
         formData.idrete = parseInt(loc.params.network);
 
         network.value = await getNetwork(parseInt(loc.params.network)) as ReteModel;
@@ -439,7 +442,10 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
     return (
         <>
 
-            <div class="m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative">
+            <div class={
+                "m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative " +
+                (action.value?.success ? "pointer-events-none opacity-50" : "")
+            }>
                 <FormBox title="Informazioni">
                     <SelectForm id="cmbType" title="Tipologia: " name="Tipo Dispositivo" value={formData.tipo_dispositivo} OnClick$={(e) => { formData.tipo_dispositivo = (e.target as HTMLOptionElement).value; }} listName="">
                         <option value="Server" key="Server">Server</option>
@@ -453,66 +459,66 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                     <DatePicker id="dpData" name={$localize`Data inserimento`} value={formData.data_inserimento} OnInput$={(e) => formData.data_inserimento = (e.target as HTMLInputElement).value} />
                 </FormBox>
                 {/* <div> */}
-                    <FormBox title="Dettagli">
+                <FormBox title="Dettagli">
 
-                        <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" forceUpdate$={handleFUpdate} currentIPNetwork={network.value?.idrete ?? -1} value={data?.ip} prefix={network.value?.prefissorete.toString() || ""} OnInput$={(e) => {
+                    <AddressBox title={loc.params.mode === "update" ? (lang == "it" ? "IP Origine" : "IP Origin") : "IPv4"} addressType="host" forceUpdate$={handleFUpdate} currentIPNetwork={network.value?.idrete ?? -1} value={data?.ip} prefix={network.value?.prefissorete.toString() || ""} OnInput$={(e) => {
 
 
-                            if (e.complete) {
-                                if (loc.params.mode == "update" && !e.exists)
-                                    e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
-                                else if (loc.params.mode == "insert" && e.exists)
-                                    e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
-                                else
-                                    formData.ip = e.ip;
-                            }
-                            if (formData.prefix == "")
-                                formData.prefix = e.prefix;
-
-                            ipErrors.value = e.errors;
-                        }} />
-                        {attempted.value && !formData.ip && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
-
-                        {ipErrors.value && <span class="text-red-600">{ipErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
-
-                        {
-                            //#region ChangeIP
-                            loc.params.mode === "update"
-                            &&
-                            changeIP.value
-                            &&
-                            <div class="flex flex-col">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 lg:ms-8 md:ms-6 sm:ms-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
-                                </svg>
-                                <AddressBox title="IP Dest" value={formData.ip} prefix={formData.prefix} currentIPNetwork={formData.idrete ?? -1} OnInput$={(e) => {
-                                    if (e.complete && e.errors.length == 0)
-                                        formData.ipDest = e.ip;
-                                    if (formData.prefix == "")
-                                        formData.prefix = e.prefix;
-
-                                    ipDestErrors.value = e.errors;
-                                }} />
-                            </div>
-                            //#endregion
+                        if (e.complete) {
+                            if (loc.params.mode == "update" && !e.exists)
+                                e.errors.push(lang == "en" ? "The IP does not exists in current network." : "L'indirizzo IP non esiste in questa rete.")
+                            else if (loc.params.mode == "insert" && e.exists)
+                                e.errors.push(lang == "en" ? "This IP already exists." : "Questo IP esiste già")
+                            else
+                                formData.ip = e.ip;
                         }
+                        if (formData.prefix == "")
+                            formData.prefix = e.prefix;
 
-                        <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
-                        {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
+                        ipErrors.value = e.errors;
+                    }} />
+                    {attempted.value && (action.value && !action.value.success) && !formData.ip && <span class="text-red-600">{$localize`This IP Address is invalid`}</span>}
 
-                        {/* <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete)) as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
+                    {ipErrors.value && (action.value && !action.value.success) && <span class="text-red-600">{ipErrors.value.map((x: string) => <>{x}<br /></>)}</span>}
+
+                    {
+                        //#region ChangeIP
+                        loc.params.mode === "update"
+                        &&
+                        changeIP.value
+                        &&
+                        <div class="flex flex-col">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 lg:ms-8 md:ms-6 sm:ms-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
+                            </svg>
+                            <AddressBox title="IP Dest" value={formData.ip} prefix={formData.prefix} currentIPNetwork={formData.idrete ?? -1} OnInput$={(e) => {
+                                if (e.complete && e.errors.length == 0)
+                                    formData.ipDest = e.ip;
+                                if (formData.prefix == "")
+                                    formData.prefix = e.prefix;
+
+                                ipDestErrors.value = e.errors;
+                            }} />
+                        </div>
+                        //#endregion
+                    }
+
+                    <TextboxForm id="txtPrefix" value={formData.prefix} disabled="disabled" title={$localize`Prefisso`} placeholder="Network Prefix" OnInput$={(e) => { formData.prefix = (e.target as any).value; }} />
+                    {attempted.value && !formData.prefix && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
+
+                    {/* <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete)) as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
                             {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                         </SelectForm> */}
-                        <TextboxForm id="txtNetwork" value={network.value?.iprete} disabled="disabled" title={$localize`Rete Associata`} placeholder="Network" OnInput$={(e) => { formData.idrete = parseInt((e.target as any).value); }} />
-                        {/* {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>} */}
+                    <TextboxForm id="txtNetwork" value={network.value?.iprete} disabled="disabled" title={$localize`Rete Associata`} placeholder="Network" OnInput$={(e) => { formData.idrete = parseInt((e.target as any).value); }} />
+                    {/* {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>} */}
 
-                        <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || "1"} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
-                            {vlans.value.map((x: VLANModel) => <option key={x.vid} value={x.vid}>{x.nomevlan}</option>)}
-                        </SelectForm>
-                        {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
+                    <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || "1"} OnClick$={(e) => { formData.vid = parseInt((e.target as any).value); }} listName="">
+                        {vlans.value.map((x: VLANModel) => <option key={x.vid} value={x.vid}>{x.nomevlan}</option>)}
+                    </SelectForm>
+                    {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}
 
-                    </FormBox>
-                    {/* <FormBox title="Selettore">
+                </FormBox>
+                {/* <FormBox title="Selettore">
                         <div class="p-2">
                             { Array(Math.pow(2,32-network.value!.prefissorete)).fill(0).map((x,i)=> 
                             <button key={i} class="p-2 w-[16px] h-[16px] border border-black" onClick$={() => { 
@@ -549,29 +555,51 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: RowAddress, rel
                 }
 
             </div>
-            <button onClick$={async (e) => {
-                e.preventDefault();
-                if (!formData.prefix || !formData.ip || !formData.idrete || !formData.vid) {
-                    attempted.value = true;
-                    if (isNaN(parseInt(formData.prefix)))
-                        formData.prefix = "";
-                    return;
-                }
-                await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, vid: formData.vid, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
-                if (action.value && action.value.success) {
-                    await new Promise((resolve) => { setTimeout(resolve, 2000) });
-                    window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
-                }
 
-            }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
-                ipErrors.value.length > 0 ||
-                ipDestErrors.value.length > 0 ||
-                formData.ip == "" ||
-                !formData.idrete ||
-                !formData.vid ||
-                formData.prefix == ""
-            }>{$localize`Conferma`}</button>
-            <a class="bg-red-500 hover:bg-red-600 transition-all rounded-md text-white p-2 inline-block mx-1" href={loc.url.href.replace("insert", "view").replace("update", "view")}>{$localize`Annulla`}</a>
+
+            <div class="w-full flex justify-center gap-2 mt-6">
+                <button
+                    onClick$={async (e) => {
+                        e.preventDefault();
+                        if (!formData.prefix || !formData.ip || !formData.idrete || !formData.vid) {
+                            attempted.value = true;
+                            if (isNaN(parseInt(formData.prefix)))
+                                formData.prefix = "";
+                            return;
+                        }
+                        await action.submit({ n_prefisso: parseInt(formData.prefix), ip: formData.ip, idrete: formData.idrete, vid: formData.vid, to_ip: changeIP.value ? formData.ipDest : formData.ip, mode: loc.params.mode, nome_dispositivo: formData.nome_dispositivo ?? "", tipo_dispositivo: formData.tipo_dispositivo ?? "", brand_dispositivo: formData.brand_dispositivo ?? "", data_inserimento: new Date(formData.data_inserimento ?? "").toString() == "Invalid Date" ? null : new Date(formData.data_inserimento!).toString() });
+                        if (action.value && action.value.success) {
+                            await new Promise((resolve) => { setTimeout(resolve, 2000) });
+                            window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
+                        }
+
+                    }}
+                    class="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
+                    disabled={
+                        ipErrors.value.length > 0 ||
+                        ipDestErrors.value.length > 0 ||
+                        formData.ip == "" ||
+                        !formData.idrete ||
+                        !formData.vid ||
+                        formData.prefix == ""
+                    }
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {$localize`Conferma`}
+                </button>
+                <a
+                    class="flex items-center gap-2 bg-red-500 hover:bg-red-600 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
+                    href={loc.url.href.replace("insert", "view").replace("update", "view")}
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {$localize`Annulla`}
+                </a>
+            </div>
+
             {action.submitted && action.value &&
                 <div class={action.value.success ? "bg-green-400 p-2 rounded-md text-white mt-2" : "bg-red-400 p-2 mt-2 rounded-md text-white"}>
                     {action.value.type_message == 1 && <span>{$localize`Inserimento avvenuto correttamente`}</span>}

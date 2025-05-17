@@ -5,6 +5,7 @@
 import { defineConfig, type UserConfig } from "vite";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
+import { VitePWA } from 'vite-plugin-pwa';
 import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
 import tailwindcss from "@tailwindcss/vite";
@@ -21,7 +22,30 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 
 export default defineConfig(({ command, mode }): UserConfig => {
   return {
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths(), tailwindcss()],
+    plugins: [qwikCity(), qwikVite(), tsconfigPaths(), tailwindcss(), VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt'],
+      manifest: {
+        name: 'IPNova: Store every address',
+        short_name: 'IPNova',
+        start_url: '/en/login',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'images/ipnova_icon_192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'images/ipnova_icon_512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+        ],
+      },
+    }),],
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.

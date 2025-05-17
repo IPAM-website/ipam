@@ -48,6 +48,7 @@ export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAct
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap }) => {
     let correct = "";
     try {
+        console.log();
         const user = await getUser();
         sharedMap.set("user", user);
         //console.log(user)
@@ -212,7 +213,7 @@ export default component$(() => {
 
     return (
         <>
-            <div class="size-full lg:px-40 px-24">
+            <div class="size-full lg:px-40 sm:px-24 px-4">
                 <Title>{$localize`: @@dbTitle:Client Selection Page`}
                     <button onClick$={showPopUpCSV} class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 bg-black text-white rounded hover:bg-gray-800 transition-colors text-sm ml-4">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
@@ -350,6 +351,7 @@ export default component$(() => {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                             </svg>
                                             <span class="text-gray-700">
+                                                {/* @ts-ignore */}
                                                 {files[section] ? files[section].name : `Trascina CSV o clicca per selezionare`}
                                             </span>
                                         </div>

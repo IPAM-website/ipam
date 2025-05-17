@@ -8,7 +8,6 @@ export const onPost : RequestHandler = async ({cookie,parseBody,env,text})=>{
     cookie.set("jwt",token,{
             httpOnly: true,
             maxAge: 60*60*24*7,
-            secure: true,
             path: '/'
         })
 

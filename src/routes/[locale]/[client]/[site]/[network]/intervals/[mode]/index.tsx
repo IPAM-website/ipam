@@ -367,8 +367,11 @@ export default component$(() => {
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
                                     </button></div>} */}
                                 </Dati>
+                                <div class="flex">
+
                                 <ButtonAddLink nomePulsante={$localize`Aggiungi intervallo`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
                                 <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="intervallo" />
+                                </div>
                             </Table>
 
 
@@ -383,7 +386,7 @@ export default component$(() => {
 
 export const FormBox = component$(({ title }: { title?: string }) => {
     return (<>
-        <div class="rounded-lg border border-gray-300">
+        <div class="rounded-lg border border-gray-300 shadow-sm">
             {
                 title &&
                 <div class="w-full p-2 border-b-1 border-gray-200">
@@ -446,7 +449,10 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
     return (
         <>
 
-            <div class="m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative">
+            <div class={
+                "m-2 sm:grid sm:grid-cols-2 max-sm:*:my-2 gap-4 relative " +
+                (action.value?.success ? "pointer-events-none opacity-50" : "")
+            }>
                 <FormBox title="Informazioni">
                     <TextboxForm id="txtName" title={$localize`Nome Intervallo`} value={formData.nomeintervallo} placeholder="Es. Intervallo 1" OnInput$={(e) => formData.nomeintervallo = (e.target as HTMLInputElement).value} />
                     <TextboxForm id="txtModel" title={$localize`Descrizione Intervallo`} value={formData.descrizioneintervallo} placeholder="Es. Pool indirizzi ufficio 1" OnInput$={(e) => formData.descrizioneintervallo = (e.target as HTMLInputElement).value} />
@@ -537,7 +543,7 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
                     }} />
                     {attempted.value && !formData.lunghezzaintervallo && <span class="text-red-600">{$localize`This length is invalid`}</span>}
 
-                    <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as HTMLOptionElement).value); network.value = networks.value.find(x => x.idrete == formData.idrete) }} listName="">
+                    <SelectForm id="cmbRete" title="Rete" disabled={true} name={$localize`Rete Associata`} value={loc.params.network} OnClick$={async (e) => { formData.idrete = parseInt((e.target as HTMLOptionElement).value); network.value = networks.value.find(x => x.idrete == formData.idrete) }} listName="">
                         {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                     </SelectForm>
                     {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>}
@@ -547,24 +553,45 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: IntervalloModel
                 </FormBox>
 
             </div>
-            <button onClick$={async (e) => {
-                e.preventDefault();
-                if (!formData.lunghezzaintervallo || formData.iniziointervallo == "" || !formData.idrete) {
-                    attempted.value = true;
-                    if (isNaN(formData.lunghezzaintervallo))
-                        formData.lunghezzaintervallo = 0;
-                    return;
-                }
-                await action.submit(formData);
-                if (action.value && action.value.success) {
-                    await new Promise((resolve) => { setTimeout(resolve, 2000) });
-                    window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
-                }
+            <div class="w-full flex justify-center gap-2 mt-6">
+                <button
+                    onClick$={async (e) => {
+                        e.preventDefault();
+                        if (!formData.lunghezzaintervallo || formData.iniziointervallo == "" || !formData.idrete) {
+                            attempted.value = true;
+                            if (isNaN(formData.lunghezzaintervallo))
+                                formData.lunghezzaintervallo = 0;
+                            return;
+                        }
+                        await action.submit(formData);
+                        if (action.value && action.value.success) {
+                            await new Promise((resolve) => { setTimeout(resolve, 2000) });
+                            window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
+                        }
 
-            }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
-                !formData.lunghezzaintervallo || formData.iniziointervallo == "" || !formData.idrete
-            }>{$localize`Conferma`}</button>
-            <a class="bg-red-500 hover:bg-red-600 transition-all rounded-md text-white p-2 inline-block mx-1" href={loc.url.href.replace("insert", "view").replace("update", "view")}>{$localize`Annulla`}</a>
+                    }}
+                    class="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
+                    disabled={
+                        !formData.lunghezzaintervallo ||
+                        formData.iniziointervallo == "" ||
+                        !formData.idrete
+                    }
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {$localize`Conferma`}
+                </button>
+                <a
+                    class="flex items-center gap-2 bg-red-500 hover:bg-red-600 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
+                    href={loc.url.href.replace("insert", "view").replace("update", "view")}
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {$localize`Annulla`}
+                </a>
+            </div>
             {action.submitted && action.value &&
                 <div class={action.value.success ? "bg-green-400 p-2 rounded-md text-white mt-2" : "bg-red-400 p-2 mt-2 rounded-md text-white"}>
                     {action.value.type_message == 1 && <span>{$localize`Inserimento avvenuto correttamente`}</span>}

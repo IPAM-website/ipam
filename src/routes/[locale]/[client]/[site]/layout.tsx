@@ -1,8 +1,15 @@
 import { component$, Slot, useVisibleTask$ } from "@builder.io/qwik";
-import { server$, useLocation, type RequestHandler } from "@builder.io/qwik-city";
+import { server$, StaticGenerateHandler, useLocation, type RequestHandler } from "@builder.io/qwik-city";
 import { setClientName, setSiteName } from "~/components/layout/Sidebar";
 import sql from "../../../../../db";
 import { getBaseURL, getUser } from "~/fnUtils";
+
+export const onStaticGenerate: StaticGenerateHandler = async () => {
+    return {
+        params: []
+    };
+};
+
 
 export const onRequest : RequestHandler = async({redirect})=>{
     

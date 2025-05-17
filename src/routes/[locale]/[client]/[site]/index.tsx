@@ -250,7 +250,7 @@ export default component$(() => {
             let xIP = x.iprete.split('.');
             let formIP = formData.iprete.split('.');
 
-            console.log(xIP,formIP);
+            console.log(xIP, formIP);
 
             return (
                 (x.prefissorete >= 24 && xIP[2] == formIP[2] && xIP[3] <= formIP[3])
@@ -285,7 +285,7 @@ export default component$(() => {
         hasParent.value = formData.idretesup != undefined;
         netMode.value = 2;
         personalizedPrefix.value = false;
-        if(updateAddr1.value)
+        if (updateAddr1.value)
             updateAddr1.value();
     })
 
@@ -294,7 +294,7 @@ export default component$(() => {
     })
 
     const handleRowClick = $((row: any) => {
-        nav(loc.url.pathname + row.idrete + "/info");
+        nav(loc.url.pathname.split('/').slice(0, 4).join('/') + '/' + row.idrete + "/info");
     })
 
     const handleNavClick = $((e: PointerEvent) => {
@@ -323,12 +323,43 @@ export default component$(() => {
             </div>
 
             <Title haveReturn={true} url={loc.url.origin + "/" + lang + "/" + client.value?.idcliente} >{client.value?.nomecliente + " - " + site.value?.nomesito}</Title>
-            <nav class="w-full flex cursor-pointer mt-2 rounded-lg *:p-2 *:px-4 *:hover:bg-gray-100 *:bg-gray-50">
+            {/* <nav class="w-full flex cursor-pointer mt-2 rounded-lg *:p-2 *:px-4 *:hover:bg-gray-100 *:bg-gray-50">
                 <option value="address" onClick$={handleNavClick}>Table</option>
                 <option value="info" onClick$={handleNavClick}>Info</option>
-            </nav>
+            </nav> */}
+            <div class="w-full flex justify-center animateEnter">
+
+
+                <nav class="flex mt-4 rounded-xl shadow bg-white px-2 py-1 gap-1  sm:w-1/4">
+                    <button
+                        onClick$={handleNavClick}
+                        value="address"
+                        class="flex-1 px-4 py-2 rounded-lg font-medium text-gray-700 transition
+           hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800
+           focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset
+           active:bg-blue-200 border border-transparent"
+                    // Aggiungi qui una condizione per la voce attiva, ad esempio:
+                    // class={isActive ? "bg-blue-200 text-blue-800" : "..."}
+                    >
+                        Table
+                    </button>
+                    <button
+                        onClick$={handleNavClick}
+                        value="info"
+                        class="flex-1 px-4 py-2 rounded-lg font-medium text-gray-700 transition
+           hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800
+           focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset
+           active:bg-blue-200 border border-transparent"
+                    // Aggiungi qui una condizione per la voce attiva, ad esempio:
+                    // class={isActive ? "bg-blue-200 text-blue-800" : "..."}
+                    >
+                        Info
+                    </button>
+                </nav>
+            </div>
+
             {page.value == 'address' &&
-                <div>
+                <div class="animateEnter">
                     <Table>
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
                             <div class="flex items-center gap-2">
@@ -382,22 +413,22 @@ export default component$(() => {
                             <div class="flex flex-1 border-b border-[#f3f3f3]">
                                 <div class="text-center w-full text-black text-base font-semibold font-['Inter']">{$localize`Viste`}</div>
                             </div>
-                            <a href="addresses/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                            <a href="0/addresses/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
                                 {$localize`Indirizzi IP`}
                             </a>
-                            <a href="intervals/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                            <a href="0/intervals/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
                                 {$localize`Intervalli IP`}
                             </a>
-                            <a href="prefixes/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                            <a href="0/prefixes/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
                                 {$localize`Prefissi`}
                             </a>
-                            <a href="aggregates/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                            <a href="0/aggregates/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
                                 {$localize`Aggregati`}
                             </a>
-                            <a href="vfr/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                            <a href="0/vfr/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
                                 VFR
                             </a>
-                            <a href="vlan/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
+                            <a href="0/vlan/view" class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
                                 VLAN
                             </a>
                         </div>
@@ -408,7 +439,7 @@ export default component$(() => {
         <PopupModal visible={netMode.value != 0} title={netMode.value == 1 ? $localize`Aggiunta network` : $localize`Aggiorna network`} onClosing$={() => { netMode.value = 0 }}>
             <Form onSubmit$={async () => {
                 if (netMode.value == 1) {
-                    
+
                     await insertAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.vid ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup })
                     if (insertAction.value?.success) {
                         netMode.value = 0;
@@ -421,7 +452,7 @@ export default component$(() => {
                     }
                 }
                 else if (netMode.value == 2) {
-                    
+
                     await updateAction.submit({ descrizione: formData.descrizione, nomerete: formData.nomerete, vrf: formData.vrf, iprete: formData.iprete, vid: formData.vid ?? 1, prefissorete: formData.prefissorete, idretesup: formData.idretesup, idrete: formData.idrete })
                     if (updateAction.value?.success) {
                         netMode.value = 0;
@@ -476,10 +507,10 @@ export default component$(() => {
                     <AddressBox title={$localize`Indirizzo di broadcast`} forceUpdate$={e => updateAddr2.value = e} disabled={true} value={broadcastIP.value} ></AddressBox>
                 </div>
                 <div class="**:flex-1">
-                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 || personalizedPrefix.value ? prefixBox.value?.value : formData.prefissorete.toString()} title={$localize`Prefisso`} ref={prefixBox} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; personalizedPrefix.value = true; updateAddr1.value()     }} />
+                    <TextboxForm id="txtPrefix" value={formData.prefissorete == 0 || personalizedPrefix.value ? prefixBox.value?.value : formData.prefissorete.toString()} title={$localize`Prefisso`} ref={prefixBox} placeholder="Es. 24" OnInput$={(e) => { formData.prefissorete = (e.target as any).value; personalizedPrefix.value = true; updateAddr1.value() }} />
                     {personalizedPrefix.value && (formData.prefissorete < 1 || formData.prefissorete > 31) && <span class="text-red-600">{$localize`This prefix is invalid`}</span>}
                 </div>
-                <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { console.log((e.target as HTMLOptionElement).value);formData.vid = parseInt((e.target as HTMLOptionElement).value); }} listName="">
+                <SelectForm id="cmbVLAN" title="VLAN" name="VLAN" value={formData.vid?.toString() || ""} OnClick$={(e) => { console.log((e.target as HTMLOptionElement).value); formData.vid = parseInt((e.target as HTMLOptionElement).value); }} listName="">
                     {vlans.value.map((x: VLANModel) => <option key={x.vid} about={x.descrizionevlan} value={x.vid}>{x.nomevlan}</option>)}
                 </SelectForm>
                 {attempted.value && !formData.vid && <span class="text-red-600">{$localize`Please select a VLAN`}</span>}

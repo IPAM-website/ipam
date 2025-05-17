@@ -340,7 +340,7 @@ export default component$<DatiProps>(({ dati: initialData, title = "", nomeTabel
                 <div class="my-2 mb-5 ms-2 text-gray-700">
                     {$localize`Click on the column name to move it to the other list. After clicking save, this will change the view of the table.`}
                 </div>
-                <div class="settings flex pb-5 mx-20">
+                <div class="settings flex pb-5 sm:mx-20 ">
                     <div class="w-2/5">
                         <h1>{$localize`Hidden Columns`}</h1>
                         <div class="p-2 h-full border border-gray-300">

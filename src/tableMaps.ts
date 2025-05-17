@@ -66,14 +66,14 @@ const TableMaps: { [key: string]: TableMap } = {
     },
     "usercliente": {
         headers: {
-            it:[
+            it: [
                 "Nome",
                 "Cognome",
                 "Email",
                 "Cliente",
                 ""
             ],
-            en:[          
+            en: [
                 "Name",
                 "Surname",
                 "Email",
@@ -124,18 +124,18 @@ const TableMaps: { [key: string]: TableMap } = {
     "rete": {
         headers: {
             it: [
-                "Nome",
                 "Indirizzo",
                 "Prefisso",
+                "Nome",
                 "Descrizione",
                 "VRF",
                 "ID",
                 ""
             ],
             en: [
-                "Name",
                 "Address",
                 "Prefix",
+                "Name",
                 "Description",
                 "VRF",
                 "ID",
@@ -151,28 +151,44 @@ const TableMaps: { [key: string]: TableMap } = {
             'idrete'
         ]
     },
+    // "aggregati": {
+    //     headers: {
+    //         it: [
+    //             'Nome',
+    //             'Descrizione',
+    //             'ID',
+    //             'Rete',
+    //             ''
+    //         ],
+    //         en: [
+    //             'Name',
+    //             'Description',
+    //             'ID',
+    //             'Network',
+    //             ''
+    //         ]
+    //     },
+    //     keys: [
+    //         'nomeaggregato',
+    //         'descrizioneaggregato',
+    //         'idaggregato',
+    //         'idrete'
+    //     ]
+    // },
     "aggregati": {
         headers: {
             it: [
-                'Nome',
-                'Descrizione',
-                'ID',
-                'Rete',
-                ''
+                'Indirizzo',
+                'Prefisso'
             ],
             en: [
-                'Name',
-                'Description',
-                'ID',
-                'Network',
-                ''
+                'Address',
+                'Prefix'
             ]
         },
         keys: [
-            'nomeaggregato',
-            'descrizioneaggregato',
-            'idaggregato',
-            'idrete'
+            'iprete',
+            'prefisso'
         ]
     },
     "prefissi": {
@@ -294,19 +310,19 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
 export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
     "tecnici": {
         keys: ['nometecnico', 'cognometecnico', 'ruolo', 'emailtecnico', 'telefonotecnico (opzionale)', 'pwdtecnico'],
-        example: [ "Mario", "Rossi", "Tecnico", "mario.rossi@example.com", "1234567890", "Password123"]
+        example: ["Mario", "Rossi", "Tecnico", "mario.rossi@example.com", "1234567890", "Password123"]
     },
     "clienti": {
         keys: ["nomecliente"],
-        example: [ "Azienda Rossi" ]
+        example: ["Azienda Rossi"]
     },
     "usercliente": {
         keys: ["nomeucliente", "cognomeucliente", "emailucliente", "pwducliente"],
-        example: [ "Mario", "Rossi", "mario.rossi@example.com", "Password123" ]
+        example: ["Mario", "Rossi", "mario.rossi@example.com", "Password123"]
     },
     "indirizzi": {
         keys: ["ip", "nome_dispositivo", "brand_dispositivo", "data_inserimento", "tipo_dispositivo", "n_prefisso", "vid"],
-        example: [ "192.1678.1.1", "Server1", "DELL", "2025-04-29", "Server", "1234", "10"]
+        example: ["192.1678.1.1", "Server1", "DELL", "2025-04-29", "Server", "1234", "10"]
     },
     "rete": {
         keys: ['iprete', 'nomerete', 'descrizione', 'vrf', 'idrete']

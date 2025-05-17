@@ -336,8 +336,11 @@ export default component$(() => {
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
                                     </button></div>}
                                 </Dati>
+                                <div class="flex">
+
                                 <ButtonAddLink nomePulsante={$localize`Aggiungi vlan`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
                                 <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="vlan" />
+                                </div>
                             </Table>
 
 
@@ -350,21 +353,37 @@ export default component$(() => {
 })
 
 
+// export const FormBox = component$(({ title }: { title?: string }) => {
+//     return (<>
+//         <div class="rounded-lg border border-gray-300">
+//             {
+//                 title &&
+//                 <div class="w-full p-2 border-b-1 border-gray-200">
+//                     <h1>{title}</h1>
+//                 </div>
+//             }
+//             <div class="w-full *:w-full **:flex-1 *:flex p-4">
+//                 <Slot></Slot>
+//             </div>
+//         </div>
+//     </>)
+// })
+
 export const FormBox = component$(({ title }: { title?: string }) => {
-    return (<>
-        <div class="rounded-lg border border-gray-300">
-            {
-                title &&
-                <div class="w-full p-2 border-b-1 border-gray-200">
-                    <h1>{title}</h1>
+    return (
+        <div class="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+            {title && (
+                <div class="w-full p-4 border-b border-gray-100 bg-gray-50">
+                    <h1 class="text-lg font-semibold text-gray-700">{title}</h1>
                 </div>
-            }
-            <div class="w-full *:w-full **:flex-1 *:flex p-4">
+            )}
+            <div class="w-full flex flex-col gap-4 p-6">
                 <Slot></Slot>
             </div>
         </div>
-    </>)
-})
+    );
+});
+
 
 export const CRUDForm = component$(({ data, reloadFN }: { data?: VLANModel, reloadFN?: Signal<(() => void) | null> }) => {
     const lang = getLocale("en")
@@ -396,42 +415,132 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: VLANModel, relo
         }
     })
 
-    return (
-        <>
+    // return (
+    //     <>
 
-            <div class="m-2 flex w-full justify-center *:w-1/2 max-sm:*:my-2 gap-4 relative">
+    //         <div class={
+    //             "m-2 max-sm:*:my-2 gap-4 relative" +
+    //             (action.value?.success ? "pointer-events-none opacity-50" : "")
+    //         }>
+    //             <div class="*:min-w-[480px] *:w-1/2 flex justify-center w-full">
+    //                 <FormBox title="Informazioni">
+    //                     <TextboxForm id="txtIDV" title="VID: " placeholder="es. 10" value={formData.vid.toString()} OnInput$={(e) => { formData.vid = parseInt((e.target as HTMLOptionElement).value); }} />
+    //                     <TextboxForm id="txtName" title={$localize`Nome VLAN`} value={formData.nomevlan} placeholder="Es. VLAN_Security" OnInput$={(e) => formData.nomevlan = (e.target as HTMLInputElement).value} />
+    //                     <TextboxForm id="txtDescrizione" title={$localize`Descrizione VLAN`} value={formData.descrizionevlan} placeholder="Es. VLAN for CCTVs" OnInput$={(e) => formData.descrizionevlan = (e.target as HTMLInputElement).value} />
+    //                 </FormBox>
+    //             </div>
+    //         </div>
+    //         <div class="w-full flex justify-center">
+    //             <button onClick$={async (e) => {
+    //                 e.preventDefault();
+    //                 if (!formData.vid || formData.descrizionevlan == "" || formData.nomevlan == "") {
+    //                     attempted.value = true;
+    //                     return;
+    //                 }
+    //                 await action.submit({ ...formData });
+    //                 if (action.value && action.value.success) {
+    //                     await new Promise((resolve) => { setTimeout(resolve, 2000) });
+    //                     window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
+    //                 }
+
+    //             }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
+    //                 formData.vid <= 0 ||
+    //                 formData.descrizionevlan == "" ||
+    //                 formData.nomevlan == ""
+    //             }>{$localize`Conferma`}</button>
+    //             <a class="bg-red-500 hover:bg-red-600 transition-all rounded-md text-white p-2 inline-block mx-1" href={loc.url.href.replace("insert", "view").replace("update", "view")}>{$localize`Annulla`}</a>
+    //             {action.submitted && action.value &&
+    //                 <div class={action.value.success ? "bg-green-400 p-2 rounded-md text-white mt-2" : "bg-red-400 p-2 mt-2 rounded-md text-white"}>
+    //                     {action.value.type_message == 1 && <span>{$localize`Inserimento avvenuto correttamente`}</span>}
+    //                     {action.value.type_message == 2 && <span>{$localize`Modifica avvenuta correttamente`}</span>}
+    //                     {action.value.type_message == 3 && <span>{$localize`Errore durante l'inserimento`}</span>}
+    //                     {action.value.type_message == 4 && <span>{$localize`Errore durante la modifica`}</span>}
+    //                 </div>
+    //             }
+    //         </div>
+    //     </>
+    // )
+
+    return (<>
+        <div class={
+            "m-2 max-sm:*:my-2 gap-4 relative w-full " +
+            (action.value?.success ? "pointer-events-none opacity-50" : "")
+        }>
+            <div class="flex justify-center w-full">
                 <FormBox title="Informazioni">
-                    <TextboxForm id="txtIDV" title="VID: " placeholder="es. 10" value={formData.vid.toString()} OnInput$={(e) => { formData.vid = parseInt((e.target as HTMLOptionElement).value); }} />
-                    <TextboxForm id="txtName" title={$localize`Nome VLAN`} value={formData.nomevlan} placeholder="Es. VLAN_Security" OnInput$={(e) => formData.nomevlan = (e.target as HTMLInputElement).value} />
-                    <TextboxForm id="txtDescrizione" title={$localize`Descrizione VLAN`} value={formData.descrizionevlan} placeholder="Es. VLAN for CCTVs" OnInput$={(e) => formData.descrizionevlan = (e.target as HTMLInputElement).value} />
+                    <TextboxForm
+                        id="txtIDV"
+                        title="VID: "
+                        placeholder="es. 10"
+                        value={formData.vid.toString()}
+                        OnInput$={(e) => { formData.vid = parseInt((e.target as HTMLInputElement).value); }}
+                    />
+                    <TextboxForm
+                        id="txtName"
+                        title={$localize`Nome VLAN`}
+                        value={formData.nomevlan}
+                        placeholder="Es. VLAN_Security"
+                        OnInput$={(e) => formData.nomevlan = (e.target as HTMLInputElement).value}
+                    />
+                    <TextboxForm
+                        id="txtDescrizione"
+                        title={$localize`Descrizione VLAN`}
+                        value={formData.descrizionevlan}
+                        placeholder="Es. VLAN for CCTVs"
+                        OnInput$={(e) => formData.descrizionevlan = (e.target as HTMLInputElement).value}
+                    />
                 </FormBox>
             </div>
-            <button onClick$={async (e) => {
-                e.preventDefault();
-                if (!formData.vid || formData.descrizionevlan == "" || formData.nomevlan == "") {
-                    attempted.value = true;
-                    return;
-                }
-                await action.submit({ ...formData });
-                if (action.value && action.value.success) {
-                    await new Promise((resolve) => { setTimeout(resolve, 2000) });
-                    window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
-                }
+        </div>
 
-            }} class="bg-green-500 transition-all hover:bg-green-600 disabled:bg-green-300 rounded-md text-white p-2 mx-1 ms-4" disabled={
-                formData.vid <= 0 ||
-                formData.descrizionevlan == "" ||
-                formData.nomevlan == ""
-            }>{$localize`Conferma`}</button>
-            <a class="bg-red-500 hover:bg-red-600 transition-all rounded-md text-white p-2 inline-block mx-1" href={loc.url.href.replace("insert", "view").replace("update", "view")}>{$localize`Annulla`}</a>
-            {action.submitted && action.value &&
-                <div class={action.value.success ? "bg-green-400 p-2 rounded-md text-white mt-2" : "bg-red-400 p-2 mt-2 rounded-md text-white"}>
-                    {action.value.type_message == 1 && <span>{$localize`Inserimento avvenuto correttamente`}</span>}
-                    {action.value.type_message == 2 && <span>{$localize`Modifica avvenuta correttamente`}</span>}
-                    {action.value.type_message == 3 && <span>{$localize`Errore durante l'inserimento`}</span>}
-                    {action.value.type_message == 4 && <span>{$localize`Errore durante la modifica`}</span>}
-                </div>
-            }
-        </>
-    )
+        <div class="w-full flex justify-center gap-2 mt-6">
+            <button
+                onClick$={async (e) => {
+                    e.preventDefault();
+                    if (!formData.vid || formData.descrizionevlan == "" || formData.nomevlan == "") {
+                        attempted.value = true;
+                        return;
+                    }
+                    await action.submit({ ...formData });
+                    if (action.value && action.value.success) {
+                        await new Promise((resolve) => { setTimeout(resolve, 2000) });
+                        window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
+                    }
+                }}
+                class="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
+                disabled={
+                    formData.vid <= 0 ||
+                    formData.descrizionevlan == "" ||
+                    formData.nomevlan == ""
+                }
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {$localize`Conferma`}
+            </button>
+            <a
+                class="flex items-center gap-2 bg-red-500 hover:bg-red-600 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
+                href={loc.url.href.replace("insert", "view").replace("update", "view")}
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {$localize`Annulla`}
+            </a>
+        </div>
+
+        {action.submitted && action.value && (
+            <div class={
+                action.value.success
+                    ? "bg-green-400 p-2 rounded-md text-white mt-4 text-center shadow"
+                    : "bg-red-400 p-2 mt-4 rounded-md text-white text-center shadow"
+            }>
+                {action.value.type_message == 1 && <span>{$localize`Inserimento avvenuto correttamente`}</span>}
+                {action.value.type_message == 2 && <span>{$localize`Modifica avvenuta correttamente`}</span>}
+                {action.value.type_message == 3 && <span>{$localize`Errore durante l'inserimento`}</span>}
+                {action.value.type_message == 4 && <span>{$localize`Errore durante la modifica`}</span>}
+            </div>
+        )}
+    </>)
 })

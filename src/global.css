@@ -29,6 +29,23 @@
     pointer-events: none;
 }
 
+.animateEnter{
+  animation: fadeSlideDown111 0.3s ease;
+}
+
+@keyframes fadeSlideDown111 {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 99999px;
+    }
+}
+
 .has-tooltip:hover .tooltip {
     opacity: 1;
 }

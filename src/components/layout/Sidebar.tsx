@@ -42,7 +42,8 @@ export default component$(() => {
 
     const lang = getLocale("en");
     const insideSS = loc.params.site;
-    const baseSiteUrl = getBaseURL() + loc.params.client + '/' + loc.params.site + '/';
+    const baseSiteUrl = getBaseURL() + loc.params.client + '/' + loc.params.site + '/' + (loc.params.network ?? '0') + '/';
+
     return (
         <div>
             <div id="sidebar" class="overflow-hidden transition-all h-full fixed top-0 left-0 bg-white border-1 border-gray-200 w-[0px] z-20">
@@ -73,10 +74,6 @@ export default component$(() => {
                                     <Accordion title={$localize`Intervalli IP`}>
                                         <NavLink href={baseSiteUrl + "intervals/view"} activeClass="text-black" class="block hover:text-black text-[#827d7d] text-sm font-semibold font-['Inter'] leading-6" onClick$={toggleSidebar}>{$localize`Tutti gli intervalli IP`}</NavLink>
                                         <NavLink href={baseSiteUrl + "intervals/create"} activeClass="text-black" class="block hover:text-black text-[#827d7d] text-sm font-semibold font-['Inter'] leading-6" onClick$={toggleSidebar}>{$localize`Crea un nuovo intervallo`}</NavLink>
-                                    </Accordion>
-
-                                    <Accordion title={$localize`Prefissi`}>
-                                        <NavLink href={baseSiteUrl + "prefixes/view"} activeClass="text-black" class="block hover:text-black text-[#827d7d] text-sm font-semibold font-['Inter'] leading-6" onClick$={toggleSidebar}>{$localize`Tutti i prefissi`}</NavLink>
                                     </Accordion>
 
                                     <Accordion title={$localize`Aggregati`}>
