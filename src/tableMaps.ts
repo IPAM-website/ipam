@@ -298,8 +298,4 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
   },
 };
 
-<<<<<<< HEAD
-export default TableMaps
-=======
 export default TableMaps;
->>>>>>> master

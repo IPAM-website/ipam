@@ -39,11 +39,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/compression": "^1.7.5",
     "@types/eslint": "8.56.10",
-<<<<<<< HEAD
-    "@types/express": "^5.0.2",
-=======
     "@types/express": "^4.17.22",
->>>>>>> master
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "20.14.11",
     "@typescript-eslint/eslint-plugin": "7.16.1",
@@ -67,14 +63,6 @@
     "@types/qrcode": "^1.5.5",
     "@types/speakeasy": "^2.0.10",
     "bcryptjs": "^3.0.2",
-<<<<<<< HEAD
-    "i18n-iso-countries": "^7.14.0",
-    "ipaddr.js": "^2.2.0",
-    "pnpm": "^10.6.5",
-    "postgres": "^3.4.5",
-    "qrcode": "^1.5.4",
-    "speakeasy": "^2.0.0"
-=======
     "express": "4.20.0",
     "pnpm": "^10.11.0",
     "postgres": "^3.4.5",
@@ -82,7 +70,6 @@
     "speakeasy": "^2.0.0",
     "undici": "^7.9.0",
     "ws": "^8.18.2"
->>>>>>> master
   },
   "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
 }
