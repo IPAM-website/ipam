@@ -23,15 +23,12 @@ importers:
       bcryptjs:
         specifier: ^3.0.2
         version: 3.0.2
-      i18n-iso-countries:
-        specifier: ^7.14.0
-        version: 7.14.0
-      ipaddr.js:
-        specifier: ^2.2.0
-        version: 2.2.0
       express:
         specifier: 4.20.0
         version: 4.20.0
+      i18n-iso-countries:
+        specifier: ^7.14.0
+        version: 7.14.0
       pnpm:
         specifier: ^10.11.0
         version: 10.11.0
@@ -2192,12 +2189,13 @@ packages:
   hast-util-whitespace@3.0.0:
     resolution: {integrity: sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw==}
 
-  i18n-iso-countries@7.14.0:
-    resolution: {integrity: sha512-nXHJZYtNrfsi1UQbyRqm3Gou431elgLjKl//CYlnBGt5aTWdRPH1PiS2T/p/n8Q8LnqYqzQJik3Q7mkwvLokeg==}
-    engines: {node: '>= 12'}
   http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
     engines: {node: '>= 0.8'}
+
+  i18n-iso-countries@7.14.0:
+    resolution: {integrity: sha512-nXHJZYtNrfsi1UQbyRqm3Gou431elgLjKl//CYlnBGt5aTWdRPH1PiS2T/p/n8Q8LnqYqzQJik3Q7mkwvLokeg==}
+    engines: {node: '>= 12'}
 
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
@@ -6131,9 +6129,6 @@ snapshots:
     dependencies:
       '@types/hast': 3.0.4
 
-  i18n-iso-countries@7.14.0:
-    dependencies:
-      diacritics: 1.3.0
   http-errors@2.0.0:
     dependencies:
       depd: 2.0.0
@@ -6141,6 +6136,10 @@ snapshots:
       setprototypeof: 1.2.0
       statuses: 2.0.1
       toidentifier: 1.0.1
+
+  i18n-iso-countries@7.14.0:
+    dependencies:
+      diacritics: 1.3.0
 
   iconv-lite@0.4.24:
     dependencies:
