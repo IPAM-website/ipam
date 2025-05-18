@@ -5,11 +5,13 @@
 import { defineConfig, type UserConfig } from "vite";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
+import { VitePWA } from 'vite-plugin-pwa';
 import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
 import tailwindcss from "@tailwindcss/vite";
+// import fs from "fs"
 type PkgDep = Record<string, string>;
-const { dependencies = {}, devDependencies = {} } = pkg as any as {
+const { dependencies = {}, devDependencies = {} } = pkg as unknown as {
   dependencies: PkgDep;
   devDependencies: PkgDep;
   [key: string]: unknown;
@@ -19,9 +21,32 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
 
-export default defineConfig(({ command, mode }): UserConfig => {
+export default defineConfig((): UserConfig => {
   return {
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths(), tailwindcss()],
+    plugins: [qwikCity(), qwikVite(), tsconfigPaths(), tailwindcss(), VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt'],
+      manifest: {
+        name: 'IPNova: Store every address',
+        short_name: 'IPNova',
+        start_url: '/en/login',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'images/ipnova_icon_192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'images/ipnova_icon_512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+        ],
+      },
+    }),],
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.
@@ -45,10 +70,14 @@ export default defineConfig(({ command, mode }): UserConfig => {
     //       }
     //     : undefined,
     server: {
-      headers: {
-        // Don't cache the server response in dev mode
-        "Cache-Control": "public, max-age=0",
-      },
+      host: '0.0.0.0',
+      port:80,
+      open:false,
+      strictPort: true,
+      // headers: {
+      //   // Don't cache the server response in dev mode
+      //   "Cache-Control": "public, max-age=0",
+      // },
       watch: {
         ignored: ["**/init.sql", "**/*.sql"], // Ignora i file SQL
       },

@@ -60,7 +60,7 @@ CREATE TABLE Siti(
     IDCliente INTEGER NOT NULL,
     PRIMARY KEY (IDSito),
     CONSTRAINT fk_idCitta FOREIGN KEY (IDCitta) REFERENCES Citta(IDCitta),
-    CONSTRAINT fk_idCliente_Sito FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
+    CONSTRAINT fk_idCliente_Sito FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente) ON DELETE CASCADE
 );
 
 CREATE TABLE Rete(

@@ -1,6 +1,11 @@
 import { component$, getLocale, useSignal, useTask$ } from "@builder.io/qwik";
-import { DocumentHead, RequestHandler, routeLoader$, server$ } from "@builder.io/qwik-city";
-import jwt from "jsonwebtoken"
+import {
+  DocumentHead,
+  RequestHandler,
+  routeLoader$,
+  server$,
+} from "@builder.io/qwik-city";
+import jwt from "jsonwebtoken";
 import Title from "~/components/layout/Title";
 import { useLogsLoader } from './logs.loader';
 import sql from "~/../db";
@@ -10,156 +15,193 @@ import { UtenteModel } from "~/dbModels";
 export { useLogsLoader };
 
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
-    if (cookie.has("jwt")) {
-        let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
-        sharedMap.set("user", user);
-    }
-    else
-        throw redirect(301, "/login");
+  if (cookie.has("jwt")) {
+    let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
+    sharedMap.set("user", user);
+  }
+  else
+    throw redirect(301, "/login");
 };
 
 export const useUser = routeLoader$(({ sharedMap }) => {
-    return sharedMap.get('user') as UtenteModel;
+  return sharedMap.get("user") as UtenteModel;
 });
 
 interface infoProps {
-    ntecnici: string,
-    nclienti: string,
-    nsiti: string,
-    rapct: string,
-    rapst: string
+  ntecnici: string;
+  nclienti: string;
+  nsiti: string;
+  rapct: string;
+  rapst: string;
 }
 
 interface logsProps {
-    data: string,
-    ora: string,
-    descrizione: string
+  data: string;
+  ora: string;
+  descrizione: string;
 }
 
-export const onGet: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
-    let user;
-    if (cookie.has("jwt")) {
-        try {
-            user = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string) as any
-            sharedMap.set("user", user);
-        } catch {
-            throw redirect(302, "/login");
-        }
-        if (!user.admin)
-            throw redirect(302, "/dashboard");
+export const onGet: RequestHandler = async ({
+  cookie,
+  redirect,
+  sharedMap,
+  env,
+}) => {
+  let user;
+  if (cookie.has("jwt")) {
+    try {
+      user = jwt.verify(
+        cookie.get("jwt")!.value,
+        env.get("JWT_SECRET") as string,
+      ) as any;
+      sharedMap.set("user", user);
+    } catch {
+      throw redirect(302, "/login");
     }
-}
+    if (!user.admin) throw redirect(302, "/dashboard");
+  }
+};
 
 export const useInfo = server$(async () => {
-    let info: infoProps = {
-        ntecnici: '0',
-        nclienti: '0',
-        nsiti: '0',
-        rapct: '0',
-        rapst: '0'
-    };
-    try {
-        const query1 = await sql`SELECT COUNT(*) FROM tecnici`
-        info.ntecnici = query1[0].count;
-        const query2 = await sql`SELECT COUNT(*) FROM clienti`
-        info.nclienti = query2[0].count;
-        const query3 = await sql`SELECT COUNT(*) FROM siti`
-        info.nsiti = query3[0].count;
-        //const query4 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico GROUP BY idcliente )`
-        //if(query4[0].avg == null)
-            //info.rapct = '0';
-        //else
-            //info.rapct = (query4[0].avg as string).substring(0, 4);
-        //const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN datacenter ON cliente_tecnico.idcliente=datacenter.idcliente INNER JOIN siti ON datacenter.iddc = siti.iddc GROUP BY idsito )`
-        //if(query5[0].avg == null)
-            //info.rapst = '0';
-        //else
-            //info.rapst = (query5[0].avg as string).substring(0, 4);
-    }
-    catch (e) {
-        console.log("Errore: ", e);
-    }
-    //console.log(info)
-    return info;
-})
+  let info: infoProps = {
+    ntecnici: "0",
+    nclienti: "0",
+    nsiti: "0",
+    rapct: "0",
+    rapst: "0",
+  };
+  try {
+    const query1 = await sql`SELECT COUNT(*) FROM tecnici`;
+    info.ntecnici = query1[0].count;
+    const query2 = await sql`SELECT COUNT(*) FROM clienti`;
+    info.nclienti = query2[0].count;
+    const query3 = await sql`SELECT COUNT(*) FROM siti`;
+    info.nsiti = query3[0].count;
+    //const query4 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico GROUP BY idcliente )`
+    //if(query4[0].avg == null)
+    //info.rapct = '0';
+    //else
+    //info.rapct = (query4[0].avg as string).substring(0, 4);
+    //const query5 = await sql`SELECT AVG(nclienti) FROM ( SELECT COUNT(*) as nclienti FROM cliente_tecnico INNER JOIN datacenter ON cliente_tecnico.idcliente=datacenter.idcliente INNER JOIN siti ON datacenter.iddc = siti.iddc GROUP BY idsito )`
+    //if(query5[0].avg == null)
+    //info.rapst = '0';
+    //else
+    //info.rapst = (query5[0].avg as string).substring(0, 4);
+  } catch (e) {
+    console.log("Errore: ", e);
+  }
+  //console.log(info)
+  return info;
+});
 
 export default component$(() => {
-    const logs = useLogsLoader();
-    const info = useSignal<infoProps>();
-    const lang = getLocale("en");
+  const logs = useLogsLoader();
+  const info = useSignal<infoProps>();
+  const lang = getLocale("en");
 
-    useTask$(async () => {
-        info.value = await useInfo();
-    })
-    return (
-        <>
-            <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0 ">
-                <Title haveReturn={true} url={"/" + lang + "/dashboard"}>{$localize`Admin Panel`}</Title>
-                <div class="flex  flex-col md:flex-row gap-8 mt-8">
+  useTask$(async () => {
+    info.value = await useInfo();
+  });
+  return (
+    <>
+      <div class="size-full overflow-hidden bg-white px-0 md:px-24 lg:px-40">
+        <Title
+          haveReturn={true}
+          url={"/" + lang + "/dashboard"}
+        >{$localize`Admin Panel`}</Title>
+        <div class="mt-8 flex flex-col gap-8 md:flex-row">
+          <div class="inline-flex w-full flex-4 flex-col items-start justify-start gap-1 rounded-lg border-1 border-[#cdcdcd] px-5 py-3 md:w-72">
+            <div class="flex h-[50px] w-full items-center overflow-hidden">
+              <div class="text-xl font-semibold text-black">{$localize`Informazioni Varie`}</div>
+            </div>
+            <div class="inline-flex w-full items-center justify-between overflow-hidden border-t border-[#cacaca] px-2 py-2.5">
+              <div class="justify-start text-xl font-normal text-black">{$localize`Numero tecnici`}</div>
+              <div class="justify-start text-xl font-normal text-black">
+                {info.value?.ntecnici}
+              </div>
+            </div>
+            <div class="inline-flex w-full items-center justify-between overflow-hidden border-t border-[#cacaca] px-2 py-2.5">
+              <div class="justify-start text-xl font-normal text-black">{$localize`Numero clienti`}</div>
+              <div class="justify-start text-xl font-normal text-black">
+                {info.value?.nclienti}
+              </div>
+            </div>
+            <div class="inline-flex w-full items-center justify-between overflow-hidden border-t border-[#cacaca] px-2 py-2.5">
+              <div class="justify-start text-xl font-normal text-black">{$localize`Numero siti`}</div>
+              <div class="justify-start text-xl font-normal text-black">
+                {info.value?.nsiti}
+              </div>
+            </div>
+            <div class="inline-flex w-full items-center justify-between overflow-hidden border-t border-[#cacaca] px-2 py-2.5">
+              <div class="justify-start text-xl font-normal text-black">{$localize`Numero medio di clienti per tecnico`}</div>
+              <div class="justify-start text-xl font-normal text-black">
+                {info.value?.rapct}
+              </div>
+            </div>
+          </div>
 
-                    <div class="w-full md:w-72 flex-4 px-5 py-3  rounded-lg border-1 border-[#cdcdcd] inline-flex flex-col justify-start items-start gap-1">
-                        <div class="h-[50px] w-full flex items-center overflow-hidden">
-                            <div class="text-black text-xl font-semibold">{$localize`Informazioni Varie`}</div>
-                        </div>
-                        <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero tecnici`}</div>
-                            <div class="justify-start text-black text-xl font-normal">{info.value?.ntecnici}</div>
-                        </div>
-                        <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero clienti`}</div>
-                            <div class="justify-start text-black text-xl font-normal">{info.value?.nclienti}</div>
-                        </div>
-                        <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero siti`}</div>
-                            <div class="justify-start text-black text-xl font-normal">{info.value?.nsiti}</div>
-                        </div>
-                        <div class="px-2 py-2.5 border-t w-full border-[#cacaca] inline-flex justify-between items-center overflow-hidden">
-                            <div class="justify-start text-black text-xl font-normal">{$localize`Numero medio di clienti per tecnico`}</div>
-                            <div class="justify-start text-black text-xl font-normal">{info.value?.rapct}</div>
-                        </div>
-                    </div>
-
-                    <div class="flex-initial rounded-lg border-1 border-[#cdcdcd]">
-                        <div class="flex-1 flex flex-col *:p-2 cursor-pointer">
-                            <div class="flex flex-1 border-b border-[#f3f3f3]">
-                                <div class="text-center w-full text-black text-base font-semibold font-['Inter']">{$localize`Operazioni`}</div>
-                            </div>
-                            <div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                                <a href={"/"+lang+"/admin/panel/tecnici"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Mostra tutti i tecnici`}</a>
-                            </div>
-                            <div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                                <a href={"/"+lang+"/admin/panel/clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Mostra tutti i clienti`}</a>
-                            </div>
-                            <div class="flex flex-1 border-b border-gray-100 hover:bg-gray-100 transition-all duration-300">
-                                <a href={"/"+lang+"/admin/panel/utenti_clienti"} class="flex-1 text-center text-black text-base font-['Inter'] py-1 ">{$localize`Mostra tutti gli utenti dei clienti`}</a>
-                            </div>
-                        </div>
-                    </div>
+          <div class="flex-initial rounded-lg border-1 border-[#cdcdcd]">
+            <div class="flex flex-1 cursor-pointer flex-col *:p-2">
+              <div class="flex flex-1 border-b border-[#f3f3f3]">
+                <div class="w-full text-center font-['Inter'] text-base font-semibold text-black">{$localize`Operazioni`}</div>
+              </div>
+              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100">
+                <a
+                  href={"/" + lang + "/admin/panel/tecnici"}
+                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black"
+                >{$localize`Mostra tutti i tecnici`}</a>
+              </div>
+              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100">
+                <a
+                  href={"/" + lang + "/admin/panel/clienti"}
+                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black"
+                >{$localize`Mostra tutti i clienti`}</a>
+              </div>
+              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100">
+                <a
+                  href={"/" + lang + "/admin/panel/utenti_clienti"}
+                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black"
+                >{$localize`Mostra tutti gli utenti dei clienti`}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 flex w-full">
+          <div class="inline-flex w-full items-center justify-start gap-2.5 overflow-hidden rounded-lg border-1 border-[#cdcdcd] p-2 md:w-3/4">
+            <div class="inline-flex flex-1 flex-col items-start justify-start">
+              <div class="border-b border-[#f3f3f3]">
+                <div class="justify-start font-['Inter'] text-base leading-normal font-semibold text-black">
+                  Logs
                 </div>
                 <div class="w-full flex mt-8">
 
-                    <div class="container mx-auto p-4">
+                  <div class="container mx-auto p-4">
 
-                        {/* Altri componenti */}
+                    {/* Altri componenti */}
 
-                        <section class="mt-8">
-                            <LogsList />
-                        </section>
-                    </div>
+                    <section class="mt-8">
+                      <LogsList />
+                    </section>
+                  </div>
                 </div>
 
 
+              </div>
             </div>
-        </>
-    )
-})
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+});
 
 export const head: DocumentHead = {
-    title: "Admin Panel",
-    meta: [
-        {
-            name: "Admin Page",
-            content: "Admin Page for Technician and Clients management",
-        },
-    ],
+  title: "Admin Panel",
+  meta: [
+    {
+      name: "Admin Page",
+      content: "Admin Page for Technician and Clients management",
+    },
+  ],
 };

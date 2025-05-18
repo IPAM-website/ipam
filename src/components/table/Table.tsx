@@ -1,12 +1,13 @@
 import { $, component$, Slot, useTask$ } from "@builder.io/qwik";
 
-interface TableProps { title?: string }
+interface TableProps {
+  title?: string;
+}
 
 export default component$<TableProps>(({ title }) => {
-
-    return (
-        <div class="bg-white relative rounded-lg shadow-[0px_4px_12px_0px_rgba(0,0,0,0.04)] border-1 border-offset-[-1px] border-neutral-200 mt-12">
-            <Slot></Slot>
-        </div>
-    )
-})
+  return (
+    <div class="border-offset-[-1px] relative mt-6 mb-2 rounded-lg border-1 border-neutral-200 bg-white shadow-lg">
+      <Slot></Slot>
+    </div>
+  );
+});

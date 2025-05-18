@@ -1,6 +1,7 @@
 import { $, component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
 
 export default component$(() => {
+<<<<<<< HEAD
     const logs = useSignal<string[]>([]);
     const status = useSignal<'loading' | 'ok' | 'error'>('loading');
     const lastUpdate = useSignal<string>(new Date().toLocaleTimeString());
@@ -161,4 +162,7 @@ export default component$(() => {
             </div>
         </div>
     );
+=======
+  return <></>;
+>>>>>>> master
 });

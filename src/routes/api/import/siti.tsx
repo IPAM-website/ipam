@@ -1,10 +1,10 @@
-import { type RequestHandler } from '@builder.io/qwik-city';
-import sql from '../../../../db';
-import { parseCSV } from '~/components/utils/parseCSV';
+import { type RequestHandler } from "@builder.io/qwik-city";
+import sql from "../../../../db";
+import { parseCSV } from "~/components/utils/parseCSV";
 
 export const onPost: RequestHandler = async ({ request, json }) => {
-    try {
-        /*const formData = await request.formData();
+  try {
+    /*const formData = await request.formData();
         const file = formData.get('file') as File;
         
         // Parsing CSV
@@ -59,10 +59,11 @@ export const onPost: RequestHandler = async ({ request, json }) => {
         `;
 
         json(200, { inserted: inserted.count });*/
-        console.log('Importazione CSV avviata');
-        console.log('File:', request);
-
-    } catch (err) {
-        json(500, { error: err instanceof Error ? err.message : 'Errore sconosciuto' });
-    }
+    console.log("Importazione CSV avviata");
+    console.log("File:", request);
+  } catch (err) {
+    json(500, {
+      error: err instanceof Error ? err.message : "Errore sconosciuto",
+    });
+  }
 };

@@ -1,2 +1,9 @@
-FROM postgres:17
-RUN apt-get update && apt-get install -y postgresql-17-pgaudit
+# FROM postgres:17
+# RUN apt-get update && apt-get install -y postgresql-17-pgaudit
+
+FROM node:22.9.0-alpine
+WORKDIR /server
+COPY package*.json .
+COPY . .
+RUN npm i
+CMD ["npm", "start"]

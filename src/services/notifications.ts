@@ -3,7 +3,7 @@
 
 // export const useNotify = () => {
 //   const { addNotification } = useNotifications();
-  
+
 //   return {
 //     success: $((message: string) => addNotification(message, 'success')),
 //     error: $((message: string) => addNotification(message, 'error')),

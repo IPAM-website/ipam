@@ -1,11 +1,15 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 
 export default component$(() => {
-    const date = useSignal(new Date().toLocaleString());
-    useVisibleTask$(()=>{
-        setInterval(()=>{
-            date.value = new Date().toLocaleString();
-        },1000)
-    })
-    return (<div class="justify-start text-gray-400 text-sm font-normal font-['Inter'] leading-normal">{$localize`Current Time`}: {date.value}</div>)
-})
+  const date = useSignal(new Date().toLocaleString());
+  useVisibleTask$(() => {
+    setInterval(() => {
+      date.value = new Date().toLocaleString();
+    }, 1000);
+  });
+  return (
+    <div class="justify-start font-['Inter'] text-sm leading-normal font-normal text-gray-400">
+      {$localize`Current Time`}: {date.value}
+    </div>
+  );
+});
