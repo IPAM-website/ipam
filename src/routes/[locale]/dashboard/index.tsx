@@ -4,40 +4,334 @@ import ClientList from "~/components/ListUtilities/ClientList/ClientList";
 import Title from "~/components/layout/Title";
 import PopupModal from "~/components/ui/PopupModal";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
+import TextBoxForm from "~/components/forms/formsComponents/TextboxForm";
 import { getBaseURL, getUser } from "~/fnUtils";
 import { ClienteModel, TecnicoModel } from "~/dbModels";
 import { parseCSV } from "~/components/utils/parseCSV";
 import sql from "../../../../db";
 import { listaClienti } from "../admin/panel/utenti_clienti";
+import countries from 'i18n-iso-countries';
+import it from 'i18n-iso-countries/langs/it.json';
 
-const clientSchema = z.object({
-    clientType: z.enum(['new', 'existing']),
-    clienteTXT: z.string().optional(),
-    clientId: z.string().optional(),
-    idcliente: z.string().optional(),
-    csvsiti: z.instanceof(File).optional(),
-    csvnetwork: z.instanceof(File).optional(),
-    csvip: z.instanceof(File).optional(),
-}).refine(
-    (data) =>
-        (data.clientType === 'new' && data.clienteTXT) ||
-        (data.clientType === 'existing' && data.clientId && data.idcliente && data.csvsiti && data.csvnetwork && data.csvip),
-    {
-        message: "Seleziona o crea un cliente",
-        path: ['clientType']
-    }
-);
+type Notification = {
+    message: string;
+    type: 'success' | 'error';
+};
 
 export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAction) => {
+    const translateCountry = (input: string): string => {
+        const code = countries.getAlpha2Code(input, 'it'); // Cerca in italiano
+        if (!code) throw new Error(`Paese non riconosciuto: ${input}`);
+        return countries.getName(code, 'en')!; // Restituisce nome in inglese
+    };
     try {
-        console.log("Dati validati:", data);
+        let user = await getUser()
+        let idClientePrivate: number | undefined;
+        //console.log("Dati validati:", data);
+
+        if (data.clientType == "existing" && data.csvsiti == undefined && data.csvnetwork == undefined && data.csvip == undefined)
+            return { error: "Errore durante l'importazione", success: false }
+        // Caricamento/Ricerca cliente
+        if (data.clientType == "new" && data.clienteTXT != undefined && data.clienteTXT != "") {
+            const clientName: string = data.clienteTXT;
+            let clienteExist = await sql`SELECT * FROM clienti WHERE nomecliente = ${data.clienteTXT}`
+            if (clienteExist.length != 0)
+                idClientePrivate = clienteExist[0].idcliente
+            else {
+                await sql.begin(async (tx) => {
+                    await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+
+                    const insertResult = await tx`  
+                        INSERT INTO clienti (nomecliente)
+                        VALUES (${clientName})
+                        RETURNING idcliente
+                    `;
+                    idClientePrivate = insertResult[0].idcliente;
+                });
+            }
+            //console.log(data.idcliente)  Dati inserire nome del cliente
+        }
+        else if (data.clientType == "existing" && data.idcliente != undefined) {
+            idClientePrivate = parseInt(data.idcliente)
+            //console.log(idClientePrivate)
+        }
+        else
+            return { error: "Errore durante l'importazione del cliente", success: false };
+
+        //console.log(idClientePrivate)
+
+        // Importazione siti
+        if (data.csvsiti != undefined) {
+            const csv = await data.csvsiti.text();
+            const rows = csv.split("\n").filter(row => row.trim() !== '');
+            for (let i = 1; i < rows.length; i++) {
+                console.log("righe siti")
+                const row = rows[i];
+                try {
+                    // Parsing manuale della riga CSV
+                    const [nomeSitoRaw, cittaRaw, paeseRaw, datacenterRaw, tipologiaRaw] = row.split(',');
+                    const nomeSito = nomeSitoRaw.replace(/^"|"$/g, '').trim();
+                    const citta = cittaRaw.replace(/^"|"$/g, '').trim();
+                    const paese = paeseRaw.replace(/^"|"$/g, '').trim();
+                    const datacenter = datacenterRaw.toLowerCase() === 'true';
+                    const tipologia = tipologiaRaw.replace(/^"|"$/g, '').trim();
+
+                    //console.log(nomeSito, citta, paese, datacenter, tipologia)
+                    //console.log(paese)
+
+                    // 1. Verifica esistenza paese
+                    const paeseResult = await sql`SELECT idpaese FROM paesi where nomePaese = ${translateCountry(paese)}`;
+                    //console.log(paeseResult)
+
+                    if (!paeseResult.count) {
+                        return { error: `Paese '${paese}' non trovato`, success: false }
+                    }
+                    const idPaese = paeseResult[0].idpaese;
+
+                    // 2. Trova o crea città
+                    let cittaResult = await sql`
+                        SELECT idcitta FROM citta 
+                        WHERE nomecitta = ${citta} AND idpaese = ${idPaese}
+                    `;
+
+                    let idCitta: number;
+                    if (cittaResult.count === 0) {
+                        await sql.begin(async (tx)=>{
+                        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+                        cittaResult = await tx`
+                            INSERT INTO citta (nomecitta, idpaese)
+                            VALUES (${citta}, ${idPaese})
+                            RETURNING idcitta
+                        `;
+                        })
+                        idCitta = cittaResult[0].idcitta;
+                    } else {
+                        idCitta = cittaResult[0].idcitta;
+                    }
+
+                    const idClientePrivate2 = idClientePrivate;
+                    // 3. Inserisci sito
+                    if (idClientePrivate2 !== undefined) {
+                        await sql.begin(async (tx) => {
+                            await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+                            await tx`
+                            INSERT INTO siti (nomesito, idcitta, datacenter, tipologia, idcliente)
+                            VALUES (${nomeSito}, ${idCitta}, ${datacenter}, ${tipologia}, ${idClientePrivate2})
+                        `;
+                        })
+                    }
+                    else
+                        throw new Error(`Cliente non trovato`)
+                    
+                } catch (err) {
+                    return { error: `Riga ${i}: ${err}`, success: false }
+                }
+            }
+        }
+        else
+            return { error: "Errore durante l'importazione dei siti", success: false };
+
+        //Importazione network
+        if (data.csvnetwork) {
+            const csv = await data.csvnetwork.text();
+            const rows = csv.split("\n").filter(row => row.trim() !== '');
+            //console.log(rows)
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                try {
+                    // Parsing manuale della riga CSV
+                    const [nomereteRaw, descrizioneRaw, ipreteRaw, prefissoreteRaw, nomesitoRaw, cittaRaw, paeseRaw] = row.split(',');
+                    const nomerete = nomereteRaw.replace(/^"|"$/g, '').trim();
+                    const descrizione = descrizioneRaw.replace(/^"|"$/g, '').trim();
+                    const iprete = ipreteRaw.replace(/^"|"$/g, '').trim();
+                    const prefissorete = prefissoreteRaw.replace(/^"|"$/g, '').trim();
+                    const nomesito = nomesitoRaw.replace(/^"|"$/g, '').trim();
+                    const citta = cittaRaw.replace(/^"|"$/g, '').trim();
+                    const paese = paeseRaw.replace(/^"|"$/g, '').trim();
+
+                    //console.log(nomeSito, citta, paese, datacenter, tipologia)
+                    //console.log(paese)
+
+                    await sql.begin(async (tx) => {
+                        // 1. Trova IDSito
+                        const sito = await tx`
+                            SELECT s.idsito 
+                            FROM siti s
+                            JOIN citta c ON s.idcitta = c.idcitta
+                            JOIN paesi p ON c.idpaese = p.idpaese
+                            WHERE s.nomesito = ${nomesito}
+                            AND c.nomecitta = ${citta}
+                            AND p.nomepaese = ${translateCountry(paese)}
+                        `;
+
+                        //console.log(sito)
+                        if (sito.length == 0) {
+                            // ERRORE: return in un contesto async non gestito
+                            throw new Error(`Sito '${nomesito}' non trovato`);
+                        }
+                        
+                        // 2. Gestione Rete
+                        let reteID : number;
+                        await sql.begin(async (tx)=>{
+                            await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+                            const rete = await tx`
+                            INSERT INTO rete (nomerete, descrizione, iprete, prefissorete)
+                            VALUES (
+                                ${nomerete},
+                                ${descrizione},
+                                ${iprete},
+                                ${prefissorete}
+                            )
+                            ON CONFLICT (nomerete, iprete, prefissorete) DO UPDATE SET
+                                descrizione = EXCLUDED.descrizione
+                            RETURNING idrete
+                            `;
+                            reteID = rete[0].idrete;
+
+                            // 3. Collegamento Sito-Rete
+                            await tx`
+                            INSERT INTO siti_rete (idsito, idrete)
+                            VALUES (${sito[0].idsito}, ${reteID})
+                            ON CONFLICT DO NOTHING
+                        `;
+                        })
+                        
+                    })
+                } catch (err) {
+                    return { error: `Riga ${i}: ${err}`, success: false }
+                }
+            }
+        }
+
+        /*if (data.csvip) {
+            const csv = await data.csvip.text();
+            const rows = csv.split('\n').filter(row => row.trim() !== '');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                try {
+                    // 1. Split avanzato che gestisce virgole nei valori tra virgolette
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+                        .map(c => c.replace(/^"|"$/g, '').trim());
+
+                    if (columns.length !== 9) {
+                        throw new Error(`Numero colonne errato: ${columns.length}/9. Controlla virgole non gestite`);
+                    }
+
+                    const [
+                        nomerete,
+                        ipretenetwork,
+                        prefissoretenetwork,
+                        ip,
+                        n_prefisso,
+                        tipo_dispositivo,
+                        nome_dispositivo,
+                        brand_dispositivo,
+                        VID
+                    ] = columns;
+
+                    // 2. Validazione manuale (senza librerie)
+                    const isValidIP = (ip: string) => {
+                        const parts = ip.split('.');
+                        if (parts.length !== 4) return false;
+                        return parts.every(part => {
+                            const num = parseInt(part, 10);
+                            return !isNaN(num) && num >= 0 && num <= 255 && part === num.toString();
+                        });
+                    };
+
+                    const isInSubnet = (ip: string, network: string, prefix: number) => {
+                        // Implementazione base per subnet matching
+                        const ipParts = ip.split('.').map(p => parseInt(p, 10));
+                        const netParts = network.split('.').map(p => parseInt(p, 10));
+
+                        // Converte in binario e confronta i primi "prefix" bit
+                        const ipBin = ipParts.map(p => p.toString(2).padStart(8, '0')).join('');
+                        const netBin = netParts.map(p => p.toString(2).padStart(8, '0')).join('');
+
+                        return ipBin.substring(0, prefix) === netBin.substring(0, prefix);
+                    };
+
+                    // 3. Esegui validazioni
+                    if (!isValidIP(ip)) {
+                        throw new Error(`Formato IP non valido: ${ip}`);
+                    }
+
+                    if (!isValidIP(ipretenetwork)) {
+                        throw new Error(`Formato rete non valido: ${ipretenetwork}`);
+                    }
+
+                    const prefisso = parseInt(prefissoretenetwork);
+                    if (isNaN(prefisso) || prefisso < 0 || prefisso > 32) {
+                        throw new Error(`Prefisso rete non valido: ${prefissoretenetwork}`);
+                    }
+
+                    if (!isInSubnet(ip, ipretenetwork, prefisso)) {
+                        throw new Error(`IP ${ip} non appartiene a ${ipretenetwork}/${prefissoretenetwork}`);
+                    }
+
+                    await sql.begin(async (tx) => {
+                        // Imposta utente per audit trail
+                        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+
+                        // 4. Trova ID rete nel database
+                        const networkDB = await tx`
+                    SELECT idrete 
+                    FROM rete 
+                    WHERE nomerete = ${nomerete} 
+                    AND iprete = ${ipretenetwork} 
+                    AND prefissorete = ${prefissoretenetwork}::integer
+                `;
+
+                        if (!networkDB?.length) {
+                            throw new Error(`Rete non trovata: ${nomerete} ${ipretenetwork}/${prefissoretenetwork}`);
+                        }
+
+                        // 5. Inserimento indirizzo
+                        const result = await tx`
+                    INSERT INTO indirizzi (
+                        ip, idrete, n_prefisso, tipo_dispositivo, 
+                        nome_dispositivo, brand_dispositivo, vid
+                    ) VALUES (
+                        ${ip}, 
+                        ${networkDB[0].idrete}, 
+                        ${parseInt(n_prefisso)},
+                        ${tipo_dispositivo}, 
+                        ${nome_dispositivo},
+                        ${brand_dispositivo}, 
+                        ${VID ? parseInt(VID) : null}
+                    )
+                    ON CONFLICT (ip, idrete) DO NOTHING
+                    RETURNING *
+                `;
+
+                        if (!result.length) {
+                            throw new Error(`IP ${ip} già esistente per questa rete`);
+                        }
+                    });
+
+                } catch (err) {
+                    return {
+                        error: `Riga ${i}: ${(err as Error).message}`,
+                        success: false
+                    }
+                }
+            }
+            return { success: true, message: "Importazione IP completata" };
+        }*/
+
+
+
+
+
+        return { success: true }
     } catch (e) {
         console.log(e)
+        return { error: "Errore durante l'importazione", success: false }
     }
 }, zod$({
     clientType: z.enum(['new', 'existing']),
     clienteTXT: z.string().optional(),
-    clientId: z.string().optional(),
     idcliente: z.string().optional(),
     csvsiti: z.instanceof(File).optional(),
     csvnetwork: z.instanceof(File).optional(),
@@ -69,20 +363,13 @@ export const useUser = routeLoader$(({ sharedMap }) => {
 });
 
 export default component$(() => {
-    const importState = useStore({
-        cliente: '',
-        files: {
-            siti: null as File | null,
-            network: null as File | null,
-            ip: null as File | null,
-        },
-        validation: {
-            siti: { valid: false, error: '' },
-            network: { valid: false, error: '' },
-            ip: { valid: false, error: '' },
-        },
-        isSubmitting: false,
+    const clientListRefresh = useSignal(0);
+    const showInfoTable = useStore<{ [key: string]: boolean }>({
+        siti: false,
+        network: false,
+        ip: false,
     });
+    const lang = getLocale("en")
     // Stati di feedback per ogni sezione
     const sitiFeedback = useSignal<null | { message: string; type: "success" | "error" }>(null);
     const networkFeedback = useSignal<null | { message: string; type: "success" | "error" }>(null);
@@ -92,81 +379,76 @@ export default component$(() => {
     const fileInputRefSiti = useSignal<HTMLInputElement>();
     const fileInputRefNetwork = useSignal<HTMLInputElement>();
     const fileInputRefIP = useSignal<HTMLInputElement>();
+    const notifications = useSignal<Notification[]>([]);
+    const feedBackSVG = useStore<{ [key: string]: { type: string; message?: string } | null }>({
+        siti: null,
+        network: null,
+        ip: null,
+    });
 
+    const clienteTXT = useSignal('');
     const user: TecnicoModel = useUser().value;
     const showModalCSV = useSignal(false);
     const formAction = CSVInsert();
     const clientType = useSignal<'new' | 'existing'>('new');
-    const selectedClient = useSignal('');
-    const files = useStore<{ [key: string]: File | null }>({
+    const files = useStore<{ [key: string]: { name: string; size: number } | null }>({
         siti: null,
         network: null,
         ip: null,
     });
 
     useTask$(async ({ track }) => {
-        clientList.value = await listaClienti();
-        track(() => showModalCSV.value);
+        track(() => clientType.value);
         track(() => formAction.value);
-        if(!formAction.value?.failed){
-            importState.files.siti = null;
-            importState.files.network = null;
-            importState.files.ip = null;
-            importState.validation.siti.valid = false;
-            importState.validation.network.valid = false;
-            importState.validation.ip.valid = false;
-            importState.validation.siti.error = '';
-            importState.validation.network.error = '';
-            importState.validation.ip.error = '';
-            sitiFeedback.value = null;
-            networkFeedback.value = null;
-            ipFeedback.value = null;
-            currentIdC.value = '';
-            clientType.value = 'new';
-            selectedClient.value = '';
-            //(document.getElementById("idC") as HTMLInputElement).value = '';
-            //(document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
-            if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-            if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-            if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
-        }
-        if (showModalCSV.value) {
-            importState.files.siti = null;
-            importState.files.network = null;
-            importState.files.ip = null;
-            importState.validation.siti.valid = false;
-            importState.validation.network.valid = false;
-            importState.validation.ip.valid = false;
-            importState.validation.siti.error = '';
-            importState.validation.network.error = '';
-            importState.validation.ip.error = '';
-            sitiFeedback.value = null;
-            networkFeedback.value = null;
-            ipFeedback.value = null;
-            currentIdC.value = '';
-            clientType.value = 'new';
-            selectedClient.value = '';
-            (document.getElementById("idC") as HTMLInputElement).value = '';
-            (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
-            if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-            if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-            if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
-        }
+        //track(() => clientList.value);
+        clientList.value = await listaClienti();
     })
 
+    const addNotification = $((message: string, type: 'success' | 'error') => {
+        notifications.value = [...notifications.value, { message, type }];
+        // Rimuovi la notifica dopo 3 secondi
+        setTimeout(() => {
+            notifications.value = notifications.value.filter(n => n.message !== message);
+        }, 3000);
+    });
+
     const handleUpload = $(async (e: Event, feedbackSignal: typeof sitiFeedback, type: 'siti' | 'network' | 'ip') => {
+        feedBackSVG[type] = { type: "loading", message: "Caricamento in corso..." };
+        //await new Promise(resolve => setTimeout(resolve, 10000));
         try {
             const fileInput = e.target as HTMLInputElement;
             const file = fileInput.files?.[0];
 
+
+
             if (!file) {
                 feedbackSignal.value = { message: "Nessun file selezionato", type: "error" };
+                feedBackSVG[type] = {
+                    type: "error",
+                    message: "Nessun file selezionato"
+                };
+                addNotification("Nessun file selezionato", 'error');
                 return;
             }
 
             // Verifica estensione e tipo file
             if (!file.name.endsWith('.csv') || !['text/csv', 'application/vnd.ms-excel'].includes(file.type)) {
                 feedbackSignal.value = { message: "Il file deve essere un CSV", type: "error" };
+                feedBackSVG[type] = {
+                    type: "error",
+                    message: "Il file deve essere un CSV"
+                };
+                addNotification("Il file deve essere un CSV", 'error');
+                return;
+            }
+
+            if (!file || file.size === 0) { // <--- Controllo dimensione file
+                feedbackSignal.value = { message: "Il file e' vuoto", type: "error" };
+                feedBackSVG[type] = {
+                    type: "error",
+                    message: "Il file e' vuoto"
+                };
+                addNotification("Il file e' vuoto", 'error');
                 return;
             }
 
@@ -176,42 +458,169 @@ export default component$(() => {
             // Verifica headers
             if (csvData.headers.length === 0) {
                 feedbackSignal.value = { message: "Il file CSV è vuoto", type: "error" };
+                feedBackSVG[type] = {
+                    type: "error",
+                    message: "Il file CSV è vuoto"
+                };
+                addNotification("Il file CSV è vuoto", 'error');
                 return;
             }
 
-            /*const requiredHeaders = ['nomeSito', 'nomeCitta', 'nomePaese', 'datacenter', 'tipologia', 'nomeCliente'];
-            if (!requiredHeaders.every(h => csvData.headers.includes(h))) {
-                feedbackSignal.value = {
-                    message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`,
-                    type: "error"
-                };
-                return;
-            }*/
-
+            if (type == 'siti') {
+                const requiredHeaders = ['nomeSito', 'citta', 'paese', 'datacenter', 'tipologia'];
+                if (!requiredHeaders.every(h => csvData.headers.includes(h))) {
+                    feedbackSignal.value = {
+                        message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`,
+                        type: "error"
+                    };
+                    feedBackSVG[type] = {
+                        type: "error",
+                        message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`
+                    };
+                    addNotification(`Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`, 'error');
+                    return;
+                }
+            }
+           //console.log(csvData)
+            if (type == 'network') {
+                const requiredNetworkFields = [
+                    'nomerete', 'descrizione', 'iprete', 'prefissorete', 'nomesito', 'citta', 'paese'
+                ];
+                if (!requiredNetworkFields.every(h => csvData.headers.includes(h))) {
+                    feedbackSignal.value = {
+                        message: `Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`,
+                        type: "error"
+                    };
+                    feedBackSVG[type] = {
+                        type: "error",
+                        message: `Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`
+                    };
+                    addNotification(`Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`, 'error');
+                    return;
+                }
+            }
+            if (type == 'ip') {
+                const requiredIPFields = [
+                    'nomerete', 'ipretenetwork', 'prefissoretenetwork', 'ip', 'n_prefisso', 'tipo_dispositivo', 'nome_dispositivo', 'brand_dispositivo', 'VID'
+                ];
+                if (!requiredIPFields.every(h => csvData.headers.includes(h))) {
+                    feedbackSignal.value = {
+                        message: `Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`,
+                        type: "error"
+                    };
+                    feedBackSVG[type] = {
+                        type: "error",
+                        message: `Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`
+                    };
+                    addNotification(`Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`, 'error');
+                    return;
+                }
+            }
             feedbackSignal.value = {
                 message: `File csv caricato con successo!`,
                 type: "success"
             };
+            feedBackSVG[type] = {
+                type: "success",
+                message: "File csv caricato con successo!"
+            };
+            if (file) {
+                // Salva solo i metadati, non l'intero oggetto File
+                files[type] = {
+                    name: file.name,
+                    size: file.size
+                };
+            }
+            addNotification("File caricato con successo", 'success');
         } catch (err) {
+            files[type] = null;
             feedbackSignal.value = {
                 message: "Errore durante l'elaborazione del file",
                 type: "error"
             };
+            feedBackSVG[type] = {
+                type: "error",
+                message: "Errore durante l'elaborazione del file"
+            };
+            addNotification("Errore durante l'elaborazione del file", 'error');
+            console.log(err)
         }
-
         setTimeout(() => (feedbackSignal.value = null), 2500);
-        setTimeout(() => (showModalCSV.value = false), 2500);
     });
 
     const showPopUpCSV = $(() => {
-        if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-        if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-        if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
+        files['siti'] = null;
+        files['network'] = null;
+        files['ip'] = null;
+        showModalCSV.value = false;
+        fileInputRefIP.value = undefined;
+        fileInputRefNetwork.value = undefined;
+        fileInputRefSiti.value = undefined;
+        sitiFeedback.value = null;
+        networkFeedback.value = null;
+        ipFeedback.value = null;
+        clienteTXT.value = "";
+        feedBackSVG['siti'] = null;
+        feedBackSVG['network'] = null;
+        feedBackSVG['ip'] = null;
+        currentIdC.value = "";
+        (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+        (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+        clientType.value = "new";
         showModalCSV.value = true
+    })
+
+    const reloadClients = $(async () => {
+        if (formAction.value?.success) {
+            clientList.value = await listaClienti();
+
+            showModalCSV.value = false;
+            files['siti'] = null;
+            files['network'] = null;
+            files['ip'] = null;
+            fileInputRefIP.value = undefined;
+            fileInputRefNetwork.value = undefined;
+            fileInputRefSiti.value = undefined;
+            sitiFeedback.value = null;
+            networkFeedback.value = null;
+            ipFeedback.value = null;
+            clienteTXT.value = "";
+            feedBackSVG['siti'] = null;
+            feedBackSVG['network'] = null;
+            feedBackSVG['ip'] = null;
+            currentIdC.value = "";
+            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+            clientType.value = "new";
+            clientListRefresh.value++
+            if (clientListRefresh.value > 255)
+                clientListRefresh.value = 0;
+            addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo", 'success');
+        }
+        else
+            addNotification(formAction.value?.error ?? "Errore durante la modifica", 'error');
+    })
+
+    const showPreviewSection = $(async (section: 'siti' | 'network' | 'ip') => {
+
     })
 
     return (
         <>
+            {/* Aggiungi questo div per le notifiche */}
+            <div class="fixed top-4 right-4 z-50 space-y-2">
+                {notifications.value.map((notification, index) => (
+                    <div
+                        key={index}
+                        class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-red-500 text-white'
+                            }`}
+                    >
+                        {notification.message}
+                    </div>
+                ))}
+            </div>
             <div class="size-full lg:px-40 px-24">
                 <Title>{$localize`: @@dbTitle:Client Selection Page`}
                     <button onClick$={showPopUpCSV} class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 bg-black text-white rounded hover:bg-gray-800 transition-colors text-sm ml-4">
@@ -221,7 +630,7 @@ export default component$(() => {
                         {$localize`Import CSV`}
                     </button>
                 </Title>
-                <ClientList />
+                <ClientList refresh={clientListRefresh.value} />
 
 
                 {user.admin && (
@@ -259,11 +668,11 @@ export default component$(() => {
                 </div>}
             >
                 <div class="w-full flex justify-center items-center">
-                    <Form action={formAction} class="bg-white shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
+                    <Form action={formAction} onSubmit$={reloadClients} class="bg-white shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
                         {/* Sezione Cliente - Modificata */}
                         <div class="space-y-4">
                             <h2 class="text-xl font-semibold">Cliente</h2>
-
+                            Trascina
                             <div class="flex gap-4">
                                 {/* Radio per scegliere tra nuovo cliente o esistente */}
                                 <label class="flex items-center gap-2">
@@ -277,6 +686,7 @@ export default component$(() => {
                                             clientType.value = 'new';
                                             currentIdC.value = '';
                                         }}
+                                        id="clientTypeIDNew"
                                     />
                                     Crea nuovo cliente
                                 </label>
@@ -290,6 +700,7 @@ export default component$(() => {
                                         onChange$={() => {
                                             clientType.value = 'existing';
                                         }}
+                                        id="clientTypeIDExisting"
                                     />
                                     Seleziona esistente
                                 </label>
@@ -297,25 +708,31 @@ export default component$(() => {
 
                             {/* Input testo per nuovo cliente */}
                             {clientType.value === 'new' && (
-                                <input
-                                    type="text"
-                                    name="clienteTXT"
-                                    class="w-full px-4 py-2 border rounded-lg"
-                                    placeholder="Nome nuovo cliente"
+                                <TextBoxForm
+                                    error={formAction.value?.error}
                                     id="clienteTXTid"
-                                />)}
-
+                                    placeholder={$localize`Inserire il nome del cliente`}
+                                    nameT="clienteTXT"
+                                    title=""
+                                    value={clienteTXT.value}
+                                    OnInput$={(event: InputEvent) => {
+                                        clienteTXT.value = (event.target as HTMLInputElement).value;
+                                    }}
+                                />
+                            )}
                             {/* Select per clienti esistenti */}
                             <input type="hidden" name="idcliente" id="idC" value={currentIdC.value} />
                             {clientType.value === 'existing' && (
                                 <SelectForm
                                     value=""
                                     OnClick$={(e) => {
-                                        (document.getElementsByName("idcliente")[0] as HTMLInputElement).value = (e.target as HTMLOptionElement).value;
+                                        const val = (e.target as HTMLSelectElement).value;
+                                        currentIdC.value = val;
+                                        (document.getElementsByName("idcliente")[0] as HTMLInputElement).value = val;
                                     }}
                                     id="idUC"
                                     name="idcliente"
-                                    title={$localize`Cliente`}
+                                    title=""
                                     listName=""
                                 >
                                     {clientList.value && clientList.value?.map((row: any) => (
@@ -328,22 +745,72 @@ export default component$(() => {
                         {/* Sezione File con feedback visivo */}
                         {['siti', 'network', 'ip'].map((section) => (
                             <div key={section} class="space-y-4">
-                                <h2 class="text-xl font-semibold capitalize">Importa {section}</h2>
+                                <h2 class="text-xl font-semibold flex items-center gap-3">
+                                    <span class="flex items-center gap-2">
+                                        Importa {section}
+                                        <button
+                                            type="button"
+                                            class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                            onClick$={() => showPreviewSection(section as 'siti' | 'network' | 'ip')}
+                                        >
+                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                            </svg>
+                                            <span class="tooltip">
+                                                {$localize`Info tabella`}
+                                            </span>
+                                        </button>
+                                    </span>
+
+                                    <span class="inline-flex">
+                                        {feedBackSVG[section]?.type === "success" && (
+                                            <div class="has-tooltip">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                </svg>
+                                                <span class="tooltip">Importazione avvenuta con successo</span>
+                                            </div>
+                                        )}
+                                        {feedBackSVG[section]?.type === "error" && (
+                                            <div class="has-tooltip">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                                </svg>
+                                                <span class="tooltip">{feedBackSVG[section]?.message}</span>
+                                            </div>
+                                        )}
+                                        {feedBackSVG[section]?.type === "loading" && (
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                            </svg>
+                                        )}
+                                    </span>
+                                </h2>
 
                                 <div class="relative">
                                     <input
+                                        disabled={section === 'siti' && clienteTXT.value.trim() === '' && currentIdC.value.trim() === ''
+                                            || section === 'network' && !files.siti
+                                            || section === 'ip' && !files.network}
                                         type="file"
                                         id={`csv-${section}`}
                                         name={`csv${section}`}
                                         class="hidden"
                                         onChange$={(e) => handleUpload(e, sitiFeedback, section as 'siti' | 'network' | 'ip')}
                                         accept=".csv"
-                                        ref={section === 'siti' ? fileInputRefSiti : section === 'network' ? fileInputRefNetwork : fileInputRefIP}
                                     />
 
                                     <label
                                         htmlFor={`csv-${section}`}
-                                        class="flex items-center justify-between px-6 py-4 bg-gray-50 hover:bg-gray-100 rounded-lg border-2 border-dashed cursor-pointer transition-colors"
+                                        class={`
+                                                flex items-center justify-between px-6 py-4 rounded-lg transition-all 
+                                                border-1 border-gray-200 bg-gray-50
+                                                ${(section === 'siti' && !clienteTXT.value.trim() && !currentIdC.value.trim())
+                                                || (section === 'network' && !files.siti)
+                                                || (section === 'ip' && !files.network)
+                                                ? 'cursor-not-allowed opacity-75'
+                                                : 'cursor-pointer hover:bg-gray-100'}
+        `}
                                     >
                                         <div class="flex items-center gap-3">
                                             <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,82 +820,51 @@ export default component$(() => {
                                                 {files[section] ? files[section].name : `Trascina CSV o clicca per selezionare`}
                                             </span>
                                         </div>
-
-                                        {files[section] && (
-                                            <span class="text-green-600">
-                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                                </svg>
-                                            </span>
-                                        )}
                                     </label>
                                 </div>
                             </div>
                         ))}
 
+
                         <button
                             type="submit"
-                            class="w-full py-3 px-6 bg-gray-600 text-white rounded-lg hover:bg-gray-700 duration-250 transition-all cursor-pointer"
+                            class="w-full py-3 px-6 bg-gray-600 text-white rounded-lg duration-250 transition-all cursor-pointer not-disabled:bg-gray-800 disabled:cursor-not-allowed"
+                            disabled={
+                                (clientType.value === 'new' && clienteTXT.value.trim() === '') ||
+                                (clientType.value === 'existing' && currentIdC.value.trim() === '')
+                            }
                         >
                             Conferma Importazione
                         </button>
                         <button
                             type="button"
-                            class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
                             onClick$={() => {
+                                files['siti'] = null;
+                                files['network'] = null;
+                                files['ip'] = null;
                                 showModalCSV.value = false;
-                                importState.files.siti = null;
-                                importState.files.network = null;
-                                importState.files.ip = null;
-                                importState.validation.siti.valid = false;
-                                importState.validation.network.valid = false;
-                                importState.validation.ip.valid = false;
-                                importState.validation.siti.error = '';
-                                importState.validation.network.error = '';
-                                importState.validation.ip.error = '';
+                                fileInputRefIP.value = undefined;
+                                fileInputRefNetwork.value = undefined;
+                                fileInputRefSiti.value = undefined;
                                 sitiFeedback.value = null;
                                 networkFeedback.value = null;
                                 ipFeedback.value = null;
-                                currentIdC.value = '';
-                                clientType.value = 'new';
-                                selectedClient.value = '';
-                                (document.getElementById("idC") as HTMLInputElement).value = '';
-                                (document.getElementById("clienteTXTid") as HTMLInputElement).value = '';
-                                if (fileInputRefIP.value) fileInputRefIP.value.value = '';
-                                if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = '';
-                                if (fileInputRefSiti.value) fileInputRefSiti.value.value = '';
+                                clienteTXT.value = "";
+                                feedBackSVG['siti'] = null;
+                                feedBackSVG['network'] = null;
+                                feedBackSVG['ip'] = null;
+                                currentIdC.value = "";
+                                (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+                                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+                                clientType.value = "new";
                             }}
+                            class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
                         >
                             Annulla
                         </button>
                     </Form>
 
                 </div>
-                {/* Feedback Caricamento
-                                                <span class="ml-4 flex items-center animate-fade-in bg-blue-100 border border-blue-400 text-blue-700 rounded px-3 py-1 text-base font-semibold shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
-                                </svg>
-                                Attendi caricamento...
-                            </span>
-                    */}
-                {                    /* Feedback errore 
-                            <span class="ml-4 flex items-center animate-fade-in bg-red-100 border border-red-400 text-red-700 rounded px-3 py-1 text-base font-semibold shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                                </svg>
-                                Errore durante l'importazione!
-                            </span>
-                    */}
-                {/* Feedback successo
-                    
-                                                <span class="ml-4 flex items-center animate-fade-in bg-green-100 border border-green-400 text-green-700 rounded px-3 py-1 text-base font-semibold shadow-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                </svg>
-                                File caricato con successo!
-                            </span>
-                    */}
             </PopupModal>
 
         </>

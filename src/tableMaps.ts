@@ -124,18 +124,18 @@ const TableMaps: { [key: string]: TableMap } = {
     "rete": {
         headers: {
             it: [
-                "Nome",
                 "Indirizzo",
                 "Prefisso",
+                "Nome",
                 "Descrizione",
                 "VRF",
                 "ID",
                 ""
             ],
             en: [
-                "Name",
                 "Address",
                 "Prefix",
+                "Name",
                 "Description",
                 "VRF",
                 "ID",
@@ -143,9 +143,9 @@ const TableMaps: { [key: string]: TableMap } = {
             ]
         },
         keys: [
-            'nomerete',
             'iprete',
             'prefissorete',
+            'nomerete',
             'descrizione',
             'vrf',
             'idrete'
@@ -327,6 +327,5 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
         keys: ['idintervallo', 'nomeintervallo', 'iniziointervallo', 'lunghezzaintervallo', 'fineintervallo', 'idrete']
     }
 };
-
 
 export default TableMaps

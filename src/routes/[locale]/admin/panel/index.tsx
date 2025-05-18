@@ -2,9 +2,13 @@ import { component$, getLocale, useSignal, useTask$ } from "@builder.io/qwik";
 import { DocumentHead, RequestHandler, routeLoader$, server$ } from "@builder.io/qwik-city";
 import jwt from "jsonwebtoken"
 import Title from "~/components/layout/Title";
+import { useLogsLoader } from './logs.loader';
 import sql from "~/../db";
 import LogsList from "~/components/utils/LogsList";
 import { UtenteModel } from "~/dbModels";
+
+export { useLogsLoader };
+
 export const onRequest: RequestHandler = async ({ cookie, redirect, sharedMap, env }) => {
     if (cookie.has("jwt")) {
         let user: any = jwt.verify(cookie.get("jwt")!.value, env.get("JWT_SECRET") as string)
@@ -80,6 +84,7 @@ export const useInfo = server$(async () => {
 })
 
 export default component$(() => {
+    const logs = useLogsLoader();
     const info = useSignal<infoProps>();
     const lang = getLocale("en");
 
@@ -133,29 +138,13 @@ export default component$(() => {
                 </div>
                 <div class="w-full flex mt-8">
 
-                    <div class="p-2 rounded-lg border-1 w-full md:w-3/4  border-[#cdcdcd] inline-flex justify-start items-center gap-2.5 overflow-hidden">
-                        <div class="flex-1 inline-flex flex-col justify-start items-start">
-                            <div class="border-b border-[#f3f3f3]">
-                                <div class="justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Logs</div>
-                            </div>
-                            <LogsList />
-                            {/* <div class="self-stretch px-[19px] pt-4 pb-[11px] inline-flex justify-start items-center gap-[60px] overflow-hidden">
-                            <div class="w-[100px] justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Data</div>
-                            <div class="w-12 justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Ora</div>
-                            <div class="flex-1 justify-start text-black text-base font-semibold font-['Inter'] leading-normal">Descrizione</div>
-                        </div>
-                        <div class="self-stretch px-[19px] pt-4 pb-[11px] border-t border-[#e8e8e8] inline-flex justify-start items-center gap-[60px] overflow-hidden">
-                            <div class="w-[100px] justify-start text-black text-base font-normal font-['Inter'] leading-normal">10/12/2024</div>
-                            <div class="w-12 justify-start text-black text-base font-normal font-['Inter'] leading-normal">12:20</div>
-                            <div class="flex-1 justify-start text-black text-base font-normal font-['Inter'] leading-normal">Aggiunta nuova associazione tra il tecnico Mario e Stellantis</div>
-                        </div>
-                        <div class="self-stretch px-[19px] pt-4 pb-[11px] border-t border-[#e8e8e8] inline-flex justify-start items-center gap-[60px] overflow-hidden">
-                            <div class="w-[100px] justify-start text-black text-base font-normal font-['Inter'] leading-normal">10/12/2024</div>
-                            <div class="w-12 justify-start text-black text-base font-normal font-['Inter'] leading-normal">12:05</div>
-                            <div class="flex-1 justify-start text-black text-base font-normal font-['Inter'] leading-normal">Aggiunto nuovo tecnico “Mario”</div>
-                        </div> */}
+                    <div class="container mx-auto p-4">
 
-                        </div>
+                        {/* Altri componenti */}
+
+                        <section class="mt-8">
+                            <LogsList />
+                        </section>
                     </div>
                 </div>
 

@@ -170,6 +170,8 @@ export const updateNetwork = routeAction$(async function (data, e) {
 }))
 
 export const getCity = server$(async function (data) {
+    if (isNaN(data))
+        return undefined;
     return (await sql`SELECT citta.* FROM citta INNER JOIN siti ON citta.idcitta=siti.idcitta WHERE siti.idsito=${data}`)[0] as unknown as CittaModel;
 })
 
@@ -233,7 +235,8 @@ export default component$(() => {
         networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
         vrfs.value = await getAllVRF();
         vlans.value = await getAllVLAN();
-        city.value = await getCity(parseInt(loc.params.site));
+        if(loc.params.site)
+            city.value = await getCity(parseInt(loc.params.site));
     })
 
     useTask$(({ track }) => {

@@ -6,8 +6,9 @@ import { getBaseURL } from '~/fnUtils';
 import { ClienteModel } from '~/dbModels';
 
 export interface ClientListProps {
-  client : Signal<number>,
-  currentTec : number
+  client ?: Signal<number>,
+  currentTec ?: number,
+  refresh ?: number
 }
 
 export const getClients = server$(async () => {
@@ -21,11 +22,13 @@ export const getClients = server$(async () => {
 
 })
 
-export default component$(() => {
+export default component$((props: ClientListProps) => {
   const clientList = useSignal<ClienteModel[] | null>(null);
   const nav = useNavigate();
 
-  useTask$(async () => {
+  useTask$(async ({track}) => {
+    track(() => props.refresh);
+    clientList.value = null;
     clientList.value = await getClients() as any;
   });
 

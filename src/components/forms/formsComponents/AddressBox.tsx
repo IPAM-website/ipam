@@ -235,7 +235,7 @@ export default component$<AddressBoxProps>(({ type = "IPv4", addressType = "host
 
             
 
-            // console.log(lastIP,networkIP);
+            //console.log(lastIP,networkIP);
             if (!(networkIP.join('.') >= parentNetwork.iprete && lastIP.join('.') <= parentLastIp.join('.')) && complete)
                 errors.push("Outside of network boundaries");
 
