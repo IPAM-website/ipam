@@ -9,6 +9,36 @@
     font-family: Inter;
 }
 
+.badge {
+  @apply px-3 py-1 rounded-full text-xs font-medium text-white;
+}
+
+.h-96 {
+  height: 24rem;
+}
+
+
+.log-entry {
+  @apply transition-colors duration-200;
+}
+
+.log-entry:hover {
+  @apply bg-gray-800;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+
 .has-tooltip {
     position: relative;
 }

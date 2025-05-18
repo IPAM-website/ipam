@@ -12,8 +12,6 @@ import sql from "../../../../db";
 import { listaClienti } from "../admin/panel/utenti_clienti";
 import countries from 'i18n-iso-countries';
 import it from 'i18n-iso-countries/langs/it.json';
-import { CSVInfoDashboardDBTableMaps } from "~/tableMaps";
-import BtnInfoTable from "~/components/table/btnInfoTable";
 
 type Notification = {
     message: string;
@@ -27,6 +25,7 @@ export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAct
         return countries.getName(code, 'en')!; // Restituisce nome in inglese
     };
     try {
+        let user = await getUser()
         let idClientePrivate: number | undefined;
         //console.log("Dati validati:", data);
 
@@ -34,13 +33,21 @@ export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAct
             return { error: "Errore durante l'importazione", success: false }
         // Caricamento/Ricerca cliente
         if (data.clientType == "new" && data.clienteTXT != undefined && data.clienteTXT != "") {
+            const clientName: string = data.clienteTXT;
             let clienteExist = await sql`SELECT * FROM clienti WHERE nomecliente = ${data.clienteTXT}`
             if (clienteExist.length != 0)
                 idClientePrivate = clienteExist[0].idcliente
             else {
-                await sql`INSERT INTO clienti (nomecliente) VALUES (${data.clienteTXT})`
-                const result = await sql`SELECT idcliente FROM clienti WHERE nomecliente = ${data.clienteTXT}`
-                idClientePrivate = result[0].idcliente
+                await sql.begin(async (tx) => {
+                    await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+
+                    const insertResult = await tx`  
+                        INSERT INTO clienti (nomecliente)
+                        VALUES (${clientName})
+                        RETURNING idcliente
+                    `;
+                    idClientePrivate = insertResult[0].idcliente;
+                });
             }
             //console.log(data.idcliente)  Dati inserire nome del cliente
         }
@@ -57,8 +64,8 @@ export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAct
         if (data.csvsiti != undefined) {
             const csv = await data.csvsiti.text();
             const rows = csv.split("\n").filter(row => row.trim() !== '');
-            //console.log(rows)
             for (let i = 1; i < rows.length; i++) {
+                console.log("righe siti")
                 const row = rows[i];
                 try {
                     // Parsing manuale della riga CSV
@@ -89,24 +96,33 @@ export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAct
 
                     let idCitta: number;
                     if (cittaResult.count === 0) {
-                        cittaResult = await sql`
+                        await sql.begin(async (tx)=>{
+                        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+                        cittaResult = await tx`
                             INSERT INTO citta (nomecitta, idpaese)
                             VALUES (${citta}, ${idPaese})
                             RETURNING idcitta
                         `;
+                        })
                         idCitta = cittaResult[0].idcitta;
                     } else {
                         idCitta = cittaResult[0].idcitta;
                     }
 
+                    const idClientePrivate2 = idClientePrivate;
                     // 3. Inserisci sito
-                    if (idClientePrivate === undefined) {
-                        return { error: `Cliente non trovato`, success: false }
+                    if (idClientePrivate2 !== undefined) {
+                        await sql.begin(async (tx) => {
+                            await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+                            await tx`
+                            INSERT INTO siti (nomesito, idcitta, datacenter, tipologia, idcliente)
+                            VALUES (${nomeSito}, ${idCitta}, ${datacenter}, ${tipologia}, ${idClientePrivate2})
+                        `;
+                        })
                     }
-                    await sql`
-                        INSERT INTO siti (nomesito, idcitta, datacenter, tipologia, idcliente)
-                        VALUES (${nomeSito}, ${idCitta}, ${datacenter}, ${tipologia}, ${idClientePrivate})
-                    `;
+                    else
+                        throw new Error(`Cliente non trovato`)
+                    
                 } catch (err) {
                     return { error: `Riga ${i}: ${err}`, success: false }
                 }
@@ -114,6 +130,197 @@ export const CSVInsert = routeAction$(async (data, requestEvent: RequestEventAct
         }
         else
             return { error: "Errore durante l'importazione dei siti", success: false };
+
+        //Importazione network
+        if (data.csvnetwork) {
+            const csv = await data.csvnetwork.text();
+            const rows = csv.split("\n").filter(row => row.trim() !== '');
+            //console.log(rows)
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                try {
+                    // Parsing manuale della riga CSV
+                    const [nomereteRaw, descrizioneRaw, ipreteRaw, prefissoreteRaw, nomesitoRaw, cittaRaw, paeseRaw] = row.split(',');
+                    const nomerete = nomereteRaw.replace(/^"|"$/g, '').trim();
+                    const descrizione = descrizioneRaw.replace(/^"|"$/g, '').trim();
+                    const iprete = ipreteRaw.replace(/^"|"$/g, '').trim();
+                    const prefissorete = prefissoreteRaw.replace(/^"|"$/g, '').trim();
+                    const nomesito = nomesitoRaw.replace(/^"|"$/g, '').trim();
+                    const citta = cittaRaw.replace(/^"|"$/g, '').trim();
+                    const paese = paeseRaw.replace(/^"|"$/g, '').trim();
+
+                    //console.log(nomeSito, citta, paese, datacenter, tipologia)
+                    //console.log(paese)
+
+                    await sql.begin(async (tx) => {
+                        // 1. Trova IDSito
+                        const sito = await tx`
+                            SELECT s.idsito 
+                            FROM siti s
+                            JOIN citta c ON s.idcitta = c.idcitta
+                            JOIN paesi p ON c.idpaese = p.idpaese
+                            WHERE s.nomesito = ${nomesito}
+                            AND c.nomecitta = ${citta}
+                            AND p.nomepaese = ${translateCountry(paese)}
+                        `;
+
+                        //console.log(sito)
+                        if (sito.length == 0) {
+                            // ERRORE: return in un contesto async non gestito
+                            throw new Error(`Sito '${nomesito}' non trovato`);
+                        }
+                        
+                        // 2. Gestione Rete
+                        let reteID : number;
+                        await sql.begin(async (tx)=>{
+                            await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+                            const rete = await tx`
+                            INSERT INTO rete (nomerete, descrizione, iprete, prefissorete)
+                            VALUES (
+                                ${nomerete},
+                                ${descrizione},
+                                ${iprete},
+                                ${prefissorete}
+                            )
+                            ON CONFLICT (nomerete, iprete, prefissorete) DO UPDATE SET
+                                descrizione = EXCLUDED.descrizione
+                            RETURNING idrete
+                            `;
+                            reteID = rete[0].idrete;
+
+                            // 3. Collegamento Sito-Rete
+                            await tx`
+                            INSERT INTO siti_rete (idsito, idrete)
+                            VALUES (${sito[0].idsito}, ${reteID})
+                            ON CONFLICT DO NOTHING
+                        `;
+                        })
+                        
+                    })
+                } catch (err) {
+                    return { error: `Riga ${i}: ${err}`, success: false }
+                }
+            }
+        }
+
+        /*if (data.csvip) {
+            const csv = await data.csvip.text();
+            const rows = csv.split('\n').filter(row => row.trim() !== '');
+
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                try {
+                    // 1. Split avanzato che gestisce virgole nei valori tra virgolette
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+                        .map(c => c.replace(/^"|"$/g, '').trim());
+
+                    if (columns.length !== 9) {
+                        throw new Error(`Numero colonne errato: ${columns.length}/9. Controlla virgole non gestite`);
+                    }
+
+                    const [
+                        nomerete,
+                        ipretenetwork,
+                        prefissoretenetwork,
+                        ip,
+                        n_prefisso,
+                        tipo_dispositivo,
+                        nome_dispositivo,
+                        brand_dispositivo,
+                        VID
+                    ] = columns;
+
+                    // 2. Validazione manuale (senza librerie)
+                    const isValidIP = (ip: string) => {
+                        const parts = ip.split('.');
+                        if (parts.length !== 4) return false;
+                        return parts.every(part => {
+                            const num = parseInt(part, 10);
+                            return !isNaN(num) && num >= 0 && num <= 255 && part === num.toString();
+                        });
+                    };
+
+                    const isInSubnet = (ip: string, network: string, prefix: number) => {
+                        // Implementazione base per subnet matching
+                        const ipParts = ip.split('.').map(p => parseInt(p, 10));
+                        const netParts = network.split('.').map(p => parseInt(p, 10));
+
+                        // Converte in binario e confronta i primi "prefix" bit
+                        const ipBin = ipParts.map(p => p.toString(2).padStart(8, '0')).join('');
+                        const netBin = netParts.map(p => p.toString(2).padStart(8, '0')).join('');
+
+                        return ipBin.substring(0, prefix) === netBin.substring(0, prefix);
+                    };
+
+                    // 3. Esegui validazioni
+                    if (!isValidIP(ip)) {
+                        throw new Error(`Formato IP non valido: ${ip}`);
+                    }
+
+                    if (!isValidIP(ipretenetwork)) {
+                        throw new Error(`Formato rete non valido: ${ipretenetwork}`);
+                    }
+
+                    const prefisso = parseInt(prefissoretenetwork);
+                    if (isNaN(prefisso) || prefisso < 0 || prefisso > 32) {
+                        throw new Error(`Prefisso rete non valido: ${prefissoretenetwork}`);
+                    }
+
+                    if (!isInSubnet(ip, ipretenetwork, prefisso)) {
+                        throw new Error(`IP ${ip} non appartiene a ${ipretenetwork}/${prefissoretenetwork}`);
+                    }
+
+                    await sql.begin(async (tx) => {
+                        // Imposta utente per audit trail
+                        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+
+                        // 4. Trova ID rete nel database
+                        const networkDB = await tx`
+                    SELECT idrete 
+                    FROM rete 
+                    WHERE nomerete = ${nomerete} 
+                    AND iprete = ${ipretenetwork} 
+                    AND prefissorete = ${prefissoretenetwork}::integer
+                `;
+
+                        if (!networkDB?.length) {
+                            throw new Error(`Rete non trovata: ${nomerete} ${ipretenetwork}/${prefissoretenetwork}`);
+                        }
+
+                        // 5. Inserimento indirizzo
+                        const result = await tx`
+                    INSERT INTO indirizzi (
+                        ip, idrete, n_prefisso, tipo_dispositivo, 
+                        nome_dispositivo, brand_dispositivo, vid
+                    ) VALUES (
+                        ${ip}, 
+                        ${networkDB[0].idrete}, 
+                        ${parseInt(n_prefisso)},
+                        ${tipo_dispositivo}, 
+                        ${nome_dispositivo},
+                        ${brand_dispositivo}, 
+                        ${VID ? parseInt(VID) : null}
+                    )
+                    ON CONFLICT (ip, idrete) DO NOTHING
+                    RETURNING *
+                `;
+
+                        if (!result.length) {
+                            throw new Error(`IP ${ip} già esistente per questa rete`);
+                        }
+                    });
+
+                } catch (err) {
+                    return {
+                        error: `Riga ${i}: ${(err as Error).message}`,
+                        success: false
+                    }
+                }
+            }
+            return { success: true, message: "Importazione IP completata" };
+        }*/
+
+
 
 
 
@@ -193,7 +400,8 @@ export default component$(() => {
     useTask$(async ({ track }) => {
         track(() => clientType.value);
         track(() => formAction.value);
-        track(() => clientList.value);
+        //track(() => clientList.value);
+        clientList.value = await listaClienti();
     })
 
     const addNotification = $((message: string, type: 'success' | 'error') => {
@@ -270,6 +478,41 @@ export default component$(() => {
                         message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`
                     };
                     addNotification(`Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`, 'error');
+                    return;
+                }
+            }
+           //console.log(csvData)
+            if (type == 'network') {
+                const requiredNetworkFields = [
+                    'nomerete', 'descrizione', 'iprete', 'prefissorete', 'nomesito', 'citta', 'paese'
+                ];
+                if (!requiredNetworkFields.every(h => csvData.headers.includes(h))) {
+                    feedbackSignal.value = {
+                        message: `Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`,
+                        type: "error"
+                    };
+                    feedBackSVG[type] = {
+                        type: "error",
+                        message: `Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`
+                    };
+                    addNotification(`Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`, 'error');
+                    return;
+                }
+            }
+            if (type == 'ip') {
+                const requiredIPFields = [
+                    'nomerete', 'ipretenetwork', 'prefissoretenetwork', 'ip', 'n_prefisso', 'tipo_dispositivo', 'nome_dispositivo', 'brand_dispositivo', 'VID'
+                ];
+                if (!requiredIPFields.every(h => csvData.headers.includes(h))) {
+                    feedbackSignal.value = {
+                        message: `Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`,
+                        type: "error"
+                    };
+                    feedBackSVG[type] = {
+                        type: "error",
+                        message: `Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`
+                    };
+                    addNotification(`Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`, 'error');
                     return;
                 }
             }

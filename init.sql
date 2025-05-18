@@ -1,3 +1,11 @@
+CREATE OR REPLACE FUNCTION update_modified_column() 
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+ 
  -- Eliminazione tabelle in ordine inverso di dipendenza
 DROP TABLE IF EXISTS Aggregati_Rete CASCADE;
 DROP TABLE IF EXISTS Intervalli CASCADE;
@@ -87,22 +95,21 @@ CREATE TABLE Siti(
 );
 
 CREATE TABLE Rete(
-    IDRete SERIAL,
+    IDRete SERIAL PRIMARY KEY,
     nomeRete VARCHAR(50) NOT NULL,
     descrizione VARCHAR(255),
     IPrete VARCHAR(15) NOT NULL,
-    prefissorete INTEGER NOT NULL,
+    prefissorete INTEGER NOT NULL CHECK (prefissorete BETWEEN 0 AND 32),
     idretesup INTEGER,
-
     vid INTEGER,
     vrf INTEGER,
-    PRIMARY KEY (IDRete)
+    UNIQUE (nomeRete, IPrete, prefissorete)
 );
 
 CREATE TABLE Siti_Rete(
     IDSito INTEGER NOT NULL,
     IDRete INTEGER NOT NULL,
-    PRIMARY KEY (IDSito,IDRete),
+    PRIMARY KEY (IDSito, IDRete),
     CONSTRAINT fk_idSito FOREIGN KEY (IDSito) REFERENCES Siti(IDSito) ON DELETE CASCADE,
     CONSTRAINT fk_idRete_Siti FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
@@ -124,16 +131,14 @@ CREATE TABLE VRF(
 CREATE TABLE Indirizzi(
     IP VARCHAR(15) NOT NULL,
     IDRete INTEGER NOT NULL,
-    N_Prefisso INTEGER NOT NULL,
-
+    N_Prefisso INTEGER NOT NULL CHECK (N_Prefisso BETWEEN 0 AND 32),
     tipo_dispositivo VARCHAR(20),
     nome_dispositivo VARCHAR(40),
     brand_dispositivo VARCHAR(20),
-    data_inserimento DATE,
-
+    data_inserimento DATE DEFAULT CURRENT_DATE,
     VID INTEGER,
     PRIMARY KEY (IP, IDRete),
-    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete)
+    CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
 
 CREATE TABLE Aggregati (
@@ -168,6 +173,320 @@ CREATE TABLE Intervalli (
     PRIMARY KEY(IDIntervallo),
     CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
+
+-- Applica trigger a tutte le tabelle
+CREATE TRIGGER tecnici_updated BEFORE UPDATE ON Tecnici FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER paesi_updated BEFORE UPDATE ON Paesi FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER citta_updated BEFORE UPDATE ON Citta FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER clienti_updated BEFORE UPDATE ON Clienti FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER usercliente_updated BEFORE UPDATE ON UserCliente FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER siti_updated BEFORE UPDATE ON Siti FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER rete_updated BEFORE UPDATE ON Rete FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER vlan_updated BEFORE UPDATE ON VLAN FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER vrf_updated BEFORE UPDATE ON VRF FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER indirizzi_updated BEFORE UPDATE ON Indirizzi FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER aggregati_updated BEFORE UPDATE ON Aggregati FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+CREATE TRIGGER intervalli_updated BEFORE UPDATE ON Intervalli FOR EACH ROW EXECUTE FUNCTION update_modified_column();
+
+-- Aggiungi timestamp a tutte le tabelle
+ALTER TABLE Tecnici ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Tecnici ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Paesi ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Paesi ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Citta ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Citta ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Clienti ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Clienti ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE UserCliente ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE UserCliente ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Siti ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Siti ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Rete ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Rete ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE VLAN ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE VLAN ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE VRF ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE VRF ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Indirizzi ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Indirizzi ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Aggregati ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Aggregati ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Intervalli ADD COLUMN created_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE Intervalli ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+
+-- Commenti per i timestamp
+COMMENT ON COLUMN Tecnici.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Tecnici.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Paesi.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Paesi.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Citta.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Citta.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Clienti.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Clienti.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN UserCliente.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN UserCliente.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Siti.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Siti.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Rete.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Rete.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN VLAN.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN VLAN.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN VRF.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN VRF.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Indirizzi.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Indirizzi.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Aggregati.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Aggregati.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+COMMENT ON COLUMN Intervalli.created_at IS 'Timestamp di creazione del record';
+COMMENT ON COLUMN Intervalli.updated_at IS 'Timestamp dell''ultimo aggiornamento del record';
+
+-- Commenti per la tabella Intervalli
+COMMENT ON COLUMN Intervalli.IDIntervallo IS 'Identificatore univoco dell''intervallo';
+COMMENT ON COLUMN Intervalli.NomeIntervallo IS 'Nome dell''intervallo';
+COMMENT ON COLUMN Intervalli.InizioIntervallo IS 'Indirizzo di inizio dell''intervallo';
+COMMENT ON COLUMN Intervalli.LunghezzaIntervallo IS 'Lunghezza dell''intervallo in host';
+COMMENT ON COLUMN Intervalli.FineIntervallo IS 'Indirizzo di fine dell''intervallo';
+COMMENT ON COLUMN Intervalli.descrizioneintervallo IS 'Descrizione dell''intervallo';
+COMMENT ON COLUMN Intervalli.IDRete IS 'Identificatore della rete associata';
+
+-- Commenti per la tabella Tecnici
+COMMENT ON COLUMN Tecnici.IDTecnico IS 'Identificatore univoco del tecnico';
+COMMENT ON COLUMN Tecnici.nomeTecnico IS 'Nome del tecnico';
+COMMENT ON COLUMN Tecnici.cognomeTecnico IS 'Cognome del tecnico';
+COMMENT ON COLUMN Tecnici.ruolo IS 'Ruolo del tecnico nell''azienda';
+COMMENT ON COLUMN Tecnici.emailTecnico IS 'Email di contatto del tecnico (unica)';
+COMMENT ON COLUMN Tecnici.telefonoTecnico IS 'Numero di telefono del tecnico';
+COMMENT ON COLUMN Tecnici.pwdTecnico IS 'Password crittografata del tecnico';
+COMMENT ON COLUMN Tecnici."admin" IS 'Flag che indica se il tecnico è un amministratore';
+COMMENT ON COLUMN Tecnici.FA IS 'Factor Authentication token';
+
+-- Commenti per la tabella Paesi
+COMMENT ON COLUMN Paesi.IDPaese IS 'Codice identificativo del paese';
+COMMENT ON COLUMN Paesi.nomePaese IS 'Nome del paese';
+
+-- Commenti per la tabella Citta
+COMMENT ON COLUMN Citta.IDCitta IS 'Identificatore univoco della città';
+COMMENT ON COLUMN Citta.nomeCitta IS 'Nome della città';
+COMMENT ON COLUMN Citta.IDPaese IS 'Codice del paese di appartenenza';
+
+-- Commenti per la tabella Clienti
+COMMENT ON COLUMN Clienti.IDCliente IS 'Identificatore univoco del cliente';
+COMMENT ON COLUMN Clienti.nomeCliente IS 'Nome del cliente';
+COMMENT ON COLUMN Clienti.telefonocliente IS 'Numero di telefono del cliente';
+
+-- Commenti per la tabella UserCliente
+COMMENT ON COLUMN UserCliente.IDUCliente IS 'Identificatore univoco dell''utente cliente';
+COMMENT ON COLUMN UserCliente.nomeUCliente IS 'Nome dell''utente cliente';
+COMMENT ON COLUMN UserCliente.cognomeUCliente IS 'Cognome dell''utente cliente';
+COMMENT ON COLUMN UserCliente.emailUCliente IS 'Email di contatto dell''utente cliente (unica)';
+COMMENT ON COLUMN UserCliente.pwdUCliente IS 'Password crittografata dell''utente cliente';
+COMMENT ON COLUMN UserCliente.FA IS 'Factor Authentication token';
+COMMENT ON COLUMN UserCliente.IDCliente IS 'Identificatore del cliente associato';
+
+-- Commenti per la tabella Siti
+COMMENT ON COLUMN Siti.IDSito IS 'Identificatore univoco del sito';
+COMMENT ON COLUMN Siti.nomeSito IS 'Nome del sito';
+COMMENT ON COLUMN Siti.IDCitta IS 'Identificatore della città di appartenenza';
+COMMENT ON COLUMN Siti.datacenter IS 'Flag che indica se il sito è un datacenter';
+COMMENT ON COLUMN Siti.tipologia IS 'Tipologia del sito';
+COMMENT ON COLUMN Siti.IDCliente IS 'Identificatore del cliente proprietario del sito';
+
+-- Commenti per la tabella Rete
+COMMENT ON COLUMN Rete.IDRete IS 'Identificatore univoco della rete';
+COMMENT ON COLUMN Rete.nomeRete IS 'Nome della rete';
+COMMENT ON COLUMN Rete.descrizione IS 'Descrizione della rete';
+COMMENT ON COLUMN Rete.IPrete IS 'Indirizzo di rete in formato CIDR (es: 192.168.1.0/24)';
+COMMENT ON COLUMN Rete.prefissorete IS 'Prefisso della rete (0-32)';
+COMMENT ON COLUMN Rete.idretesup IS 'Identificatore della rete superiore (padre)';
+COMMENT ON COLUMN Rete.vid IS 'Identificatore della VLAN associata';
+COMMENT ON COLUMN Rete.vrf IS 'Identificatore della VRF associata';
+
+-- Commenti per la tabella VLAN
+COMMENT ON COLUMN VLAN.VID IS 'Identificatore univoco della VLAN';
+COMMENT ON COLUMN VLAN.nomeVLAN IS 'Nome della VLAN';
+COMMENT ON COLUMN VLAN.descrizioneVLAN IS 'Descrizione della VLAN';
+
+-- Commenti per la tabella VRF
+COMMENT ON COLUMN VRF.IDVrf IS 'Identificatore univoco della VRF';
+COMMENT ON COLUMN VRF.nomeVrf IS 'Nome della VRF';
+COMMENT ON COLUMN VRF.descrizioneVRF IS 'Descrizione della VRF';
+
+-- Commenti per la tabella Indirizzi
+COMMENT ON COLUMN Indirizzi.IP IS 'Indirizzo IP host o network in formato INET';
+COMMENT ON COLUMN Indirizzi.IDRete IS 'Identificatore della rete associata';
+COMMENT ON COLUMN Indirizzi.N_Prefisso IS 'Numero di prefisso dell''indirizzo (0-32)';
+COMMENT ON COLUMN Indirizzi.tipo_dispositivo IS 'Tipo di dispositivo (es: router, switch, server)';
+COMMENT ON COLUMN Indirizzi.nome_dispositivo IS 'Nome del dispositivo';
+COMMENT ON COLUMN Indirizzi.brand_dispositivo IS 'Marca del dispositivo';
+COMMENT ON COLUMN Indirizzi.data_inserimento IS 'Data di inserimento dell''indirizzo';
+COMMENT ON COLUMN Indirizzi.VID IS 'Identificatore della VLAN associata';
+
+-- Commenti per la tabella Aggregati
+COMMENT ON COLUMN Aggregati.IDAggregato IS 'Identificatore univoco dell''aggregato';
+COMMENT ON COLUMN Aggregati.NomeAggregato IS 'Nome dell''aggregato';
+COMMENT ON COLUMN Aggregati.IDRete IS 'Identificatore della rete associata';
+
+COMMENT ON COLUMN Rete.IPrete IS 'Indirizzo di rete in formato CIDR (es: 192.168.1.0/24)';
+COMMENT ON COLUMN Indirizzi.IP IS 'Indirizzo IP host o network in formato INET';
+
+CREATE INDEX idx_siti_idcliente ON Siti(IDCliente);
+CREATE INDEX idx_rete_iprete ON Rete(IPrete);
+CREATE INDEX idx_indirizzi_idrete ON Indirizzi(IDRete);
+
+ALTER SYSTEM SET wal_level = replica;
+ALTER SYSTEM SET archive_mode = on;
+ALTER SYSTEM SET archive_command = 'gzip < %p > /backup/wal/%f.gz';
+
+-- Crea tabella di audit
+CREATE TABLE IF NOT EXISTS audit_log (
+    id SERIAL PRIMARY KEY,
+    operation CHAR(1) NOT NULL,
+    table_name TEXT NOT NULL,
+    user_name TEXT NOT NULL,
+    old_data JSONB,
+    new_data JSONB,
+    query_text TEXT NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Crea funzione di trigger
+CREATE OR REPLACE FUNCTION audit_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Per DELETE
+    IF (TG_OP = 'DELETE') THEN
+        INSERT INTO audit_log (
+            operation, 
+            table_name, 
+            user_name,  -- MODIFICA CHIAVE
+            old_data, 
+            query_text
+        )
+        VALUES (
+            'D', 
+            TG_TABLE_NAME, 
+            COALESCE(current_setting('app.audit_user', TRUE), current_user),
+            row_to_json(OLD), 
+            current_query()
+        );
+        RETURN OLD;
+
+    -- Per UPDATE
+    ELSIF (TG_OP = 'UPDATE') THEN
+        INSERT INTO audit_log (
+            operation, 
+            table_name, 
+            user_name,  -- MODIFICA CHIAVE
+            old_data, 
+            new_data, 
+            query_text
+        )
+        VALUES (
+            'U', 
+            TG_TABLE_NAME, 
+            COALESCE(current_setting('app.audit_user', TRUE), current_user),
+            row_to_json(OLD),
+            row_to_json(NEW),
+            current_query()
+        );
+        RETURN NEW;
+
+    -- Per INSERT
+    ELSIF (TG_OP = 'INSERT') THEN
+        INSERT INTO audit_log (
+            operation, 
+            table_name, 
+            user_name,  -- MODIFICA CHIAVE
+            new_data, 
+            query_text
+        )
+        VALUES (
+            'I', 
+            TG_TABLE_NAME, 
+            COALESCE(current_setting('app.audit_user', TRUE), current_user),
+            row_to_json(NEW),
+            current_query()
+        );
+        RETURN NEW;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Applica il trigger a tutte le tabelle (escludendo solo la tabella di audit)
+DO $$
+DECLARE
+    tbl text;
+BEGIN
+    FOR tbl IN
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public' 
+        AND table_name NOT IN ('audit_log')
+    LOOP
+        EXECUTE format('CREATE TRIGGER audit_trigger_%I
+                        AFTER INSERT OR UPDATE OR DELETE ON %I
+                        FOR EACH ROW EXECUTE FUNCTION audit_trigger()', tbl, tbl);
+    END LOOP;
+END $$;
+
+-- Applica manualmente i trigger per tutte le tabelle
+CREATE TRIGGER tecnici_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Tecnici
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER paesi_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Paesi
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER citta_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Citta
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER clienti_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Clienti
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER usercliente_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON UserCliente
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER siti_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Siti
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER rete_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Rete
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER siti_rete_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Siti_Rete
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER vlan_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON VLAN
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER vrf_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON VRF
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER indirizzi_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Indirizzi
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER aggregati_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Aggregati
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER aggregati_rete_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Aggregati_Rete
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
+CREATE TRIGGER intervalli_audit_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Intervalli
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();
+
 
 INSERT INTO vrf (nomevrf,descrizionevrf) VALUES ('default','default virtual routing table');
 INSERT INTO vlan (nomevlan,descrizionevlan) VALUES ('default','global VLAN');

@@ -18,20 +18,6 @@ type Notification = {
     type: 'success' | 'error';
 };
 
-
-export const getAllSite = server$(async function (iddc: number) {
-    let siteList: SiteModel[] = [];
-    try {
-        const query = await sql`SELECT * FROM siti WHERE siti.iddc=${iddc}`
-        siteList = query as unknown as SiteModel[];
-    }
-    catch (e) {
-        console.log(e);
-    }
-
-    return siteList;
-})
-
 export const getCitiesOfClients = server$(async function (idcliente: number) {
     try {
         const query = await sql`SELECT DISTINCT citta.* FROM citta INNER JOIN siti ON citta.idcitta=siti.idcitta WHERE siti.idcliente=${idcliente}`;
