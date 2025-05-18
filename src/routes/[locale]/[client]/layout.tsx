@@ -1,35 +1,42 @@
 import { component$, Slot, useVisibleTask$ } from "@builder.io/qwik";
-import { server$, useLocation, type RequestHandler } from "@builder.io/qwik-city";
+import {
+  server$,
+  useLocation,
+  type RequestHandler,
+} from "@builder.io/qwik-city";
 import { setClientName } from "~/components/layout/Sidebar";
 import sql from "../../../../db";
 import { getBaseURL, getUser } from "~/fnUtils";
 
 export const onRequest: RequestHandler = async ({ params, redirect }) => {
-
-    try {
-        const user = await getUser();
-        //console.log(user);
-        const query1 = await sql`SELECT * FROM tecnici WHERE emailtecnico=${user.mail}`;
-        if(query1.length == 1)
-           return;
-        const query = await sql`SELECT * FROM usercliente WHERE usercliente.iducliente=${user.id} AND usercliente.emailucliente=${user.mail}`;
-        if (query.length == 0)
-            throw new Error("Unauthorized access");
-    } catch (e) {
-        console.log(e);
-        throw redirect(301, getBaseURL() + "dashboard");
-    }
-}
+  try {
+    const user = await getUser();
+    //console.log(user);
+    const query1 =
+      await sql`SELECT * FROM tecnici WHERE emailtecnico=${user.mail}`;
+    if (query1.length == 1) return;
+    const query =
+      await sql`SELECT * FROM usercliente WHERE usercliente.iducliente=${user.id} AND usercliente.emailucliente=${user.mail}`;
+    if (query.length == 0) throw new Error("Unauthorized access");
+  } catch (e) {
+    console.log(e);
+    throw redirect(301, getBaseURL() + "dashboard");
+  }
+};
 
 export const getClientName = server$(async function () {
-    return (await sql`SELECT nomecliente FROM clienti WHERE idcliente = ${this.params.client}`)[0].nomecliente
-})
+  return (
+    await sql`SELECT nomecliente FROM clienti WHERE idcliente = ${this.params.client}`
+  )[0].nomecliente;
+});
 
 export default component$(() => {
-    useVisibleTask$(async () => {
-        setClientName(await getClientName());
-    })
-    return <div  class="lg:px-40 md:px-24">
-        <Slot />
+  useVisibleTask$(async () => {
+    setClientName(await getClientName());
+  });
+  return (
+    <div class="md:px-24 lg:px-40">
+      <Slot />
     </div>
+  );
 });

@@ -1,7 +1,18 @@
-
 import { $, component$, Signal } from "@builder.io/qwik";
 
-interface TextBoxFormProps { disabled?: string; id: string; value?: string; nameT?: string; title?: string; placeholder: string; error?: any; css?: {}; OnInput$?: (event: InputEvent) => void; ref?: Signal<HTMLInputElement | undefined>, search?: boolean }
+interface TextBoxFormProps {
+  disabled?: string;
+  id: string;
+  value?: string;
+  nameT?: string;
+  title?: string;
+  placeholder: string;
+  error?: any;
+  css?: {};
+  OnInput$?: (event: InputEvent) => void;
+  ref?: Signal<HTMLInputElement | undefined>;
+  search?: boolean;
+}
 
 // TextboxForm
 // export default component$<TextBoxFormProps>(
@@ -72,17 +83,17 @@ export default component$<TextBoxFormProps>(
     title,
     placeholder,
     error,
-    OnInput$ = $((event: InputEvent) => { }),
+    OnInput$ = $((event: InputEvent) => {}),
     ref,
     css,
     disabled,
-    search = false
+    search = false,
   }) => {
     return (
-      <div class="flex flex-col gap-1 w-full my-2">
+      <div class="my-2 flex w-full flex-col gap-1">
         {title && (
           <label
-            class="font-semibold text-gray-800 mb-1 tracking-wide"
+            class="mb-1 font-semibold tracking-wide text-gray-800"
             htmlFor={"txt" + id}
           >
             {title}
@@ -90,9 +101,9 @@ export default component$<TextBoxFormProps>(
         )}
         <div class="relative">
           {search && (
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
-                class="w-5 h-5 text-gray-400"
+                class="h-5 w-5 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
@@ -111,13 +122,13 @@ export default component$<TextBoxFormProps>(
             placeholder={placeholder || "Cerca..."}
             style={css}
             class={[
-              "pl-10 pr-4 py-2 rounded-xl border w-full bg-gray-50 text-gray-900",
-              "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none",
-              "hover:border-blue-400 transition-all duration-300 shadow",
+              "w-full rounded-xl border bg-gray-50 py-2 pr-4 pl-10 text-gray-900",
+              "focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 focus:outline-none",
+              "shadow transition-all duration-300 hover:border-blue-400",
               error?.failed && error?.fieldErrors[nameT]
-                ? "border-red-400 focus:border-red-600 ring-2 ring-red-200"
+                ? "border-red-400 ring-2 ring-red-200 focus:border-red-600"
                 : "border-gray-300",
-              "disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed",
+              "disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400",
             ].join(" ")}
             onInput$={OnInput$}
             value={value}
@@ -126,10 +137,11 @@ export default component$<TextBoxFormProps>(
           />
         </div>
         {error?.failed && error?.fieldErrors[nameT] && (
-          <span class="text-sm text-red-500 mt-1 ml-1">{error.fieldErrors[nameT]}</span>
+          <span class="mt-1 ml-1 text-sm text-red-500">
+            {error.fieldErrors[nameT]}
+          </span>
         )}
       </div>
     );
-  }
+  },
 );
-

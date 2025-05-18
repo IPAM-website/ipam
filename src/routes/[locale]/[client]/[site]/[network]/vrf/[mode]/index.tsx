@@ -1,7 +1,31 @@
-import { $, component$, getLocale, Signal, Slot, UseSignal, useSignal, useStore, useTask$, useVisibleTask$ } from "@builder.io/qwik";
-import { Form, RequestHandler, routeAction$, routeLoader$, server$, useContent, useLocation, useNavigate, z, zod$ } from "@builder.io/qwik-city";
-import sql from "~/../db"
-import AddressBox, { getNetwork } from "~/components/forms/formsComponents/AddressBox";
+import {
+  $,
+  component$,
+  getLocale,
+  Signal,
+  Slot,
+  UseSignal,
+  useSignal,
+  useStore,
+  useTask$,
+  useVisibleTask$,
+} from "@builder.io/qwik";
+import {
+  Form,
+  RequestHandler,
+  routeAction$,
+  routeLoader$,
+  server$,
+  useContent,
+  useLocation,
+  useNavigate,
+  z,
+  zod$,
+} from "@builder.io/qwik-city";
+import sql from "~/../db";
+import AddressBox, {
+  getNetwork,
+} from "~/components/forms/formsComponents/AddressBox";
 import DatePicker from "~/components/forms/formsComponents/DatePicker";
 import SelectForm from "~/components/forms/formsComponents/SelectForm";
 import TextboxForm from "~/components/forms/formsComponents/TextboxForm";
@@ -17,250 +41,270 @@ import SiteNavigator from "~/components/layout/SiteNavigator";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
-    if (!['view', 'insert', 'update'].includes(params.mode)) {
-        let splitURL = url.href.split('/');
-        splitURL.pop();
-        splitURL.pop();
-        throw redirect(301, splitURL.join('/') + "/view")
-    }
-}
+  if (!["view", "insert", "update"].includes(params.mode)) {
+    let splitURL = url.href.split("/");
+    splitURL.pop();
+    splitURL.pop();
+    throw redirect(301, splitURL.join("/") + "/view");
+  }
+};
 
 export interface RowAddress {
-    descrizione?: string,
-    idrete?: number,
-    idsito?: number,
-    idsottosito?: number,
-    vid?: number,
-    ip?: string,
-    n_prefisso?: number,
-    nomerete?: string,
-    nomesottosito?: string,
-    nome_dispositivo?: string,
-    brand_dispositivo?: string,
-    data_inserimento?: string,
-    tipo_dispositivo?: string
+  descrizione?: string;
+  idrete?: number;
+  idsito?: number;
+  idsottosito?: number;
+  vid?: number;
+  ip?: string;
+  n_prefisso?: number;
+  nomerete?: string;
+  nomesottosito?: string;
+  nome_dispositivo?: string;
+  brand_dispositivo?: string;
+  data_inserimento?: string;
+  tipo_dispositivo?: string;
 }
 
 export interface FilterObject {
-    active: boolean;
-    visible: boolean;
-    params: {
-        [key: string]: string;
-    }
+  active: boolean;
+  visible: boolean;
+  params: {
+    [key: string]: string;
+  };
 }
 
 export const getVRFs = server$(async function (this, filter = { empty: 1 }) {
-    filter.query = filter.query ? filter.query + '%' : filter.query = "%";
-    filter.query = (filter.query as string).trim();
-    let vrfs: VRFModel[] = [];
+  filter.query = filter.query ? filter.query + "%" : (filter.query = "%");
+  filter.query = (filter.query as string).trim();
+  let vrfs: VRFModel[] = [];
 
-    if (filter.empty == 1) {
-        const queryResult = await sql`SELECT * FROM vrf`;
-        vrfs = queryResult as unknown as VRFModel[];
-        return vrfs;
-    }
-
-    // if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
-
-
-    //     if (isNaN(parseInt(filter.query))) {
-    //         const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
-    //         addresses = queryResult as unknown as IndirizziModel[];
-    //     }
-    //     else {
-    //         const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
-    //         addresses = queryResult as unknown as IndirizziModel[];
-    //     }
-
-    // }
-    // else {
-
-
-    //     if (isNaN(parseInt(filter.query))) {
-    //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.query}`;
-    //         addresses = queryResult as unknown as IndirizziModel[];
-    //     }
-    //     else {
-    //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.ip LIKE ${filter.query}`;
-    //         addresses = queryResult as unknown as IndirizziModel[];
-    //     }
-    // }
-
+  if (filter.empty == 1) {
+    const queryResult = await sql`SELECT * FROM vrf`;
+    vrfs = queryResult as unknown as VRFModel[];
     return vrfs;
-})
+  }
 
+  // if (this.query.has("network") || (filter.network != undefined && filter.network != '')) {
+
+  //     if (isNaN(parseInt(filter.query))) {
+  //         const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.nome_dispositivo LIKE ${filter.query}`;
+  //         addresses = queryResult as unknown as IndirizziModel[];
+  //     }
+  //     else {
+  //         const queryResult = await sql`SELECT indirizzi.* FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete AND rete.idrete=${this.query.get("network") ?? filter.network} WHERE indirizzi.ip LIKE ${filter.query}`;
+  //         addresses = queryResult as unknown as IndirizziModel[];
+  //     }
+
+  // }
+  // else {
+
+  //     if (isNaN(parseInt(filter.query))) {
+  //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.query}`;
+  //         addresses = queryResult as unknown as IndirizziModel[];
+  //     }
+  //     else {
+  //         const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.ip LIKE ${filter.query}`;
+  //         addresses = queryResult as unknown as IndirizziModel[];
+  //     }
+  // }
+
+  return vrfs;
+});
 
 export const useSiteName = routeLoader$(async ({ params }) => {
-    return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0].nomesito;
-})
+  if (isNaN(parseInt(params.site)))
+    return;
+  return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
+    .nomesito;
+});
 
-
-export const useAction = routeAction$(async (data, ev) => {
+export const useAction = routeAction$(
+  async (data, ev) => {
     let success = false;
     let type_message = 0;
-    let vrf: VRFModel
+    let vrf: VRFModel;
     try {
-        if (ev.params.mode == "update") {
-            await sql`UPDATE vrf SET nomevrf=${data.nomevrf}, descrizionevrf=${data.descrizionevrf} WHERE idvrf=${data.idvrf}`;
-            type_message = 2;
-        } else {
-            await sql`INSERT INTO vrf(idvrf,nomevrf,descrizionevrf) VALUES (${data.idvrf},${data.nomevrf},${data.descrizionevrf})`;
-            type_message = 1;
-        }
-        success = true;
+      if (ev.params.mode == "update") {
+        await sql`UPDATE vrf SET nomevrf=${data.nomevrf}, descrizionevrf=${data.descrizionevrf} WHERE idvrf=${data.idvrf}`;
+        type_message = 2;
+      } else {
+        await sql`INSERT INTO vrf(idvrf,nomevrf,descrizionevrf) VALUES (${data.idvrf},${data.nomevrf},${data.descrizionevrf})`;
+        type_message = 1;
+      }
+      success = true;
     } catch (e) {
-        if (ev.params.mode == "update")
-            type_message = 4;
-        else
-            type_message = 3;
+      if (ev.params.mode == "update") type_message = 4;
+      else type_message = 3;
     }
 
     return {
-        success,
-        type_message
-    }
-},
-    zod$({
-        idvrf: z.number(),
-        descrizionevrf: z.string(),
-        nomevrf: z.string()
-    }))
-
+      success,
+      type_message,
+    };
+  },
+  zod$({
+    idvrf: z.number(),
+    descrizionevrf: z.string(),
+    nomevrf: z.string(),
+  }),
+);
 
 export const getAllVRFs = server$(async function () {
-    let vrfs: VRFModel[] = [];
-    try {
-        const query = await sql`SELECT * FROM vrf`
-        vrfs = query as unknown as VRFModel[];
-    }
-    catch (e) {
-        console.log(e);
-    }
+  let vrfs: VRFModel[] = [];
+  try {
+    const query = await sql`SELECT * FROM vrf`;
+    vrfs = query as unknown as VRFModel[];
+  } catch (e) {
+    console.log(e);
+  }
 
-    return vrfs;
-})
+  return vrfs;
+});
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
-    let networks: ReteModel[] = [];
-    try {
-        const query = await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
-                                WHERE siti_rete.idsito=${idsito}`
-        networks = query as unknown as ReteModel[];
-    }
-    catch (e) {
-        console.log(e);
-    }
+  let networks: ReteModel[] = [];
+  try {
+    if (isNaN(idsito))
+      throw new Error("idsito non dispnibile")
+    const query =
+      await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
+                                WHERE siti_rete.idsito=${idsito}`;
+    networks = query as unknown as ReteModel[];
+  } catch (e) {
+    console.log(e);
+  }
 
-    return networks;
-})
+  return networks;
+});
 
 export const deleteVRF = server$(async function (this, data) {
-    try {
-        await sql`DELETE FROM vrf WHERE idvrf=${data.idvrf}`;
-        return true;
-    }
-    catch (e) {
-        console.log(e);
-        return false;
-    }
-})
+  try {
+    if (isNaN(data.idvrf))
+      throw new Error("data.idvrf non dispnibile")
+    await sql`DELETE FROM vrf WHERE idvrf=${data.idvrf}`;
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
+});
 
 type Notification = {
-    message: string;
-    type: 'success' | 'error';
+  message: string;
+  type: "success" | "error";
 };
 
 export default component$(() => {
-    // const notify = useNotify();
-    const lang = getLocale("en");
-    const vrfList = useSignal<VRFModel[]>([]);
-    const networks = useSignal<ReteModel[]>([]);
-    const loc = useLocation();
-    const nav = useNavigate();
-    const vrf = useStore<VRFModel>({
-        descrizionevrf: '',
-        idvrf: 0,
-        nomevrf: ''
-    });
-    const sitename = useSiteName();
-    const filter = useStore<FilterObject>({ active: false, visible: false, params: { network: '', query: '' } });
-    const mode = loc.params.mode ?? "view";
-    const txtQuickSearch = useSignal<HTMLInputElement>();
-    const reloadFN = useSignal<(() => void) | null>(null);
-    const notifications = useSignal<Notification[]>([]);
+  // const notify = useNotify();
+  const lang = getLocale("en");
+  const vrfList = useSignal<VRFModel[]>([]);
+  const networks = useSignal<ReteModel[]>([]);
+  const loc = useLocation();
+  const nav = useNavigate();
+  const vrf = useStore<VRFModel>({
+    descrizionevrf: "",
+    idvrf: 0,
+    nomevrf: "",
+  });
+  const sitename = useSiteName();
+  const filter = useStore<FilterObject>({
+    active: false,
+    visible: false,
+    params: { network: "", query: "" },
+  });
+  const mode = loc.params.mode ?? "view";
+  const txtQuickSearch = useSignal<HTMLInputElement>();
+  const reloadFN = useSignal<(() => void) | null>(null);
+  const notifications = useSignal<Notification[]>([]);
 
-    useTask$(async ({ track }) => {
-        vrfList.value = await getVRFs();
-        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
+  useTask$(async ({ track }) => {
+    vrfList.value = await getVRFs();
+    networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
 
-        // for (const [key, value] of loc.url.searchParams.entries()) {
-        //     filter.params[key] = value;
-        //     filter.active = true;
-        // }
+    // for (const [key, value] of loc.url.searchParams.entries()) {
+    //     filter.params[key] = value;
+    //     filter.active = true;
+    // }
+  });
 
-    })
+  const addNotification = $((message: string, type: "success" | "error") => {
+    notifications.value = [...notifications.value, { message, type }];
+    // Rimuovi la notifica dopo 3 secondi
+    setTimeout(() => {
+      notifications.value = notifications.value.filter(
+        (n) => n.message !== message,
+      );
+    }, 3000);
+  });
 
-    const addNotification = $((message: string, type: 'success' | 'error') => {
-        notifications.value = [...notifications.value, { message, type }];
-        // Rimuovi la notifica dopo 3 secondi
-        setTimeout(() => {
-            notifications.value = notifications.value.filter(n => n.message !== message);
-        }, 3000);
-    });
+  const handleError = $((error: any) => {
+    console.log(error);
+    addNotification(
+      lang === "en" ? "Error during import" : "Errore durante l'importazione",
+      "error",
+    );
+  });
 
-    const handleError = $((error: any) => {
-        console.log(error);
-        addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
-    })
+  const handleOkay = $(() => {
+    // console.log("ok");
+    addNotification(
+      lang === "en"
+        ? "Import completed successfully"
+        : "Importazione completata con successo",
+      "success",
+    );
+  });
 
-    const handleOkay = $(() => {
-        // console.log("ok");
-        addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
-    })
+  const handleModify = $((row: any) => {
+    Object.assign(vrf, row as VRFModel);
+    nav(loc.url.href.replace("view", "update"));
+  });
 
-    const handleModify = $((row: any) => {
-        Object.assign(vrf, row as VRFModel);
-        nav(loc.url.href.replace("view", "update"));
-    })
+  const handleDelete = $(async (row: any) => {
+    if (await deleteVRF({ idvrf: row.idvrf }))
+      addNotification(
+        lang === "en" ? "Deleted successfully" : "Eliminato con successo",
+        "success",
+      );
+    else
+      addNotification(
+        lang === "en"
+          ? "Error during deletion"
+          : "Errore durante l'eliminazione",
+        "error",
+      );
+  });
 
-    const handleDelete = $(async (row: any) => {
-        if (await deleteVRF({ idvrf: row.idvrf }))
-            addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", 'success');
-        else
-            addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
+  const reloadData = $(async () => {
+    // if (filter.active)
+    //     return await useAddresses(filter.params);
+    // else
+    return await getVRFs();
+  });
 
-    });
+  const getREF = $((reloadFunc: () => void) => {
+    reloadFN.value = reloadFunc;
+  });
 
-    const reloadData = $(async () => {
-        // if (filter.active)
-        //     return await useAddresses(filter.params);
-        // else
-        return await getVRFs();
-    })
-
-    const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
-
-    return (
-        <>
-            {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("vlan")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
-            {
-                mode == "view"
-                    ? (
-                        <div>
-                            <div class="fixed top-4 right-4 z-50 space-y-2">
-                                {notifications.value.map((notification, index) => (
-                                    <div
-                                        key={index}
-                                        class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
-                                            ? 'bg-green-500 text-white'
-                                            : 'bg-red-500 text-white'
-                                            }`}
-                                    >
-                                        {notification.message}
-                                    </div>
-                                ))}
-                            </div>
-                            {/* <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
+  return (
+    <>
+      {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("vlan")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
+      {mode == "view" ? (
+        <div>
+          <div class="fixed top-4 right-4 z-50 space-y-2">
+            {notifications.value.map((notification, index) => (
+              <div
+                key={index}
+                class={`rounded-md p-4 shadow-lg ${notification.type === "success"
+                    ? "bg-green-500 text-white"
+                    : "bg-red-500 text-white"
+                  }`}
+              >
+                {notification.message}
+              </div>
+            ))}
+          </div>
+          {/* <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
                                 <div class="flex">
                                     <div class="w-full">
                                         <span class="ms-2">Network</span>
@@ -301,11 +345,20 @@ export default component$(() => {
                                 </div>
                             </PopupModal> */}
 
-                            {/* <SiteNavigator /> */}
+          {/* <SiteNavigator /> */}
 
-                            <Table>
-                                <Dati DBTabella="vrf" title={$localize`Lista VRF`} dati={vrfList.value} nomeTabella={"vrf"} OnModify={handleModify} OnDelete={handleDelete} funcReloadData={reloadData} onReloadRef={getREF}>
-                                    {/* <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
+          <Table>
+            <Dati
+              DBTabella="vrf"
+              title={$localize`Lista VRF`}
+              dati={vrfList.value}
+              nomeTabella={"vrf"}
+              OnModify={handleModify}
+              OnDelete={handleDelete}
+              funcReloadData={reloadData}
+              onReloadRef={getREF}
+            >
+              {/* <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
                                         filter.params.query = (e.target as HTMLInputElement).value;
                                         filter.active = false;
                                         for (let item in filter.params) {
@@ -317,7 +370,7 @@ export default component$(() => {
                                         if (reloadFN)
                                             reloadFN.value?.();
                                     }} /> */}
-                                    {/* <div class="has-tooltip">
+              {/* <div class="has-tooltip">
                                         <button class="cursor-pointer p-1 rounded-md bg-black hover:bg-gray-700 text-white size-[32px] flex items-center justify-center" onClick$={() => filter.visible = true} >
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
@@ -333,23 +386,26 @@ export default component$(() => {
                                         </svg>
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
                                     </button></div>} */}
-                                </Dati>
-                                <div class="flex">
-
-                                <ButtonAddLink nomePulsante={$localize`Aggiungi vrf`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink>
-                                <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="vrf" />
-                                </div>
-                            </Table>
-
-
-
-                        </div>)
-                    :
-                    <CRUDForm data={vrf} reloadFN={reloadFN} />
-            }
-        </>);
-})
-
+            </Dati>
+            <div class="flex">
+              <ButtonAddLink
+                nomePulsante={$localize`Aggiungi vrf`}
+                href={loc.url.href.replace("view", "insert")}
+              ></ButtonAddLink>
+              <ImportCSV
+                OnError={handleError}
+                OnOk={handleOkay}
+                nomeImport="vrf"
+              />
+            </div>
+          </Table>
+        </div>
+      ) : (
+        <CRUDForm data={vrf} reloadFN={reloadFN} />
+      )}
+    </>
+  );
+});
 
 // export const FormBox = component$(({ title }: { title?: string }) => {
 //     return (<>
@@ -368,31 +424,37 @@ export default component$(() => {
 // })
 
 export const FormBox = component$(({ title }: { title?: string }) => {
-    return (
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
-            {title && (
-                <div class="w-full p-4 border-b border-gray-100 bg-gray-50">
-                    <h1 class="text-lg font-semibold text-gray-700">{title}</h1>
-                </div>
-            )}
-            <div class="w-full flex flex-col gap-4 p-6">
-                <Slot></Slot>
-            </div>
+  return (
+    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+      {title && (
+        <div class="w-full border-b border-gray-100 bg-gray-50 p-4">
+          <h1 class="text-lg font-semibold text-gray-700">{title}</h1>
         </div>
-    );
+      )}
+      <div class="flex w-full flex-col gap-4 p-6">
+        <Slot></Slot>
+      </div>
+    </div>
+  );
 });
 
-
-export const CRUDForm = component$(({ data, reloadFN }: { data?: VRFModel, reloadFN?: Signal<(() => void) | null> }) => {
-    const lang = getLocale("en")
+export const CRUDForm = component$(
+  ({
+    data,
+    reloadFN,
+  }: {
+    data?: VRFModel;
+    reloadFN?: Signal<(() => void) | null>;
+  }) => {
+    const lang = getLocale("en");
     const loc = useLocation();
     const nav = useNavigate();
     const action = useAction();
 
     const formData = useStore<VRFModel>({
-        descrizionevrf: '',
-        idvrf: 0,
-        nomevrf: ''
+      descrizionevrf: "",
+      idvrf: 0,
+      nomevrf: "",
     });
 
     const attempted = useSignal<boolean>(false);
@@ -401,17 +463,15 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: VRFModel, reloa
     const networks = useSignal<ReteModel[]>([]);
     const vrfs = useSignal<VRFModel[]>([]);
 
-
     useTask$(async () => {
+      networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
+      vrfs.value = await getAllVRFs();
 
-        networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
-        vrfs.value = await getAllVRFs();
-
-        if (loc.params.mode == "update") {
-            Object.assign(formData, data);
-            // console.log(formData);
-        }
-    })
+      if (loc.params.mode == "update") {
+        Object.assign(formData, data);
+        // console.log(formData);
+      }
+    });
 
     // return (
     //     <>
@@ -459,90 +519,158 @@ export const CRUDForm = component$(({ data, reloadFN }: { data?: VRFModel, reloa
     //     </>
     // )
 
-    return (<>
-
-        <div class={
-            "m-2 max-sm:*:my-2 gap-4 relative w-full " +
+    return (
+      <>
+        <div
+          class={
+            "relative m-2 w-full gap-4 max-sm:*:my-2 " +
             (action.value?.success ? "pointer-events-none opacity-50" : "")
-        }>
-            <div class="flex justify-center w-full">
-                <FormBox title="Informazioni">
-                    <TextboxForm
-                        id="txtIDVRF"
-                        disabled={"disabled"}
-                        title="ID: "
-                        placeholder="es. 65000"
-                        value={formData.idvrf.toString()}
-                        OnInput$={(e) => { formData.idvrf = parseInt((e.target as HTMLInputElement).value); }}
-                    />
-                    <TextboxForm
-                        id="txtNome"
-                        title={$localize`Nome VRF`}
-                        value={formData.nomevrf}
-                        placeholder="Es. Alpha"
-                        OnInput$={(e) => formData.nomevrf = (e.target as HTMLInputElement).value}
-                        error={attempted.value && !formData.nomevrf ? { failed: true, fieldErrors: { nomevrf: $localize`Campo obbligatorio` } } : null}
-                    />
-                    <TextboxForm
-                        id="txtDescrizione"
-                        title={$localize`Descrizione VRF`}
-                        value={formData.descrizionevrf}
-                        placeholder="Es. Main Circuit"
-                        OnInput$={(e) => formData.descrizionevrf = (e.target as HTMLInputElement).value}
-                        error={attempted.value && !formData.descrizionevrf ? { failed: true, fieldErrors: { descrizionevrf: $localize`Campo obbligatorio` } } : null}
-                    />
-                </FormBox>
-            </div>
-        </div>
-        <div class="w-full flex justify-center gap-2 mt-6">
-            <button
-                onClick$={async (e) => {
-                    e.preventDefault();
-                    if (!formData.idvrf || formData.descrizionevrf == "" || formData.nomevrf == "") {
-                        attempted.value = true;
-                        return;
-                    }
-                    await action.submit({ ...formData });
-                    if (action.value && action.value.success) {
-                        await new Promise((resolve) => { setTimeout(resolve, 2000) });
-                        window.location.href = loc.url.href.replace("insert", "view").replace("update", "view");
-                    }
+          }
+        >
+          <div class="flex w-full justify-center">
+            <FormBox title="Informazioni">
+              <TextboxForm
+                id="txtIDVRF"
+                disabled={"disabled"}
+                title="ID: "
+                placeholder="es. 65000"
+                value={formData.idvrf.toString()}
+                OnInput$={(e) => {
+                  formData.idvrf = parseInt(
+                    (e.target as HTMLInputElement).value,
+                  );
                 }}
-                class="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
-                disabled={
-                    formData.idvrf <= 0 ||
-                    formData.descrizionevrf == "" ||
-                    formData.nomevrf == ""
+              />
+              <TextboxForm
+                id="txtNome"
+                title={$localize`Nome VRF`}
+                value={formData.nomevrf}
+                placeholder="Es. Alpha"
+                OnInput$={(e) =>
+                  (formData.nomevrf = (e.target as HTMLInputElement).value)
                 }
+                error={
+                  attempted.value && !formData.nomevrf
+                    ? {
+                      failed: true,
+                      fieldErrors: { nomevrf: $localize`Campo obbligatorio` },
+                    }
+                    : null
+                }
+              />
+              <TextboxForm
+                id="txtDescrizione"
+                title={$localize`Descrizione VRF`}
+                value={formData.descrizionevrf}
+                placeholder="Es. Main Circuit"
+                OnInput$={(e) =>
+                (formData.descrizionevrf = (
+                  e.target as HTMLInputElement
+                ).value)
+                }
+                error={
+                  attempted.value && !formData.descrizionevrf
+                    ? {
+                      failed: true,
+                      fieldErrors: {
+                        descrizionevrf: $localize`Campo obbligatorio`,
+                      },
+                    }
+                    : null
+                }
+              />
+            </FormBox>
+          </div>
+        </div>
+        <div class="mt-6 flex w-full justify-center gap-2">
+          <button
+            onClick$={async (e) => {
+              e.preventDefault();
+              if (
+                !formData.idvrf ||
+                formData.descrizionevrf == "" ||
+                formData.nomevrf == ""
+              ) {
+                attempted.value = true;
+                return;
+              }
+              await action.submit({ ...formData });
+              if (action.value && action.value.success) {
+                await new Promise((resolve) => {
+                  setTimeout(resolve, 2000);
+                });
+                window.location.href = loc.url.href
+                  .replace("insert", "view")
+                  .replace("update", "view");
+              }
+            }}
+            class="flex items-center gap-2 rounded-xl bg-green-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-green-600 disabled:bg-green-300"
+            disabled={
+              formData.idvrf <= 0 ||
+              formData.descrizionevrf == "" ||
+              formData.nomevrf == ""
+            }
+          >
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
             >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                {$localize`Conferma`}
-            </button>
-            <a
-                class="flex items-center gap-2 bg-red-500 hover:bg-red-600 rounded-xl text-white px-6 py-2 text-base font-semibold shadow transition-all duration-200"
-                href={loc.url.href.replace("insert", "view").replace("update", "view")}
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            {$localize`Conferma`}
+          </button>
+          <a
+            class="flex items-center gap-2 rounded-xl bg-red-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-red-600"
+            href={loc.url.href
+              .replace("insert", "view")
+              .replace("update", "view")}
+          >
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
             >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                {$localize`Annulla`}
-            </a>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            {$localize`Annulla`}
+          </a>
         </div>
         {action.submitted && action.value && (
-            <div class={
-                action.value.success
-                    ? "bg-green-400 p-2 rounded-md text-white mt-4 text-center shadow"
-                    : "bg-red-400 p-2 mt-4 rounded-md text-white text-center shadow"
-            }>
-                {action.value.type_message == 1 && <span>{$localize`Inserimento avvenuto correttamente`}</span>}
-                {action.value.type_message == 2 && <span>{$localize`Modifica avvenuta correttamente`}</span>}
-                {action.value.type_message == 3 && <span>{$localize`Errore durante l'inserimento`}</span>}
-                {action.value.type_message == 4 && <span>{$localize`Errore durante la modifica`}</span>}
-            </div>
+          <div
+            class={
+              action.value.success
+                ? "mt-4 rounded-md bg-green-400 p-2 text-center text-white shadow"
+                : "mt-4 rounded-md bg-red-400 p-2 text-center text-white shadow"
+            }
+          >
+            {action.value.type_message == 1 && (
+              <span>{$localize`Inserimento avvenuto correttamente`}</span>
+            )}
+            {action.value.type_message == 2 && (
+              <span>{$localize`Modifica avvenuta correttamente`}</span>
+            )}
+            {action.value.type_message == 3 && (
+              <span>{$localize`Errore durante l'inserimento`}</span>
+            )}
+            {action.value.type_message == 4 && (
+              <span>{$localize`Errore durante la modifica`}</span>
+            )}
+          </div>
         )}
-
-
-    </>)
-})
+      </>
+    );
+  },
+);

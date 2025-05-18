@@ -1,67 +1,71 @@
 @import "tailwindcss";
 
 @font-face {
-    font-family: Inter;
-    src: url("/fonts/Inter-VariableFont_opsz,wght.ttf");
+  font-family: Inter;
+  src: url("/fonts/Inter-VariableFont_opsz,wght.ttf");
 }
 
 * {
-    font-family: Inter;
+  font-family: Inter;
 }
 
 .has-tooltip {
-    position: relative;
+  position: relative;
 }
 
 .tooltip {
-    position: absolute;
-    bottom: 110%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
 }
 
-.animateEnter{
+.animateEnter {
   animation: fadeSlideDown111 0.3s ease;
 }
 
 @keyframes fadeSlideDown111 {
-    0% {
-        opacity: 0;
-        transform: translateY(-10px);
-        max-height: 0;
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-        max-height: 99999px;
-    }
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 99999px;
+  }
 }
 
 .has-tooltip:hover .tooltip {
-    opacity: 1;
+  opacity: 1;
 }
 
 input[type="checkbox"] {
-  @apply appearance-none h-6 w-6 border border-gray-400 rounded-md cursor-pointer;
-  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  @apply h-6 w-6 cursor-pointer appearance-none rounded-md border border-gray-400;
+  transition:
+    background-color 0.3s ease-in-out,
+    border-color 0.3s ease-in-out;
 }
 
 input[type="checkbox"]:checked {
-  @apply bg-gray-500 border-transparent;
-  transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  @apply border-transparent bg-gray-500;
+  transition:
+    background-color 0.3s ease-in-out,
+    border-color 0.3s ease-in-out;
 }
 
 input[type="checkbox"]:checked::before {
-  content: '✔';
+  content: "✔";
   display: block;
   text-align: center;
   color: white;

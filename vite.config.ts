@@ -9,8 +9,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
 import tailwindcss from "@tailwindcss/vite";
+// import fs from "fs"
 type PkgDep = Record<string, string>;
-const { dependencies = {}, devDependencies = {} } = pkg as any as {
+const { dependencies = {}, devDependencies = {} } = pkg as unknown as {
   dependencies: PkgDep;
   devDependencies: PkgDep;
   [key: string]: unknown;
@@ -20,7 +21,7 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
 
-export default defineConfig(({ command, mode }): UserConfig => {
+export default defineConfig((): UserConfig => {
   return {
     plugins: [qwikCity(), qwikVite(), tsconfigPaths(), tailwindcss(), VitePWA({
       registerType: 'autoUpdate',
@@ -69,10 +70,14 @@ export default defineConfig(({ command, mode }): UserConfig => {
     //       }
     //     : undefined,
     server: {
-      headers: {
-        // Don't cache the server response in dev mode
-        "Cache-Control": "public, max-age=0",
-      },
+      host: '0.0.0.0',
+      port:80,
+      open:false,
+      strictPort: true,
+      // headers: {
+      //   // Don't cache the server response in dev mode
+      //   "Cache-Control": "public, max-age=0",
+      // },
       watch: {
         ignored: ["**/init.sql", "**/*.sql"], // Ignora i file SQL
       },

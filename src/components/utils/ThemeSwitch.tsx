@@ -1,10 +1,10 @@
 import { component$, useStylesScoped$ } from "@builder.io/qwik";
 import styles from "./ThemeSwitch.css?inline";
- 
+
 export const ThemeSwitch = component$(() => {
   useStylesScoped$(styles);
   return (
-    <div class="flex gap-3 items-center">
+    <div class="flex items-center gap-3">
       <label class="switch">
         <input
           type="checkbox"

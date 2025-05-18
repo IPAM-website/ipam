@@ -1,5 +1,5 @@
-import { RequestHandler } from "@builder.io/qwik-city"
+import { RequestHandler } from "@builder.io/qwik-city";
 
-export const onRequest : RequestHandler = ({redirect,url})=>{
-    throw redirect(301,url.pathname+"view")
-}
+export const onRequest: RequestHandler = ({ redirect, url }) => {
+  throw redirect(301, url.pathname + "view");
+};

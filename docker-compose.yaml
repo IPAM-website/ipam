@@ -1,12 +1,22 @@
 services:
   db:
     ports:
-      - "127.0.0.1:5432:5432"
+    - "127.0.0.1:5432:5432"
+    container_name: "db"
     image: "docker.io/postgres:17-alpine"
     env_file:
       - .env
     volumes:
       - postgresql-data:/var/lib/postgresql/data/ # persist data even if container shuts down
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+  # app:
+  #   container_name: "app"
+  #   build: .
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - db
+  #   ports:
+  #     - "8080:80"
 volumes:
-  postgresql-data: 
+  postgresql-data:
