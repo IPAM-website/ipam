@@ -1,0 +1,36 @@
+@keyframes fadeSlideDown11 {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    overflow: hidden;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+    overflow: visible;
+  }
+}
+
+@keyframes fadeSlideUp22 {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+    overflow: visible;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    overflow: hidden;
+  }
+}
+
+.showFullScreen {
+  animation: fadeSlideDown11 0.3s ease;
+}
+.hideFullScreen {
+  animation: fadeSlideUp22 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

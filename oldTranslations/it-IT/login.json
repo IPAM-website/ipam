@@ -1,0 +1,16 @@
+{
+  "login": {
+    "fa": {
+      "actionDescription": "Scannerizza il qrcode con Google authenticator",
+      "cancel": "Annulla",
+      "confirm": "Verifica",
+      "enable": "2FA",
+      "error": "Errore durante l'autenticazione",
+      "insertcode": "Inserisci il codice creato dalla applicazione",
+      "key": "Altrimenti utilizza questa chiave: {{key}}",
+      "verify": "Verifica OTP"
+    },
+    "signin": "Accedi",
+    "terms": "Continuano accetti i nostri termini e condizioni."
+  }
+}

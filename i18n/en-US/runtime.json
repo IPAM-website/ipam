@@ -1,0 +1,9 @@
+{
+  "runtime": {
+    "result1": "Sign in completed successfullz",
+    "result2": "Wrong password",
+    "result3": "Username not found",
+    "result4": "Server error",
+    "resultundefined": "BOH VABBE"
+  }
+}
