@@ -1,9 +1,15 @@
-# FROM postgres:17
-# RUN apt-get update && apt-get install -y postgresql-17-pgaudit
+FROM node:22.9.0-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+COPY errors .
+RUN npm run build
 
 FROM node:22.9.0-alpine
-WORKDIR /server
-COPY package*.json .
-COPY . .
-RUN npm i
-CMD ["npm", "run","serve"]
+WORKDIR /app
+COPY --from=builder /app .
+ENV NODE_ENV=production
+COPY .env .
+EXPOSE 3000
+CMD ["npm","run","serve"]
