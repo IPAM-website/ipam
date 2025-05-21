@@ -106,7 +106,7 @@ export default component$<LoginData>((props) => {
     //console.log(props.table)
     if (utente.value) {
       const user = JSON.parse(utente.value);
-      console.log(user);
+      // console.log(user);
       //console.log(tabella.value);
       if (tabella.value == "tecnici") {
         cookie.mail = user.emailtecnico;

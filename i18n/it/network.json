@@ -1,0 +1,67 @@
+{
+  "network": {
+    "addesses": {
+      "addaddress": "Aggiungi un indirizzo",
+      "associatednetwork": "Rete associata",
+      "changeip": "Cambia IP",
+      "devicebrand": "Marca del dispositivo",
+      "devicename": "Nome del dispositivo",
+      "insertdate": "Data di inserimento",
+      "invalidipaddress": "Indirizzo IP non valido",
+      "invalidprefix": "Prefisso non valido",
+      "ipaddresslist": "Elenco indirizzi IP",
+      "prefix": "Prefisso",
+      "remove": "Rimuovi",
+      "selectvlan": "Seleziona VLAN"
+    },
+    "addnetwork": "Aggiungi rete",
+    "addresses": {
+      "addresslist": "Elenco indirizzi"
+    },
+    "broadcastip": "IP di broadcast",
+    "info": {
+      "AS": "Spazio allocato",
+      "RAS": "Spazio libero rimanente",
+      "TAS": "Spazio totale allocato",
+      "freespace": "Spazio libero",
+      "networkinformation": "Informazioni sulla rete",
+      "occupedspace": "Spazio occupato",
+      "parent": "Rete principale",
+      "relativescomponents": "Componenti correlati",
+      "selectnetwork": "Seleziona rete"
+    },
+    "insertdescription": "Inserisci descrizione",
+    "interval": {
+      "addinterval": "Aggiungi intervallo",
+      "finalIP": "IP finale",
+      "initialIP": "IP iniziale",
+      "intervaldescription": "Descrizione intervallo",
+      "intervallist": "Elenco intervalli",
+      "intervalname": "Nome intervallo",
+      "invalidipaddress": "Indirizzo IP non valido"
+    },
+    "invalidprefix": "Prefisso non valido",
+    "ipnetwork": "Rete IP",
+    "name": "Nome",
+    "networkcontainer": "Contenitore di rete",
+    "networkname": "Nome rete",
+    "networks": "Reti",
+    "prefix": "Prefisso",
+    "selectVLAN": "Seleziona VLAN",
+    "subnet": "Sottorete",
+    "uknownnetwork": "Rete sconosciuta",
+    "updatenetwork": "Aggiorna rete",
+    "vlan": {
+      "addvlan": "Aggiungi VLAN",
+      "vlandescription": "Descrizione VLAN",
+      "vlanlist": "Elenco VLAN",
+      "vlanname": "Nome VLAN"
+    },
+    "vrf": {
+      "addvrf": "Aggiungi VRF",
+      "necessaryvalue": "Valore necessario",
+      "vrflist": "Elenco VRF",
+      "vrfname": "Nome VRF"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "table": {
+    "cancel": "Annulla",
+    "columnsettingsdescription": "Seleziona la colonna per cui si voglia cambiare la modalità di visualizzazione",
+    "delete": "Cancella",
+    "hiddencolumns": "Colonne nasconste",
+    "noelements": "Non ci sono elementi",
+    "reload": "Ricarica",
+    "save": "Salva",
+    "settings": "Impostazioni",
+    "switchall": "Inverti",
+    "tablesettings": "Impostazioni Tabella",
+    "viewcolumns": "Colonne visibili"
+  }
+}

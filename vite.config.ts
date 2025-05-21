@@ -25,8 +25,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
   return {
     base: '/',
     plugins: [qwikCity(), qwikVite(), qwikSpeakInline({
-        supportedLangs: ['en-US', 'it-IT'],
-        defaultLang: 'en-US',
+        supportedLangs: ['en', 'it'],
+        defaultLang: 'en',
         assetsPath: 'i18n'
       }), tsconfigPaths(), tailwindcss()],
     // This tells Vite which dependencies to pre-build in dev mode.
@@ -56,6 +56,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
         // Don't cache the server response in dev mode
         "Cache-Control": "public, max-age=0",
       },
+      
     },
     preview: {
       headers: {

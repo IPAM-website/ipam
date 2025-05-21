@@ -1,0 +1,10 @@
+{
+  "dialog": {
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "delete": "Cancella",
+    "proceed": "Proceda",
+    "title": "Sei sicuro di voler continuare?"
+  }
+}
+

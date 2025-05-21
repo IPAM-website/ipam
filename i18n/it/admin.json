@@ -1,0 +1,49 @@
+{
+  "admin": {
+    "avgtec": "Numero medio di tecnici per sito",
+    "client": {
+      "addclient": "Aggiungi un cliente",
+      "clients": "clienti",
+      "form": {
+        "name": "Inserisci il nome del cliente",
+        "phone": "Inserisci il numero di telefono del cliente"
+      },
+      "list": "listaClienti",
+      "modclient": "Modifica un cliente"
+    },
+    "numclienti": "Numero di clienti",
+    "numsiti": "Numero di siti",
+    "numtecnici": "Numero di tecnici",
+    "operations": "Operazioni",
+    "panel": "Pannello d'amministrazione",
+    "tech": {
+      "addtech": "Aggiungi un tecnico",
+      "addtecnico": "Aggiungi un tecnico",
+      "form": {
+        "mail": "Inserisci la mail del tecnico",
+        "name": "Inserisci il nome del tecnico",
+        "password": "Inserisci la password del tecnico",
+        "phone": "Inserisci il numero di telefono del tecnico",
+        "role": "Inserisci il ruolo del tecnico",
+        "surname": "Inserisci il cognome del tecnico"
+      },
+      "list": "listaTecnici",
+      "modtech": "Modifica un tecnico",
+      "modtecnico": "Modifica un tecnico",
+      "technicians": "tecnici"
+    },
+    "uc": {
+      "addrelation": "Aggiunga una relazione",
+      "formuser": {
+        "name": "Inserisci l'username",
+        "password": "Inserisci la password",
+        "surname": "Inserisci il cognome"
+      },
+      "relationList": "Lista relazioni"
+    },
+    "variousinfo": "Informazioni varie",
+    "viewallclienti": "Visualizza tutti i clienti",
+    "viewalltecnici": "Visualizza tutti i tecnici",
+    "viewallutenti": "Visualizza tutti i clienti"
+  }
+}

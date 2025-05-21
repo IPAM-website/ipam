@@ -1,0 +1,11 @@
+{
+  "dashboard": {
+    "csv": {
+      "clientSelection": "Client selection",
+      "import": "Import",
+      "placeholdercliente": "Client name"
+    },
+    "gotoadmin": "Go to admin area",
+    "infotabella": "Table information"
+  }
+}

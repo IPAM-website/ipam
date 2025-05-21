@@ -1,0 +1,11 @@
+{
+  "client": {
+    "addsite": "Aggiungi sito",
+    "allsites": "Tutti i siti",
+    "client": "Cliente",
+    "nocountries": "Nessun paese trovat",
+    "nosites": "Nessun sito trovato",
+    "nositesusebutton": "Utilizza il bottome di aggiunta dai paesi per aggiungere un sito",
+    "selectcity": "Seleziona la citta per visualizzare i suoi siti"
+  }
+}

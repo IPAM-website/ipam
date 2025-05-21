@@ -18,7 +18,7 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
 export const onRequest: RequestHandler = async ({ locale, redirect }) => {
   if (!locale()) {
     const getPath = localizePath();
-    throw redirect(302, getPath('/login', 'en-US')); // Let the server know the language to use
+    throw redirect(302, getPath('/login', 'en')); // Let the server know the language to use
   }
 };
 

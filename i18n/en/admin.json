@@ -1,0 +1,49 @@
+{
+  "admin": {
+    "avgtec": "Average number of technicians per site",
+    "client": {
+      "addclient": "Add a client",
+      "clients": "Clients",
+      "form": {
+        "name": "Enter the client's name",
+        "phone": "Enter the client's phone number"
+      },
+      "list": "Clients list",
+      "modclient": "Edit a client"
+    },
+    "numclienti": "Number of clients",
+    "numsiti": "Number of sites",
+    "numtecnici": "Number of technicians",
+    "operations": "Operations",
+    "panel": "Administration panel",
+    "tech": {
+      "addtech": "Add a technician",
+      "addtecnico": "Add a technician",
+      "form": {
+        "mail": "Enter the technician's email",
+        "name": "Enter the technician's name",
+        "password": "Enter the technician's password",
+        "phone": "Enter the technician's phone number",
+        "role": "Enter the technician's role",
+        "surname": "Enter the technician's surname"
+      },
+      "list": "Technicians list",
+      "modtech": "Edit a technician",
+      "modtecnico": "Edit a technician",
+      "technicians": "Technicians"
+    },
+    "uc": {
+      "addrelation": "Add a relation",
+      "formuser": {
+        "name": "Enter the username",
+        "password": "Enter the password",
+        "surname": "Enter the surname"
+      },
+      "relationList": "Relations list"
+    },
+    "variousinfo": "Various information",
+    "viewallclienti": "View all clients",
+    "viewalltecnici": "View all technicians",
+    "viewallutenti": "View all users"
+  }
+}

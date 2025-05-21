@@ -1,0 +1,67 @@
+{
+  "network": {
+    "addesses": {
+      "addaddress": "Add an address",
+      "associatednetwork": "Associated network",
+      "changeip": "Change IP",
+      "devicebrand": "Device brand",
+      "devicename": "Device name",
+      "insertdate": "Insertion date",
+      "invalidipaddress": "Invalid IP address",
+      "invalidprefix": "Invalid prefix",
+      "ipaddresslist": "IP address list",
+      "prefix": "Prefix",
+      "remove": "Remove",
+      "selectvlan": "Select VLAN"
+    },
+    "addnetwork": "Add network",
+    "addresses": {
+      "addresslist": "Address list"
+    },
+    "broadcastip": "Broadcast IP",
+    "info": {
+      "AS": "Allocated space",
+      "RAS": "Remaining free space",
+      "TAS": "Total allocated space",
+      "freespace": "Free space",
+      "networkinformation": "Network information",
+      "occupedspace": "Occupied space",
+      "parent": "Main network",
+      "relativescomponents": "Related components",
+      "selectnetwork": "Select network"
+    },
+    "insertdescription": "Enter description",
+    "interval": {
+      "addinterval": "Add interval",
+      "finalIP": "Final IP",
+      "initialIP": "Initial IP",
+      "intervaldescription": "Interval description",
+      "intervallist": "Interval list",
+      "intervalname": "Interval name",
+      "invalidipaddress": "Invalid IP address"
+    },
+    "invalidprefix": "Invalid prefix",
+    "ipnetwork": "IP network",
+    "name": "Name",
+    "networkcontainer": "Network container",
+    "networkname": "Network name",
+    "networks": "Networks",
+    "prefix": "Prefix",
+    "selectVLAN": "Select VLAN",
+    "subnet": "Subnet",
+    "uknownnetwork": "Unknown network",
+    "updatenetwork": "Update network",
+    "vlan": {
+      "addvlan": "Add VLAN",
+      "vlandescription": "VLAN description",
+      "vlanlist": "VLAN list",
+      "vlanname": "VLAN name"
+    },
+    "vrf": {
+      "addvrf": "Add VRF",
+      "necessaryvalue": "Required value",
+      "vrflist": "VRF list",
+      "vrfname": "VRF name"
+    }
+  }
+}

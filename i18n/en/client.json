@@ -1,0 +1,11 @@
+{
+  "client": {
+    "addsite": "Add site",
+    "allsites": "All sites",
+    "client": "Client",
+    "nocountries": "There are no countries, create sites to add them",
+    "nosites": "There are no sites present",
+    "nositesusebutton": "Use the add button next to 'country' to add a site",
+    "selectcity": "Please select a city in order to see its sites"
+  }
+}

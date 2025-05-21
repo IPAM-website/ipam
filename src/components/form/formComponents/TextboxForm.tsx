@@ -1,6 +1,6 @@
 /* eslint-disable qwik/valid-lexical-scope */
 import type { Signal } from "@builder.io/qwik";
-import { component$ } from "@builder.io/qwik";
+import { $, component$ } from "@builder.io/qwik";
 
 interface TextBoxFormProps {
   disabled?: string;
@@ -24,7 +24,8 @@ export default component$<TextBoxFormProps>(
     title,
     placeholder,
     error,
-    onInput$ = () => {},
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    onInput$ = $((event: InputEvent) => {}),
     ref,
     css,
     disabled,

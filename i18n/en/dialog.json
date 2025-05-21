@@ -1,0 +1,9 @@
+{
+  "dialog": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "proceed": "Proceed",
+    "title": "Are you sure you want to continue?"
+  }
+}

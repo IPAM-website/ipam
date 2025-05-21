@@ -36,7 +36,7 @@ export default function (opts: RenderToStreamOptions) {
     base: extractBase,
     // Use container attributes to set attributes on the html tag.
     containerAttributes: {
-      lang: "en-us",
+      lang: "en",
       ...opts.containerAttributes,
     },
     serverData: {

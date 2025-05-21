@@ -1,0 +1,36 @@
+{
+  "sidebar": {
+    "aggregates": {
+      "add": "Add aggregate",
+      "title": "Aggregates",
+      "view": "View aggregates"
+    },
+    "buttons": {
+      "adminpanel": "Admin panel",
+      "changeclient": "Change client",
+      "changesite": "Change site",
+      "gotosite": "Go to site"
+    },
+    "buttonstitle": "Others",
+    "email": "Log as {{email}}",
+    "intervals": {
+      "add": "Add interval",
+      "title": "Intervals",
+      "view": "View intervals"
+    },
+    "ip": {
+      "add": "Assign IP",
+      "title": "IP addresses",
+      "view": "View IP"
+    },
+    "logout": "Logout",
+    "nooptions": "No options available. Please select a site first.",
+    "vlan": {
+      "view": "View VLAN"
+    },
+    "vrf": {
+      "add": "Add VRF",
+      "view": "View VRF"
+    }
+  }
+}

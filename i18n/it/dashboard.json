@@ -1,0 +1,11 @@
+{
+  "dashboard": {
+    "csv": {
+      "clientSelection": "Selezione clienti",
+      "import": "Importa",
+      "placeholdercliente": "Nome del cliente"
+    },
+    "gotoadmin": "Vai all'area di amministrazione",
+    "infotabella": "Informazioni tabella"
+  }
+}

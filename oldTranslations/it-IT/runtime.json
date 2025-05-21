@@ -1,9 +1,0 @@
-{
-    "runtime":{
-        "result1":"Accesso eseguito con successo",
-        "result2":"Password errata",
-        "result3":"Username non trovato",
-        "result4":"Errore del server",
-        "resultundefined":"BOH VABBE"
-    }
-}

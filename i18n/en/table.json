@@ -1,0 +1,15 @@
+{
+  "table": {
+    "cancel": "Cancel",
+    "columnsettingsdescription": "Select the column for which you want to change the display mode",
+    "delete": "Delete",
+    "hiddencolumns": "Hidden columns",
+    "noelements": "There aren't any elements yet",
+    "reload": "Reload",
+    "save": "Save",
+    "settings": "Settings",
+    "switchall": "Invert",
+    "tablesettings": "Table settings",
+    "viewcolumns": "Visible columns"
+  }
+}

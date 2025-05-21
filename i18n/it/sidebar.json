@@ -1,0 +1,36 @@
+{
+  "sidebar": {
+    "aggregates": {
+      "add": "Aggiungi aggregato",
+      "title": "Aggregati",
+      "view": "Visualizza aggregati"
+    },
+    "buttons": {
+      "adminpanel": "Pannello admin",
+      "changeclient": "Cambia cliente",
+      "changesite": "Cambia sito",
+      "gotosite": "Vai al sito"
+    },
+    "buttonstitle": "Altri",
+    "email": "Accesso con {{email}}",
+    "intervals": {
+      "add": "Aggiungi intervallo",
+      "title": "Intervalli",
+      "view": "Visualizza intervalli"
+    },
+    "ip": {
+      "add": "Assegna IP",
+      "title": "Indirizzi IP",
+      "view": "Visualizza IP"
+    },
+    "logout": "Esci",
+    "nooptions": "Nessuna opzione disponibile. Selezionare prima un sito.",
+    "vlan": {
+      "view": "Visualizza VLAN"
+    },
+    "vrf": {
+      "add": "Aggiungi VRF",
+      "view": "Visualizza VRF"
+    }
+  }
+}

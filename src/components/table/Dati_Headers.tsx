@@ -191,8 +191,6 @@ export default component$<DatiProps>(
       );
     }
 
-    console.log(TableMaps)
-
     const settings = useStore({
       visible: false,
       tableColumnsKey: TableMaps[nT.value].keys.slice(0, 2),
@@ -226,8 +224,9 @@ export default component$<DatiProps>(
     });
 
     const t  = inlineTranslate();
-    const rowclickFunc = useSignal<((row:any)=>void)|undefined>(onRowClick);
-    const modifyFunc =  useSignal<((row:any)=>void)|undefined>(OnModify);
+
+    
+   
     return (
       <>
         {/* Pulsante Ricarica */}
@@ -404,7 +403,7 @@ export default component$<DatiProps>(
                       (onRowClick != undefined ? "cursor-pointer" : "")
                     }
                     onClick$={() => {
-                      if (rowclickFunc.value) rowclickFunc.value(row);
+                      if (onRowClick) onRowClick(row);
                     }}
                   >
                     {settings.tableColumnsKey.map((key, colIndex) => (
@@ -423,8 +422,7 @@ export default component$<DatiProps>(
                           class="has-tooltip inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-amber-500 transition-colors hover:bg-amber-600"
                           onClick$={(e) => {
                             e.stopPropagation();
-                            if(modifyFunc.value)
-                              modifyFunc.value(row);
+                            OnModify?.(row);
                           }}
                         >
                           <span class="tooltip">
