@@ -28,7 +28,7 @@ interface SelectFormProps {
 export default component$<SelectFormProps>(
   ({
     id,
-    name,
+    // name,
     value,
     title,
     OnClick$,
@@ -69,6 +69,7 @@ export default component$<SelectFormProps>(
       if (value == "" && selectedOption.value)
         selectedOption.value.textContent =
           lang == "en" ? "Select an option" : "Seleziona Opzione";
+
       options.value?.childNodes.forEach((x) => {
         const opt = x as HTMLOptionElement;
         if (opt.value == value && selectedOption.value) {
@@ -97,9 +98,9 @@ export default component$<SelectFormProps>(
 
     return (
       <div class="flex w-full min-w-[200px] flex-row items-center bg-white p-2">
-        <select name={name} id={name} style="display:none">
+        {/* <select name={name} id={name} style="display:none">
           <Slot />
-        </select>
+        </select> */}
         {title && (
           <label class="w-24 font-semibold" for={id}>
             {title}
@@ -148,7 +149,7 @@ export default component$<SelectFormProps>(
                 }
 
                 clicked.value = true;
-                if (!options.value) return;
+                if (!options.value || !options.value.children) return;
                 const optList = options.value.children;
                 if (e.key == "ArrowDown") {
                   if (selectedOption != undefined) {
@@ -161,7 +162,7 @@ export default component$<SelectFormProps>(
                       }
                     }
                     if (!found) {
-                      selectOPT(0)  ;
+                      selectOPT(0);
                     }
                   }
                 }

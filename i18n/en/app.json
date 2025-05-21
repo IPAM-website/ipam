@@ -5,8 +5,7 @@
     "result3": "Error during insert",
     "result4": "Error during update"
   },
-  "aggregatelist": "Aggregates list",
-  "aggregates": "Aggregates",
+
   "alreadyoccupiedspace": "Already occupied space",
   "associatenetwork": "Associate network",
   "cancel": "Cancel",
@@ -36,5 +35,6 @@
   "role": "Role",
   "selectnetwork": "Select network",
   "selectoption": "Select option",
-  "surname": "Surname"
+  "surname": "Surname",
+  "other":"Other"
 }

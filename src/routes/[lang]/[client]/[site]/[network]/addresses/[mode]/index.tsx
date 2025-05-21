@@ -549,7 +549,9 @@ export const CRUDForm = component$(
               <option value="Firewall" key="Firewall">
                 Firewall
               </option>
-              <option value="Other" key="Other">{this}</option>
+              <option value="Other" key="Other">
+                {t("other")}
+              </option>
             </SelectForm>
             <TextboxForm
               id="txtName"

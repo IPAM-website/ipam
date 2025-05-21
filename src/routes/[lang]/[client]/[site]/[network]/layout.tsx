@@ -39,7 +39,7 @@ export default component$(() => {
           .slice(0, 4)
           .join("/")}
       >
-        {networkName.value.iprete != "-1"
+        {networkName.value && networkName.value.iprete != "-1"
           ? `${networkName.value.nomerete} - ${networkName.value.iprete}`
           : t("network.uknownnetwork")}{" "}
       </Title>

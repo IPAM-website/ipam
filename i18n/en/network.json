@@ -62,6 +62,12 @@
       "necessaryvalue": "Required value",
       "vrflist": "VRF list",
       "vrfname": "VRF name"
+    },
+    "aggregates":
+    {
+      "aggregatelist": "Aggregates list",
+      "aggregate": "Aggregates"
+
     }
   }
 }

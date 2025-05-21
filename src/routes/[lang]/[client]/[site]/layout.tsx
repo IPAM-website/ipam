@@ -1,3 +1,4 @@
+/* eslint-disable qwik/no-use-visible-task */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { component$, Slot, useVisibleTask$ } from "@builder.io/qwik";
 import {

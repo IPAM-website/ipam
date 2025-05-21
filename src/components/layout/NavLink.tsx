@@ -1,10 +1,11 @@
 import { Slot, component$ } from "@builder.io/qwik";
-import { Link, useLocation, type LinkProps } from "@builder.io/qwik-city";
+import { useLocation, useNavigate, type LinkProps } from "@builder.io/qwik-city";
 
 type NavLinkProps = LinkProps & { activeClass?: string };
 
 export const NavLink = component$(({ activeClass, ...props }: NavLinkProps) => {
   const location = useLocation();
+  const nav = useNavigate();
   const toPathname = props.href ?? "";
   const locationPathname = location.url.pathname;
 
@@ -23,11 +24,13 @@ export const NavLink = component$(({ activeClass, ...props }: NavLinkProps) => {
         locationPathname.charAt(startSlashPosition) === "/"));
 
   return (
-    <Link
-      {...props}
+    <button
+      onClick$={()=>{
+        nav(toPathname);
+      }}
       class={`${props.class || ""} ${isActive && activeClass ? activeClass : ""}`}
     >
       <Slot />
-    </Link>
+    </button>
   );
 });

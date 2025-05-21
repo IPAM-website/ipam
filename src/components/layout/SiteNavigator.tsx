@@ -55,7 +55,12 @@ export default component$(
     const navClosing = useSignal(false);
 
     useTask$(async () => {
-      siteNetworks.value = await getNetworks();
+      try{
+        siteNetworks.value = await getNetworks();
+      }
+      catch{
+        console.error("Unable to retrieve networks");
+      }
     });
 
     const toggleNav = $(() => {
@@ -227,7 +232,7 @@ export default component$(
               name=""
             >
               {siteNetworks.value.map((x) => (
-                <option value={x.idrete} key={x.idrete}>{x.nomerete}</option>
+                <option value={x.idrete} key={"navrete"+x.idrete}>{x.nomerete}</option>
               ))}
             </SelectForm>
           </div>

@@ -486,7 +486,7 @@ export default component$(() => {
           </div>
         )}
         {page.value == "info" && (
-          <div class="mt-8 flex flex-col gap-8 md:flex-row">
+          <div class="mt-8 flex flex-col gap-8 md:flex-row mx-8 md:mx-0">
             <div class="inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 border-gray-300 px-5 py-3">
               <div class="flex h-[50px] w-full items-center overflow-hidden">
                 <div class="text-lg font-semibold text-black">{t("site.siteinformation")}</div>
@@ -516,7 +516,7 @@ export default component$(() => {
                 <div class="flex flex-1 border-b border-[#f3f3f3]">
                   <div class="w-full text-center font-['Inter'] text-base font-semibold text-black">{t("site.views")}</div>
                 </div>
-                {/* <button
+                <button
                   type="button"
                   class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
                   onClick$={() => nav("0/addresses/view")}
@@ -530,19 +530,19 @@ export default component$(() => {
                 >
                   {t("ipintervals")}
                 </button>
-                <button
+                {/* <button
                   type="button"
                   class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
                   onClick$={() => nav("0/prefixes/view")}
                 >
                   {t("prefixes")}
-                </button>
+                </button> */}
                 <button
                   type="button"
                   class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
                   onClick$={() => nav("0/aggregates/view")}
                 >
-                  {t("aggregates")}
+                  {t("network.aggregates.aggregate")}
                 </button>
                 <button
                   type="button"
@@ -557,7 +557,7 @@ export default component$(() => {
                   onClick$={() => nav("0/vlan/view")}
                 >
                   VLAN
-                </button> */}
+                </button>
               </div>
             </div>
           </div>
