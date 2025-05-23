@@ -1,0 +1,7 @@
+{
+    "tableInfoCSV": {
+        "titlePt1": "The",
+        "titlePt2": "should have the following columns (headers in the first row):",
+        "warning": "Make sure the headers are exactly as shown above and that each row contains the corresponding data."
+    }
+}

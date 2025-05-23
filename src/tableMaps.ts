@@ -85,9 +85,9 @@ const TableMaps: { [key: string]: TableMap } = {
       en: ["Address", "Prefix", "Name", "Description", "VRF", "ID", ""],
     },
     keys: [
-      "nomerete",
       "iprete",
       "prefissorete",
+      "nomerete",
       "descrizione",
       "vrf",
       "idrete",
@@ -225,6 +225,18 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
 };
 
 export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
+  siti: {
+    keys: ["nomesito", "citta", "paese", "datacenter", "tipologia"],
+    example: ["Sito di prova", "Milano", "Italia", "true", "Active"],
+  },
+  network: {
+    keys: ["nomerete", "descrizione", "iprete", "prefissorete", "nomesito", "citta", "paese"],
+    example: ["rete di prova", "descrizione di prova", "192.168.1.0", "24", "Sito di prova", "Milano", "Italia"],
+  },
+  ip: {
+    keys: ["nomerete", "ipretenetwork", "prefissoretenetwork", "ip", "n_prefisso", "tipo_dispositivo", "nome_dispositivo", "brand_dispositivo", "data_inserimento"],
+    example: ["rete di prova", "192.168.1.0", "24", "192.168.1.1", "24", "Server", "Server1", "DELL", "2023-01-01"],
+  },
   tecnici: {
     keys: [
       "nometecnico",
@@ -232,7 +244,7 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
       "ruolo",
       "emailtecnico",
       "telefonotecnico (opzionale)",
-      "pwdtecnico",
+      "pwdtecnico"
     ],
     example: [
       "Mario",
@@ -244,35 +256,37 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
     ],
   },
   clienti: {
-    keys: ["nomecliente"],
-    example: ["Azienda Rossi"],
+    keys: ["nomecliente", "telefonocliente"],
+    example: ["Azienda Rossi", "1234567890"],
   },
   usercliente: {
-    keys: ["nomeucliente", "cognomeucliente", "emailucliente", "pwducliente"],
-    example: ["Mario", "Rossi", "mario.rossi@example.com", "Password123"],
+    keys: ["nomeucliente", "cognomeucliente", "emailucliente", "pwducliente", "nomecliente"],
+    example: ["Mario", "Rossi", "mario.rossi@example.com", "Password123", "Azienda Rossi"],
   },
   indirizzi: {
     keys: [
       "ip",
       "nome_dispositivo",
       "brand_dispositivo",
-      "data_inserimento",
       "tipo_dispositivo",
       "n_prefisso",
-      "vid",
     ],
     example: [
       "192.1678.1.1",
       "Server1",
       "DELL",
-      "2025-04-29",
       "Server",
-      "1234",
-      "10",
+      "24",
     ],
   },
   rete: {
-    keys: ["iprete", "nomerete", "descrizione", "vrf", "idrete"],
+    keys: ["iprete", "nomerete", "descrizione", "prefissorete"],
+    example: [
+      "192.168.1.0",
+      "rete di prova",
+      "Descrizione di prova",
+      "24",
+    ],
   },
   aggregati: {
     keys: ["nomeaggregato", "descrizioneaggregato", "idaggregato", "idrete"],

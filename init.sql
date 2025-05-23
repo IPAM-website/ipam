@@ -729,15 +729,15 @@ VALUES
 -- (3, 'Cliente C');
 
 -- Sample data for additional Clienti
-INSERT INTO Clienti(IDCliente,nomeCliente,telefonocliente) VALUES
-    (2,'Azienda Bianchi','0698765432'),
-    (3,'Azienda Verdi','0623456789');
+--INSERT INTO Clienti(IDCliente,nomeCliente,telefonocliente) VALUES
+    --(2,'Azienda Bianchi','0698765432'),
+    --(3,'Azienda Verdi','0623456789');
 
 -- Sample data for additional UserCliente
-INSERT INTO UserCliente(nomeUCliente,cognomeUCliente,emailUCliente,pwdUCliente,IDCliente) VALUES
-    ('Giulia','Bianchi','giulia.bianchi@azienda.it','Pass1234',2),
-    ('Luca','Neri','luca.neri@azienda.it','$2a$12$SChoN9OCW7JfqwGNDliCR.1HgvZ3PsNUYhXqsDsutnEn6A8twsMIG',2),
-    ('Francesca','Verdi','francesca.verdi@azienda.it','Pwd7890',3);
+--INSERT INTO UserCliente(nomeUCliente,cognomeUCliente,emailUCliente,pwdUCliente,IDCliente) VALUES
+    --('Giulia','Bianchi','giulia.bianchi@azienda.it','Pass1234',2),
+    --('Luca','Neri','luca.neri@azienda.it','$2a$12$SChoN9OCW7JfqwGNDliCR.1HgvZ3PsNUYhXqsDsutnEn6A8twsMIG',2),
+    --('Francesca','Verdi','francesca.verdi@azienda.it','Pwd7890',3);
 
 -- -- Inserimento Clienti
 -- INSERT INTO Datacenter (idDC, nomeDC, IDCliente) VALUES

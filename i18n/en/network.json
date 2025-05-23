@@ -28,7 +28,10 @@
       "occupedspace": "Occupied space",
       "parent": "Main network",
       "relativescomponents": "Related components",
-      "selectnetwork": "Select network"
+      "selectnetwork": "Select network",
+      "usingAddressesPt1": "There are ",
+      "usingAddressesPt2": " of ",
+      "usingAddressesPt3": " addresses in use"
     },
     "insertdescription": "Enter description",
     "interval": {

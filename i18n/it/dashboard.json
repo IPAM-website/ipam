@@ -1,9 +1,19 @@
 {
   "dashboard": {
     "csv": {
-      "clientSelection": "Selezione clienti",
+      "titleForm": "Importazione di clienti, siti, reti e IP",
+      "subtitleForm": "Selezione clienti",
+      "clientSelectNew": "Crea un nuovo cliente",
+      "clientSelectExisting": "Seleziona un cliente esistente",
+      "siti": "Importa siti",
+      "network": "Importa reti",
+      "ip": "Importa IP",
+      "confirmImport": "Conferma importazione",
+      "cancel": "Annulla",
+      "clientSelection": "Selezione cliente",
       "import": "Importa",
-      "placeholdercliente": "Nome del cliente"
+      "placeholdercliente": "Nome del cliente",
+      "titleInfoCSV": "Formato richiesto per l'importazione CSV"
     },
     "gotoadmin": "Vai all'area di amministrazione",
     "infotabella": "Informazioni tabella"

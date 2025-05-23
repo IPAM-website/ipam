@@ -1,9 +1,15 @@
 {
   "runtime": {
-    "result1": "Sign in completed successfullz",
+    "result1": "Sign in completed successfully",
     "result2": "Wrong password",
     "result3": "Username not found",
     "result4": "Server error",
-    "resultundefined": "uknown result"
+    "resultundefined": "uknown result",
+    "infoInput": "Drag CSV or click to select",
+    "tableInfoCSV": {
+      "titlePt1": "The",
+      "titlePt2": "should have the following columns (headers in the first row):",
+      "warning": "Make sure the headers are exactly as shown above and that each row contains the corresponding data."
+    }
   }
 }
