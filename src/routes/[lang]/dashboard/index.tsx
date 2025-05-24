@@ -724,7 +724,7 @@ export default component$(() => {
                 (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
             if (document.getElementById("clientTypeIDExisting") as HTMLInputElement != null)
                 (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
-            clientType.value = "new";   
+            clientType.value = "new";
             clientListRefresh.value++
             if (clientListRefresh.value > 255)
                 clientListRefresh.value = 0;
@@ -788,7 +788,7 @@ export default component$(() => {
                 ))}
             </div>
 
-            <div class="size-full lg:px-40 px-24">
+            <div class="size-full lg:px-40 md:px-24 sm:px-12 px-4">
                 <Title>{t("dashboard.csv.clientSelection")}
                     <button onClick$={showPopUpCSV} class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 bg-black text-white rounded hover:bg-gray-800 transition-colors text-sm ml-4">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
@@ -804,7 +804,7 @@ export default component$(() => {
                     <div class="flex items-center mt-4">
                         <div class="flex gap-1 hover:gap-2 cursor-pointer transition-all dark:hover:text-blue-400 items-center">
 
-                            <button onClick$={()=>nav(`/${lang}/admin/panel`)} class="cursor-pointer" >
+                            <button onClick$={() => nav(`/${lang}/admin/panel`)} class="cursor-pointer" >
                                 {t("dashboard.gotoadmin")}
                             </button>
                             <svg
@@ -829,16 +829,23 @@ export default component$(() => {
             <PopupModal
                 visible={showModalCSV.value}
                 onClosing$={() => { showModalCSV.value = false }}
-                title={<div class="flex items-center gap-2">
-                    <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <span>{t("dashboard.csv.titleForm")}</span>
-                    <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
-                </div>}
+                title={
+                    <div class="flex items-center gap-2 ">
+                        <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>{t("dashboard.csv.titleForm")}</span>
+                        <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
+                    </div>}
             >
-                <div class="w-full flex justify-center items-center">
-                    <Form action={formAction} onSubmit$={reloadClients} ref={formRef} class="bg-white shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
+                <div
+                    class="w-full flex justify-center items-center mb-2"
+                    style={{
+                        maxHeight: "80vh",
+                        overflowY: "auto",
+                    }}
+                >
+                    <Form action={formAction} onSubmit$={reloadClients} ref={formRef} class=" shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
                         {/* Sezione Cliente - Modificata */}
                         <div class="space-y-4">
                             <h2 class="text-xl font-semibold">{t("dashboard.csv.subtitleForm")}</h2>
@@ -1137,7 +1144,7 @@ export default component$(() => {
 
                         <button
                             type="submit"
-                            class="w-full py-3 px-6 bg-gray-600 text-white rounded-lg duration-250 transition-all cursor-pointer not-disabled:bg-gray-800 disabled:cursor-not-allowed"
+                            class="w-full py-3 px-6 bg-gray-600 dark:bg-gray-900 dark:not-disabled:bg-gray-950 dark:hover:not-disabled:bg-800 text-white rounded-lg duration-250 transition-all cursor-pointer not-disabled:bg-gray-800 disabled:cursor-not-allowed"
                             disabled={
                                 (clientType.value === 'new' && clienteTXT.value.trim() === '') ||
                                 (clientType.value === 'existing' && currentIdC.value.trim() === '')
@@ -1169,7 +1176,7 @@ export default component$(() => {
                                     (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
                                 clientType.value = "new";
                             }}
-                            class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
+                            class="w-full py-3 px-6 bg-white dark:bg-gray-600 dark:hover:bg-gray-500 rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
                         >
                             {t("dashboard.csv.cancel")}
                         </button>

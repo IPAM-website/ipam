@@ -622,7 +622,7 @@ export default component$(() => {
             <Table>
               <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 dark:border-gray-700 dark:bg-gray-800 bg-gray-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="text-lg font-semibold text-gray-800">{t("network.networks")}</span>
+                  <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">{t("network.networks")}</span>
                   <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
                 </div>
                 <div class="flex items-center gap-2">

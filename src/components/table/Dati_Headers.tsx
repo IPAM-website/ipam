@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable qwik/valid-lexical-scope */
 import type {
   QRL} from "@builder.io/qwik";
@@ -230,10 +231,10 @@ export default component$<DatiProps>(
     return (
       <>
         {/* Pulsante Ricarica */}
-        <div class="flex items-center px-1 pe-3">
-          <div class="m-5 mb-3 flex-auto font-['Inter'] text-base font-semibold text-black dark:text-gray-200">
+        <div class="flex items-center justify-end sm:absolute right-0 md:top-25 top-34 px-1 pe-3">
+          {/* <div class="m-5 mb-3 flex-auto font-['Inter'] text-base font-semibold text-black dark:text-gray-200">
             {title}
-          </div>
+          </div> */}
           <div class="has-tooltip flex h-full items-center">
             <button
               class="mx-2 cursor-pointer rounded-md border-[1.5px] border-black dark:border-gray-500 px-0.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-600"

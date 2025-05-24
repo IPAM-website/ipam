@@ -669,7 +669,7 @@ export default component$(() => {
       >
         <TableInfoCSV tableName="usercliente"></TableInfoCSV>
       </PopupModal>
-      )
+      
 
 
     </>

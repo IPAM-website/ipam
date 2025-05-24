@@ -530,7 +530,7 @@ export default component$(() => {
             )}
           </div>
         </div>
-        <div class="mx-5 flex flex-col rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-3 shadow md:h-[60vh] md:w-3/4">
+        <div class="mx-5 flex flex-col rounded-md border border-gray-200  dark:bg-gray-800 dark:border-gray-700 p-3 shadow md:h-[60vh] md:w-3/4">
           <div
             class="ms-1 flex items-center gap-2"
             onClick$={() => {
@@ -544,7 +544,7 @@ export default component$(() => {
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              class="size-6"
+              class="size-6 "
             >
               <path
                 stroke-linecap="round"
@@ -559,10 +559,7 @@ export default component$(() => {
               {!isClient.value && selected.value !== -1 && (
                 <button
                   onClick$={handleSiteClick}
-                  class="has-tooltip cursor-pointer rounded-[50%] p-1 hover:bg-gray-200"
-                  style={{
-                    backgroundColor: siteUpdateMode.value ? "#ddd" : "",
-                  }}
+                  class={"has-tooltip cursor-pointer rounded-[50%] p-1 hover:bg-gray-200 dark:hover:bg-gray-600 " + (siteUpdateMode.value ? "dark:bg-gray-600 bg-gray-300" : "")}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

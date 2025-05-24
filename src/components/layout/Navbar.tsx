@@ -16,7 +16,7 @@ export default component$(() => {
   return (
     <>
       <div class="mb-8 flex h-16 w-full border-b dark:bg-gray-800 border-[#dfdfdf] dark:border-[#4f4f4f] bg-white *:h-full *:items-center">
-        <div class="flex w-3/4 sm:w-1/12 flex-none items-center justify-start ps-3 sm:ps-0 sm:justify-end pe-2">
+        <div class="flex flex-none items-center justify-between ps-3 sm:ps-0 sm:justify-end pe-2">
           <button class="cursor-pointer" onClick$={toggleSidebar}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -39,7 +39,7 @@ export default component$(() => {
             IP Address Manager
           </span>
         </div>
-        <div class="flex pe-5 gap-2 justify-end sm:gap-4 md:gap-8 w-1/4 sm:w-1/6">
+        <div class="flex gap-2 pe-5 justify-end sm:gap-4 md:gap-8 "> {/*w-1/4 sm:w-1/6 */}
         <ThemeSwitch />
           <div class="">
             <SelectLang />
