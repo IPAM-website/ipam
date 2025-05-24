@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { $, component$, getLocale, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 import type { RequestHandler, DocumentHead } from "@builder.io/qwik-city";
 import { routeLoader$, routeAction$, zod$, z, Form, useNavigate } from "@builder.io/qwik-city";
@@ -535,7 +536,7 @@ export default component$(() => {
         track(() => formAction.value);
         track(() => viewTableSection.value)
         track(() => showModalCSV.value)
-        //track(() => clientList.value);
+        track(() => clientListRefresh.value)
         clientList.value = await listaClienti();
     })
 
@@ -690,15 +691,17 @@ export default component$(() => {
         feedBackSVG['network'] = null;
         feedBackSVG['ip'] = null;
         currentIdC.value = "";
-        (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-        (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+        if (document.getElementById("clientTypeIDNew") != null)
+            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+        if (document.getElementById("clientTypeIDExisting") != null)
+            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
         clientType.value = "new";
     })
 
     const reloadClients = $(async () => {
+        addNotification(lang === "en" ? "Clients updating..." : "Clienti in aggiornamento...", 'loading');
         if (formAction.value?.success) {
             clientList.value = await listaClienti();
-
             showModalCSV.value = false;
             //if (fileInputRefSiti.value) fileInputRefSiti.value.value = "";
             //if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = "";
@@ -717,16 +720,21 @@ export default component$(() => {
             feedBackSVG['network'] = null;
             feedBackSVG['ip'] = null;
             currentIdC.value = "";
-            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
-            clientType.value = "new";
+            if (document.getElementById("clientTypeIDNew") as HTMLInputElement != null)
+                (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+            if (document.getElementById("clientTypeIDExisting") as HTMLInputElement != null)
+                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+            clientType.value = "new";   
             clientListRefresh.value++
             if (clientListRefresh.value > 255)
                 clientListRefresh.value = 0;
             addNotification(lang === "en" ? "Insert completed" : "Inserimento completato", 'success');
         }
-        else
+        else {
             addNotification(lang === "en" ? "Error during insert" : "Errore durante l'inserimento: " + formAction.value?.error, 'error');
+        }
+
+        notifications.value = notifications.value.filter(n => n.type !== "loading");
     })
 
     const showPreviewSection = $(async (section: 'siti' | 'network' | 'ip') => {
@@ -865,6 +873,7 @@ export default component$(() => {
                                     />
                                     {t("dashboard.csv.clientSelectExisting")}
                                 </label>
+
                             </div>
 
                             {/* Input testo per nuovo cliente */}
@@ -1154,8 +1163,10 @@ export default component$(() => {
                                 feedBackSVG['network'] = null;
                                 feedBackSVG['ip'] = null;
                                 currentIdC.value = "";
-                                (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-                                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+                                if (document.getElementById("clientTypeIDNew") as HTMLInputElement != null)
+                                    (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+                                if (document.getElementById("clientTypeIDExisting") as HTMLInputElement != null)
+                                    (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
                                 clientType.value = "new";
                             }}
                             class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"

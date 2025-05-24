@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { $, component$, getLocale, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, routeAction$, server$, z, zod$ } from "@builder.io/qwik-city";
@@ -13,10 +14,11 @@ import PopupModal from "~/components/ui/PopupModal";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { inlineTranslate } from "qwik-speak";
+import { getUser } from "~/fnUtils";
 
 type Notification = {
   message: string;
-  type: 'success' | 'error';
+  type: "success" | "error" | "loading";
 };
 
 export interface FilterObject {
@@ -34,8 +36,11 @@ export const extractRow = (row: any) => {
 
 export const deleteRow = server$(async function (this, data) {
   try {
-
-    await sql`DELETE FROM clienti WHERE clienti.idcliente = ${data.idcliente}`;
+    const user = await getUser()
+    await sql.begin(async(tx)=>{
+      await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+      await tx`DELETE FROM clienti WHERE clienti.idcliente = ${data.idcliente}`;
+    })
     return true;
   } catch (e) {
     console.log(e);
@@ -132,6 +137,73 @@ export const search = server$(async (data) => {
   }
 })
 
+export const ImportCSV = server$(async (data: string[][]) => {
+  const lang = getLocale("en");
+  //console.log(data)
+  try {
+    const expectedHeaders = ["nomecliente", "telefonocliente"];
+
+    if (data.length === 0) {
+      throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
+    }
+
+    const headerRow = data[0];
+    const receivedHeaders = headerRow.map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+
+    if (receivedHeaders.length !== expectedHeaders.length) {
+      throw new Error(lang == "it" ? `Numero di colonne errato. Attese ${expectedHeaders.length}, ricevute ${receivedHeaders.length}` : `Number of columns incorrect. Expected ${expectedHeaders.length}, received ${receivedHeaders.length}`);
+    }
+
+    if (!receivedHeaders.every((h, index) => h === expectedHeaders[index].toLowerCase())) {
+      throw new Error(lang == "it" ? `Intestazioni non valide. Atteso: ${expectedHeaders.join(", ")}` : `Invalid headers. Expected: ${expectedHeaders.join(", ")}`);
+    }
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const [nomeClienteRow, telefonoClienteRow] = row;
+      //console.log(nomeClienteRow)
+      const nomeCliente = nomeClienteRow.replace(/^"|"$/g, '').trim();
+      let telefonoCliente;
+      if (telefonoClienteRow) {
+        telefonoCliente = telefonoClienteRow.replace(/^"|"$/g, '').trim();
+      }
+      else {
+        telefonoCliente = "";
+      }
+      //console.log(nomeCliente)
+      const existingCliente = await sql`
+        SELECT r.idcliente 
+        FROM clienti r
+        WHERE 
+          r.nomecliente = ${nomeCliente}
+      `;
+      if (existingCliente.length > 0) {
+        throw new Error(lang == "it" ? `Il cliente ${nomeCliente} esiste già` : `The client ${nomeCliente} already exists`);
+      }
+
+      const user = await getUser()
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        await tx`
+          INSERT INTO clienti 
+            (nomecliente,telefonocliente) 
+          VALUES 
+            (${nomeCliente},${telefonoCliente})
+        `;
+      })
+    }
+    return {
+      success: true,
+      message: lang == "it" ? "Importazione completata con successo" : "Import completed successfully"
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      success: false,
+      message: lang == "it" ? "Errore durante l'importazione: " + e : "Error during import: " + e
+    }
+  }
+})
+
 
 export default component$(() => {
   useStyles$(styles);
@@ -159,12 +231,13 @@ export default component$(() => {
     formAction.value = isEditing.value ? editAction : addAction;
   })
 
-  const addNotification = $((message: string, type: 'success' | 'error') => {
+  const addNotification = $((message: string, type: "success" | "error" | "loading") => {
     notifications.value = [...notifications.value, { message, type }];
-    // Rimuovi la notifica dopo 3 secondi
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(n => n.message !== message);
-    }, 3000);
+    if (type !== "loading") {
+      setTimeout(() => {
+        notifications.value = notifications.value.filter((n) => n.message !== message);
+      }, 4000);
+    }
   });
 
   const Modify = $((row: any) => {
@@ -202,8 +275,22 @@ export default component$(() => {
     addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
   })
 
-  const handleOk = $(async () => {
-    addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
+  const handleOk = $(async (data:  any) => {
+    addNotification(lang == 'it' ? "Operazione in corso..." : "Operation in progress...", 'loading');
+    try{
+      const result = await ImportCSV(data)
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      if(result.success){
+        addNotification(result.message, 'success');
+        reloadFN.value?.();
+      }else{
+        addNotification(result.message, 'error');
+      }
+    }catch(e){
+      console.log(e)
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      addNotification(lang == 'it' ? "Errore durante l'importazione: " + e : "Error during import: " + e, 'error');
+    }
   })
 
   const Delete = $(async (row: any) => {
@@ -234,16 +321,43 @@ export default component$(() => {
     <>
       <div class="size-full overflow-hidden lg:px-40 md:px-24 px-0">
         {/* Aggiungi questo div per le notifiche */}
-        <div class="fixed top-4 right-4 z-50 space-y-2">
+        <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
           {notifications.value.map((notification, index) => (
             <div
               key={index}
-              class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
-                ? 'bg-green-500 text-white'
-                : 'bg-red-500 text-white'
-                }`}
+              class={[
+                "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+                notification.type === "success"
+                  ? "bg-green-500/90 border-green-700 text-white"
+                  : notification.type === "error"
+                    ? "bg-red-500/90 border-red-700 text-white"
+                    : "bg-white border-blue-400 text-blue-800"
+              ]}
+              style={{
+                filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+                opacity: 0.98,
+              }}
             >
-              {notification.message}
+              {/* Icona */}
+              {notification.type === "success" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {notification.type === "error" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              {notification.type === "loading" && (
+                <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              )}
+
+              {/* Messaggio */}
+              <span class="flex-1">{notification.message}</span>
             </div>
           ))}
         </div>
@@ -270,11 +384,13 @@ export default component$(() => {
               />
             </div>
           </div>
-          <Dati dati={dati.value} title={t("admin.client.list")} nomeTabella={t("admin.client.clients")} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
-          <div class="flex">
+          <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
             <ButtonAdd nomePulsante={t("admin.client.addclient")} onClick$={openClientiDialog}></ButtonAdd>
-            <Import nomeImport="clienti" OnError={handleError} OnOk={handleOk}></Import>
+            <div>
+              <Import OnError={handleError} OnOk={handleOk}></Import>
+            </div>
           </div>
+          <Dati dati={dati.value} title={t("admin.client.list")} nomeTabella={t("admin.client.clients")} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
         </Table>
       </div>
 

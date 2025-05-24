@@ -16,10 +16,11 @@ import TableInfoCSV from "~/components/table/tableInfoCSV";
 // import { useNotify } from "~/services/notifications";
 import bcrypt from "bcryptjs";
 import { inlineTranslate } from "qwik-speak";
+import { getUser } from "~/fnUtils";
 
 type Notification = {
   message: string;
-  type: 'success' | 'error';
+  type: "success" | "error" | "loading";
 };
 
 export interface FilterObject {
@@ -149,6 +150,80 @@ export const search = server$(async (data) => {
   }
 })
 
+export const insertRow = server$(async (data: string[][]) => {
+  const lang = getLocale("en");
+  try {
+    const expectedHeaders = ["cometecnico", "cognometecnico","ruolo","emailtecnico","pwdtecnico"];
+
+    if (data.length === 0) {
+      throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
+    }
+
+    const headerRow = data[0];
+    const receivedHeaders = headerRow.map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+
+    if (receivedHeaders.length !== expectedHeaders.length) {
+      throw new Error(lang == "it" ? `Numero di colonne errato. Attese ${expectedHeaders.length}, ricevute ${receivedHeaders.length}` : `Number of columns incorrect. Expected ${expectedHeaders.length}, received ${receivedHeaders.length}`);
+    }
+
+    if (!receivedHeaders.every((h, index) => h === expectedHeaders[index].toLowerCase())) {
+      throw new Error(lang == "it" ? `Intestazioni non valide. Atteso: ${expectedHeaders.join(", ")}` : `Invalid headers. Expected: ${expectedHeaders.join(", ")}`);
+    }
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const [nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow] = row;
+      console.log(nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow)
+      const nomeTecnico = nomeTecnicoRow.replace(/^"|"$/g, '').trim();
+      const cognomeTecnico = cognomeTecnicoRow.replace(/^"|"$/g, '').trim();
+      const ruolo = ruoloRow.replace(/^"|"$/g, '').trim();
+      const emailTecnico = emailTecnicoRow.replace(/^"|"$/g, '').trim();
+      let telefonoTecnico;
+      if (telefonoTecnicoRow) {
+        telefonoTecnico = telefonoTecnicoRow.replace(/^"|"$/g, '').trim();
+      }
+      else {
+        telefonoTecnico = "";
+      }
+      const pwdTecnico = pwdTecnicoRow.replace(/^"|"$/g, '').trim();
+      //console.log(ipRete.toString(),prefissoRete.toString(),nomerete.toString(),descrizione.toString())
+
+      //Ricerca se tecnico esiste gia'
+      const existingTecnico = await sql`
+        SELECT r.idtecnico 
+        FROM tecnici r
+        WHERE 
+          r.nometecnico = ${nomeTecnico} 
+          AND r.cognometecnico = ${cognomeTecnico}
+          AND r.emailtecnico = ${emailTecnico}
+      `;
+      if (existingTecnico.length > 0) {
+        throw new Error(`Il tecnico ${nomeTecnico} ${cognomeTecnico} con email ${emailTecnico} esiste già`);
+      }
+
+      const user = await getUser()
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        await tx`
+          INSERT INTO tecnici 
+            (nometecnico, cognometecnico, ruolo, emailtecnico, pwdtecnico, telefonotecnico, admin) 
+          VALUES 
+            (${nomeTecnico}, ${cognomeTecnico}, ${ruolo}, ${emailTecnico}, ${bcrypt.hashSync(pwdTecnico, 12)}, ${telefonoTecnico}, false)
+        `;
+      })
+    }
+    return {
+      success: true,
+      message: lang == "it" ? "Tecnico inserito con successo" : "Technician inserted successfully"
+    }
+  } catch (err) {
+    console.log(err);
+    return {
+      success: false,
+      message: lang == "it" ? "Errore durante l'inserimento nel DB:" + err : "Error during insertion in the DB: " + err
+    }
+  }
+})
+
 
 export default component$(() => {
   useStyles$(styles);
@@ -202,12 +277,13 @@ export default component$(() => {
     showDialog.value = false;
   });
 
-  const addNotification = $((message: string, type: 'success' | 'error') => {
+  const addNotification = $((message: string, type: "success" | "error" | "loading") => {
     notifications.value = [...notifications.value, { message, type }];
-    // Rimuovi la notifica dopo 3 secondi
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(n => n.message !== message);
-    }, 3000);
+    if (type !== "loading") {
+      setTimeout(() => {
+        notifications.value = notifications.value.filter((n) => n.message !== message);
+      }, 4000);
+    }
   });
 
   const reloadTable = $(() => {
@@ -238,10 +314,15 @@ export default component$(() => {
 
 
   const Delete = $(async (row: any) => {
-    if (await deleteRow(extractRow(row)))
+    addNotification("Eliminazione in corso...", "loading");
+    if (await deleteRow(extractRow(row))) {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang === "en" ? "Record deleted successfully" : "Dato eliminato con successo", 'success');
-    else
+    }
+    else {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang === "en" ? "Error during deleting" : "Errore durante la eliminazione", 'error');
+    }
   })
 
 
@@ -250,8 +331,21 @@ export default component$(() => {
     addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
   })
 
-  const handleOk = $(async () => {
-    addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
+  const handleOk = $(async (data:any) => {
+    addNotification("Operazione in corso...", "loading");
+    try {
+      const result = await insertRow(data);
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      if(result.success){
+        reloadFN.value?.();
+        addNotification(result.message, 'success');
+      }else{
+        addNotification(result.message, 'error');
+      }
+    } catch (error) {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      addNotification(lang === "en" ? "Error during import:" + error : "Errore durante l'importazione:" + error, 'error');
+    }
   })
 
   const getREF = $((reloadFunc: () => void) => { reloadFN.value = reloadFunc; })
@@ -277,16 +371,43 @@ export default component$(() => {
     <>
       <div class="size-full overflow-hidden lg:px-40 md:px-24 px-0">
         {/* Aggiungi questo div per le notifiche */}
-        <div class="fixed top-4 right-4 z-50 space-y-2">
+        <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
           {notifications.value.map((notification, index) => (
             <div
               key={index}
-              class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
-                ? 'bg-green-500 text-white'
-                : 'bg-red-500 text-white'
-                }`}
+              class={[
+                "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+                notification.type === "success"
+                  ? "bg-green-500/90 border-green-700 text-white"
+                  : notification.type === "error"
+                    ? "bg-red-500/90 border-red-700 text-white"
+                    : "bg-white border-blue-400 text-blue-800"
+              ]}
+              style={{
+                filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+                opacity: 0.98,
+              }}
             >
-              {notification.message}
+              {/* Icona */}
+              {notification.type === "success" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {notification.type === "error" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              {notification.type === "loading" && (
+                <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              )}
+
+              {/* Messaggio */}
+              <span class="flex-1">{notification.message}</span>
             </div>
           ))}
         </div>
@@ -313,12 +434,13 @@ export default component$(() => {
               />
             </div>
           </div>
-          <Dati dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
-          <div class="flex">
-
+          <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
             <ButtonAdd nomePulsante={t("admin.tech.addtech")} onClick$={openTeniciDialog}></ButtonAdd>
-            <Import nomeImport="tecnici" OnError={handleError} OnOk={handleOk}></Import>
+            <div>
+              <Import OnError={handleError} OnOk={handleOk}></Import>
+            </div>
           </div>
+          <Dati dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
         </Table>
       </div>
 

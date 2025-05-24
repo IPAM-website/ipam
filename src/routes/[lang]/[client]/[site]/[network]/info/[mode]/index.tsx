@@ -227,15 +227,17 @@ export default component$(() => {
               {t("network.info.networkinformation")}
             </h2>
             {!loading.value ? (
-              <div class="relative h-6 mb-3">
+              <div class="relative h-6 mb-3 has-tooltip">
                 <div class="absolute inset-0 rounded-md bg-gray-300"></div>
                 {allocatedSpace.value > 0 && totalSpace.value > 0 && (
                   <div
-                    class="absolute top-0 left-0 h-full rounded-md bg-green-500"
+                    class="absolute top-0 left-0 h-full rounded-md bg-blue-400"
                     style={{
                       width: Math.max(4, (allocatedSpace.value / totalSpace.value) * 100) + "%",
                     }}
-                  ></div>
+                  >
+                  <span class="tooltip">{Math.max(4, (allocatedSpace.value / totalSpace.value) * 100).toFixed(2)}%</span>
+                  </div>
                 )}
               </div>
 
@@ -249,7 +251,7 @@ export default component$(() => {
               </p>
               <div class="flex gap-x-6">
                 <div class="flex items-center gap-2">
-                  <div class="h-3 w-3 rounded-sm bg-green-500"></div>
+                  <div class="h-3 w-3 rounded-sm bg-blue-400"></div>
                   <span class="text-xs text-gray-600">{t("network.info.occupedspace")}</span>
                 </div>
                 <div class="flex items-center gap-2">

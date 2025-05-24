@@ -33,14 +33,18 @@ import ButtonAdd from "~/components/table/ButtonAdd";
 import PopupModal from "~/components/ui/PopupModal";
 import AddressBox from "~/components/form/formComponents/AddressBox";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
+import Import from "~/components/table/ImportCSV";
 import SelectForm from "~/components/form/formComponents/SelectForm";
 import CHKForms from "~/components/form/formComponents/CHKForms";
 import SelectFormLive from "~/components/form/formComponents/SelectFormLive";
 import { inlineTranslate } from "qwik-speak";
+import { getUser } from "~/fnUtils";
+import BtnInfoTable from "~/components/table/btnInfoTable";
+import TableInfoCSV from "~/components/table/tableInfoCSV";
 
 type Notification = {
   message: string;
-  type: "success" | "error";
+  type: "success" | "error" | "loading";
 };
 
 export const getSite = server$(async function (idsito: number) {
@@ -235,8 +239,117 @@ export const reloadData = server$(async function () {
   return (await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site}`) as unknown as ReteModel[];
 });
 
-export default component$(() => {
+export const insertNetworkFromCSV = server$(async function (data: string[][]) {
+  const lang = getLocale("en")
+  try {
+    const expectedHeaders = ["iprete", "nomerete","descrizione","prefissorete"];
 
+    if (data.length === 0) {
+      throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
+    }
+
+    const headerRow = data[0];
+    const receivedHeaders = headerRow.map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+
+    if (receivedHeaders.length !== expectedHeaders.length) {
+      throw new Error(lang == "it" ? `Numero di colonne errato. Attese ${expectedHeaders.length}, ricevute ${receivedHeaders.length}` : `Number of columns incorrect. Expected ${expectedHeaders.length}, received ${receivedHeaders.length}`);
+    }
+
+    if (!receivedHeaders.every((h, index) => h === expectedHeaders[index].toLowerCase())) {
+      throw new Error(lang == "it" ? `Intestazioni non valide. Atteso: ${expectedHeaders.join(", ")}` : `Invalid headers. Expected: ${expectedHeaders.join(", ")}`);
+    }
+    //console.log("handle ok server",data[1])
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const [ipReteRow, nomereteRow, descrizioneRow, prefissoReteRow] = row;
+      const ipRete = ipReteRow.replace(/^"|"$/g, '').trim();
+      const prefissoRete = parseInt(prefissoReteRow.replace(/^"|"$/g, '').trim());
+      const nomerete = nomereteRow.replace(/^"|"$/g, '').trim();
+      const descrizione = descrizioneRow.replace(/^"|"$/g, '').trim();
+      //console.log(ipRete.toString(),prefissoRete.toString(),nomerete.toString(),descrizione.toString())
+
+      //Ricerca se nome rete esiste gia' nel sito
+      const pathParts = new URL(this.request.url).pathname.split('/');
+      const siteId = parseInt(pathParts[3]);
+      //console.log(siteId)
+      if (isNaN(siteId)) {
+        throw new Error("ID sito non valido nell'URL");
+      }
+      const existingNetwork = await sql`
+        SELECT r.idrete 
+        FROM rete r
+        JOIN siti_rete sr ON r.idrete = sr.idrete
+        WHERE 
+          r.iprete = ${ipRete} 
+          AND r.prefissorete = ${prefissoRete}
+          AND sr.idsito = ${siteId}
+      `;
+      if (existingNetwork.length > 0) {
+        throw new Error(`La rete ${ipRete}/${prefissoRete} esiste già nel sito ID ${siteId}`);
+      }
+
+      const user = await getUser()
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        const newNetwork = await tx`
+          INSERT INTO rete 
+            (nomerete, descrizione, iprete, prefissorete) 
+          VALUES 
+            (${nomerete}, ${descrizione}, ${ipRete}, ${prefissoRete})
+          RETURNING idrete
+        `;
+        await tx`
+          INSERT INTO siti_rete 
+            (idsito, idrete) 
+          VALUES 
+            (${siteId}, ${newNetwork[0].idrete})
+        `;
+      })
+    }
+    return {
+      success: true,
+      message: lang === "it" ? "Rete inserita con successo" : "Network inserted successfully"
+    };
+  }
+  catch (err) {
+    console.log(err)
+    return {
+      success: false,
+      message: lang === "it" ? "Errore durante l'inserimento del network:" + err : "Error during network insertion: " + err
+    }
+  }
+})
+
+export const search = server$(async function (data) {
+  console.log(data)
+  try {
+    const pathParts = new URL(this.request!.url).pathname.split('/');
+    const sitoId = parseInt(pathParts[3]);
+    console.log(sitoId)
+    const query = await sql`
+      SELECT *
+      FROM rete
+      INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete
+      WHERE siti_rete.idsito=${sitoId}
+      AND (rete.nomerete LIKE ${data.filter}
+      OR rete.descrizione LIKE ${data.filter}
+      OR rete.iprete LIKE ${data.filter})
+    `;
+    return query;
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+})
+
+export interface FilterObject {
+  value?: string;
+}
+
+export default component$(() => {
+  const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
+  const filter = useSignal<FilterObject>({ value: '' });
+  const showPreview = useSignal(false);
   const loc = useLocation();
   const nav = useNavigate();
   const lang = getLocale("en");
@@ -330,31 +443,35 @@ export default component$(() => {
     });
   });
 
-  const addNotification = $((message: string, type: "success" | "error") => {
+  const addNotification = $((message: string, type: "success" | "error" | "loading") => {
     notifications.value = [...notifications.value, { message, type }];
-    // Rimuovi la notifica dopo 3 secondi
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(
-        (n) => n.message !== message,
-      );
-    }, 3000);
+    if (type !== "loading") {
+      setTimeout(() => {
+        notifications.value = notifications.value.filter((n) => n.message !== message);
+      }, 4000);
+    }
   });
 
   const handleDelete = $(async (e: any) => {
-    if ((await deleteNetwork(e.idrete)).success)
+    addNotification(lang === "en" ? "Deleting..." : "Eliminazione in corso...", "loading");
+    if ((await deleteNetwork(e.idrete)).success) {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(
         lang === "en"
           ? "Record deleted successfully"
           : "Dato eliminato con successo",
         "success",
       );
-    else
+    }
+    else {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(
         lang === "en"
           ? "Error during deleting"
           : "Errore durante la eliminazione",
         "error",
       );
+    }
     // console.log("COME?")
   });
 
@@ -394,19 +511,75 @@ export default component$(() => {
 
   const t = inlineTranslate();
 
+  const handleOk = $(async (data: any) => {
+    addNotification(lang === "en" ? "Importing..." : "Importazione in corso...", 'loading');
+    //console.log("handleOk",data)
+    try {
+      const result = await insertNetworkFromCSV(data)
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      if(result.success){
+        addNotification(result.message, 'success');
+        reloadFN.value?.()
+      }else{
+        addNotification(result.message, 'error');
+      }
+    }
+    catch (err) {
+      console.log(err)
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      addNotification(lang === "en" ? "Error during import: " + err : "Errore durante l'importazione: " + err, 'error');
+    }
+  })
+
+  const handleError = $((error: any) => {
+    console.log(error);
+    addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
+  })
+
+  const showPreviewCSV = $(() => {
+    showPreview.value = true;
+  });
+
   return (
     <>
       <div class="size-full overflow-hidden bg-white dark:bg-transparent">
-        <div class="fixed top-4 right-4 z-50 space-y-2">
+        <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
           {notifications.value.map((notification, index) => (
             <div
               key={index}
-              class={`rounded-md p-4 shadow-lg ${notification.type === "success"
-                ? "bg-green-500 text-white"
-                : "bg-red-500 text-white"
-                }`}
+              class={[
+                "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+                notification.type === "success"
+                  ? "bg-green-500/90 border-green-700 text-white"
+                  : notification.type === "error"
+                    ? "bg-red-500/90 border-red-700 text-white"
+                    : "bg-white border-blue-400 text-blue-800"
+              ]}
+              style={{
+                filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+                opacity: 0.98,
+              }}
             >
-              {notification.message}
+              {/* Icona */}
+              {notification.type === "success" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {notification.type === "error" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              {notification.type === "loading" && (
+                <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              )}
+
+              {/* Messaggio */}
+              <span class="flex-1">{notification.message}</span>
             </div>
           ))}
         </div>
@@ -449,7 +622,49 @@ export default component$(() => {
             <Table>
               <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 dark:border-gray-700 dark:bg-gray-800 bg-gray-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="text-lg font-semibold text-gray-800 dark:text-gray-100">{t("network.networks")}</span>
+                  <span class="text-lg font-semibold text-gray-800">{t("network.networks")}</span>
+                  <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+                </div>
+                <div class="flex items-center gap-2">
+                  <TextboxForm
+                    id="txtfilter"
+                    value={filter.value.value}
+                    ref={txtQuickSearch}
+                    placeholder={t("quicksearch")}
+                    onInput$={(e) => {
+                      filter.value.value = (e.target as HTMLInputElement).value;
+                      if (reloadFN) reloadFN.value?.();
+                    }}
+                    search={true}
+                  />
+                </div>
+              </div>
+              <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+                <ButtonAdd
+                  nomePulsante={t("network.addnetwork")}
+                  onClick$={() => {
+                    Object.assign(formData, {
+                      descrizione: "",
+                      idrete: 0,
+                      nomerete: "",
+                      vrf: 1,
+                      iprete: "",
+                      prefissorete: 0,
+                      vid: 1,
+                      idretesup: null,
+                    });
+                    personalizedPrefix.value = false;
+                    hasParent.value = false;
+                    broadcastIP.value = "";
+                    netMode.value = 1;
+                    if (updateAddr2.value) updateAddr2.value();
+                  }}
+                ></ButtonAdd>
+                <div>
+                  <Import
+                    OnError={handleError}
+                    OnOk={handleOk}
+                  ></Import>
                 </div>
               </div>
               <Dati_Headers
@@ -462,27 +677,6 @@ export default component$(() => {
                 OnDelete={handleDelete}
                 onRowClick={handleRowClick}
               />
-              <ButtonAdd
-                nomePulsante={t("network.addnetwork")}
-                onClick$={() => {
-                  Object.assign(formData, {
-                    descrizione: "",
-                    idrete: 0,
-                    nomerete: "",
-                    vrf: 1,
-                    iprete: "",
-                    prefissorete: 0,
-                    vid: 1,
-                    idretesup: null,
-                  });
-                  personalizedPrefix.value = false;
-                  hasParent.value = false;
-                  broadcastIP.value = "";
-                  netMode.value = 1;
-                  if (updateAddr1.value) updateAddr1.value();
-                  if (updateAddr2.value) updateAddr2.value();
-                }}
-              ></ButtonAdd>
             </Table>
           </div>
         )}
@@ -809,6 +1003,36 @@ export default component$(() => {
             />
           </div>
         </Form>
+      </PopupModal>
+
+      <PopupModal
+        visible={showPreview.value}
+        title={
+          <div class="flex items-center gap-2">
+            <svg
+              class="h-6 w-6 text-cyan-600"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <span>Formato richiesto per l'importazione CSV</span>
+            <span class="ml-2 rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-semibold tracking-wide text-cyan-700">
+              CSV
+            </span>
+          </div>
+        }
+        onClosing$={() => {
+          showPreview.value = false;
+        }}
+      >
+        <TableInfoCSV tableName="rete"></TableInfoCSV>
       </PopupModal>
     </>
   );
