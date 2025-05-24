@@ -222,50 +222,41 @@ export default component$(() => {
               )}
             </div>
           </div>
-          <div class="flex w-1/2 gap-4 max-sm:w-full sm:min-w-[620px]">
-            <div class="flex w-full rounded-md border dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 border-gray-300 p-3 shadow-md">
-              <div class="relative me-5 flex-1">
-                <h2 class="m-2 mb-1 text-[16pt] font-semibold">
-                  Network Usage
-                </h2>
-                {!loading.value ? (
-                  <div class="relative">
-                    <div
-                      class="absolute top-0 left-0 z-10 h-[40px] rounded-2xl bg-gray-400"
-                      style={{ width: lengthBar.value }}
-                    ></div>
-                    <div
-                      class="absolute top-0 left-0 z-20 h-[40px] rounded-2xl bg-green-500"
-                      style={{
-                        width:
-                          (allocatedSpace.value / totalSpace.value) *
-                          lengthBar.value,
-                      }}
-                    ></div>
-                  </div>
-                ) : (
-                  <div class="absolute w-full animate-pulse">
-                    <div class="h-[40px] rounded-2xl bg-gray-300"></div>
-                  </div>
+          <div class="rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 bg-white p-4 shadow-sm w-full">
+            <h2 class="font-semibold text-lg mb-3">
+              {t("network.info.networkinformation")}
+            </h2>
+            {!loading.value ? (
+              <div class="relative h-6 mb-3">
+                <div class="absolute inset-0 rounded-md bg-gray-300"></div>
+                {allocatedSpace.value > 0 && totalSpace.value > 0 && (
+                  <div
+                    class="absolute top-0 left-0 h-full rounded-md bg-green-500"
+                    style={{
+                      width: Math.max(4, (allocatedSpace.value / totalSpace.value) * 100) + "%",
+                    }}
+                  ></div>
                 )}
-                <div class="mt-[48px]"></div>
-                <p>
-                  There are {allocatedSpace.value} of {totalSpace.value}{" "}
-                  addresses in use
-                </p>
               </div>
-              {lengthBar.value >= 400 && (
-                <div class="me-4 mt-1 flex flex-col justify-center">
-                  <div class="flex items-center gap-2">
-                    <div class="size-[8px] bg-green-500"></div>
-                    {t("network.info.occupedspace")}
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div class="size-[8px] bg-gray-400"></div>
-                    {t("network.info.freespace")}
-                  </div>
+
+            ) : (
+              <div class="animate-pulse h-6 rounded-md bg-gray-200 mb-3"></div>
+            )}
+
+            <div class="flex justify-between items-center">
+              <p class="text-sm text-gray-700">
+                {t("network.info.usingAddressesPt1")}{allocatedSpace.value}{t("network.info.usingAddressesPt2")}{totalSpace.value}{t("network.info.usingAddressesPt3")}
+              </p>
+              <div class="flex gap-x-6">
+                <div class="flex items-center gap-2">
+                  <div class="h-3 w-3 rounded-sm bg-green-500"></div>
+                  <span class="text-xs text-gray-600">{t("network.info.occupedspace")}</span>
                 </div>
-              )}
+                <div class="flex items-center gap-2">
+                  <div class="h-3 w-3 rounded-sm bg-gray-300"></div>
+                  <span class="text-xs text-gray-600">{t("network.info.freespace")}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

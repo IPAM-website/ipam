@@ -9,6 +9,22 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./logs:/var/log/postgresql
       - ./backup/wal:/backup/wal
+    command:
+      - "postgres"
+      - "-c"
+      - "logging_collector=on"
+      - "-c"
+      - "log_directory=/var/log/postgresql"
+      - "-c"
+      - "log_filename=postgresql.log"
+      - "-c"
+      - "log_statement=all"
+      - "-c"
+      - "log_min_duration_statement=0"
+      - "-c"
+      - "log_line_prefix=%t [%p] app_user=%m db=%d "
+      - "-c"
+      - "log_hostname=off"
   app:
     container_name: "app"
     build: .

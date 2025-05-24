@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import Title from "~/components/layout/Title";
 import { useLogsLoader } from './logs.loader';
 import sql from "~/../db";
-import LogsList from "~/components/utils/LogsList";
+//import LogsList from "~/components/utils/LogsList";
 import type { UtenteModel } from "~/dbModels";
 import { inlineTranslate } from "qwik-speak";
 
@@ -186,7 +186,7 @@ export default component$(() => {
                     {/* Altri componenti */}
 
                     <section class="mt-8">
-                      <LogsList />
+                      {/*<LogsList />*/}
                     </section>
                   </div>
                 </div>

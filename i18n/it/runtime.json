@@ -4,7 +4,13 @@
     "result2": "Password errata",
     "result3": "Username non trovato",
     "result4": "Errore del server",
-    "resultundefined": "BOH VABBE"
+    "resultundefined": "BOH VABBE",
+    "infoInput": "Trascina CSV o clicca per selezionare",
+    "tableInfoCSV": {
+      "titlePt1": "Il",
+      "titlePt2": "deve avere le seguenti colonne (intestazioni nella prima riga):",
+      "warning": "Assicurati che le intestazioni siano esattamente come mostrato sopra e che ogni riga contenga i dati corrispondenti."
+    }
   },
   "full": {
     "it": "Italiano",

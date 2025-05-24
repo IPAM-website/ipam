@@ -1,9 +1,19 @@
 {
   "dashboard": {
     "csv": {
+      "titleForm":"Clients, sites and IPs import",
+      "subtitleForm": "Client selection",
+      "clientSelectNew": "Create a new client",
+      "clientSelectExisting": "Select an existing client",
+      "siti": "Sites import",
+      "network": "Network import",
+      "ip": "IP import",
+      "confirmImport": "Confirm import",
+      "cancel": "Cancel",
       "clientSelection": "Client selection",
       "import": "Import",
-      "placeholdercliente": "Client name"
+      "placeholdercliente": "Client name",
+      "titleInfoCSV": "Format required for CSV import"
     },
     "gotoadmin": "Go to admin area",
     "infotabella": "Table information"

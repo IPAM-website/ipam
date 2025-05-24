@@ -6,6 +6,7 @@ import Title from "~/components/layout/Title";
 import PopupModal from "~/components/ui/PopupModal";
 import SelectForm from "~/components/form/formComponents/SelectForm";
 import TextBoxForm from "~/components/form/formComponents/TextboxForm";
+import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { getBaseURL, getUser } from "~/fnUtils";
 import type { ClienteModel, TecnicoModel } from "~/dbModels";
 import { parseCSV } from "~/components/utils/parseCSV";
@@ -17,7 +18,7 @@ import fs from "fs"
 
 type Notification = {
     message: string;
-    type: 'success' | 'error';
+    type: "success" | "error" | "loading";
 };
 
 export const useCSVInsert = routeAction$(async (data) => {
@@ -322,14 +323,138 @@ export const useCSVInsert = routeAction$(async (data) => {
             return { success: true, message: "Importazione IP completata" };
         }*/
 
+        if (data.csvip) {
+            const csv = await data.csvip.text();
+            const rows = csv.split('\n').filter(row => row.trim() !== '');
 
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                try {
+                    // 1. Split avanzato che gestisce virgole nei valori tra virgolette
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+                        .map(c => c.replace(/^"|"$/g, '').trim());
 
+                    if (columns.length !== 8) {
+                        return { error: `Riga ${i}: 8 colonne richieste, trovate ${columns.length}` }
+                    }
+
+                    const [
+                        nomerete,
+                        ipretenetwork,
+                        prefissoretenetwork,
+                        ip,
+                        n_prefisso,
+                        tipo_dispositivo,
+                        nome_dispositivo,
+                        brand_dispositivo
+                    ] = columns;
+
+                    // 2. Validazione manuale (senza librerie)
+                    const isValidIP = (ip: string) =>
+                        /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/.test(ip);
+
+                    const isInSubnet = (ip: string, network: string, prefix: number) => {
+                        // Implementazione base per subnet matching
+                        const ipParts = ip.split('.').map(p => parseInt(p, 10));
+                        const netParts = network.split('.').map(p => parseInt(p, 10));
+
+                        // Converte in binario e confronta i primi "prefix" bit
+                        const ipBin = ipParts.map(p => p.toString(2).padStart(8, '0')).join('');
+                        const netBin = netParts.map(p => p.toString(2).padStart(8, '0')).join('');
+
+                        return ipBin.substring(0, prefix) === netBin.substring(0, prefix);
+                    };
+
+                    // 3. Esegui validazioni
+                    if (!isValidIP(ip)) {
+                        return {
+                            error: `Riga ${i}: Formato IP non valido: ${ip}`,
+                            success: false
+                        }
+                    }
+
+                    if (!isValidIP(ipretenetwork)) {
+                        return {
+                            error: `Riga ${i}: Formato rete non valido: ${ipretenetwork}`,
+                            success: false
+                        }
+                    }
+
+                    const prefisso = parseInt(prefissoretenetwork);
+                    if (isNaN(prefisso) || prefisso < 0 || prefisso > 32) {
+                        return {
+                            error: `Riga ${i}: Prefisso rete non valido: ${prefissoretenetwork}`,
+                            success: false
+                        }
+                    }
+
+                    if (!isInSubnet(ip, ipretenetwork, prefisso)) {
+                        return {
+                            error: `Riga ${i}: IP ${ip} non appartiene a ${ipretenetwork}/${prefissoretenetwork}`,
+                            success: false
+                        }
+                    }
+
+                    await sql.begin(async (tx) => {
+                        // Imposta utente per audit trail
+                        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+
+                        // 4. Trova ID rete nel database
+                        const networkDB = await tx`
+                    SELECT idrete 
+                    FROM rete 
+                    WHERE nomerete = ${nomerete} 
+                    AND iprete = ${ipretenetwork} 
+                    AND prefissorete = ${prefissoretenetwork}::integer
+                `;
+
+                        if (!networkDB?.length) {
+                            return {
+                                error: `Riga ${i}: Rete non trovata: ${nomerete} ${ipretenetwork}/${prefissoretenetwork}`,
+                                success: false
+                            }
+                        }
+
+                        // 5. Inserimento indirizzo
+                        const result = await tx`
+                    INSERT INTO indirizzi (
+                        ip, idrete, n_prefisso, tipo_dispositivo, 
+                        nome_dispositivo, brand_dispositivo
+                    ) VALUES (
+                        ${ip}, 
+                        ${networkDB[0].idrete}, 
+                        ${parseInt(n_prefisso)},
+                        ${tipo_dispositivo}, 
+                        ${nome_dispositivo},
+                        ${brand_dispositivo}
+                    )
+                    ON CONFLICT (ip, idrete) DO NOTHING
+                    RETURNING *
+                `;
+
+                        if (!result.length) {
+                            return {
+                                error: `Riga ${i}: IP ${ip} già esistente per questa rete`,
+                                success: false
+                            }
+                        }
+                    });
+
+                } catch (err) {
+                    return {
+                        error: `Riga ${i}: ${(err as Error).message}`,
+                        success: false
+                    }
+                }
+            }
+            return { success: true, message: "Importazione IP completata" };
+        }
 
 
         return { success: true }
     } catch (e) {
         console.log(e)
-        return { error: "Errore durante l'importazione", success: false }
+        throw new Error("Errore durante l'importazione:" + e)
     }
 }, zod$({
     clientType: z.enum(['new', 'existing']),
@@ -379,9 +504,10 @@ export default component$(() => {
     const ipFeedback = useSignal<null | { message: string; type: "success" | "error" }>(null);
     const currentIdC = useSignal('');
     const clientList = useSignal<ClienteModel[]>([]);
-    const fileInputRefSiti = useSignal<HTMLInputElement>();
-    const fileInputRefNetwork = useSignal<HTMLInputElement>();
-    const fileInputRefIP = useSignal<HTMLInputElement>();
+    const formRef = useSignal<HTMLFormElement>();
+    //const fileInputRefSiti = useSignal<HTMLInputElement>();
+    //const fileInputRefNetwork = useSignal<HTMLInputElement>();
+    //const fileInputRefIP = useSignal<HTMLInputElement>();
     const notifications = useSignal<Notification[]>([]);
     const feedBackSVG = useStore<{ [key: string]: { type: string; message?: string } | null }>({
         siti: null,
@@ -392,6 +518,8 @@ export default component$(() => {
     const clienteTXT = useSignal('');
     const user: TecnicoModel = useUser().value;
     const showModalCSV = useSignal(false);
+    const showModalInfoCSV = useSignal(false)
+    const viewTableSection = useSignal()
     const formAction = useCSVInsert();
     const clientType = useSignal<'new' | 'existing'>('new');
     const files = useStore<{ [key: string]: { name: string; size: number } | null }>({
@@ -405,16 +533,19 @@ export default component$(() => {
     useTask$(async ({ track }) => {
         track(() => clientType.value);
         track(() => formAction.value);
+        track(() => viewTableSection.value)
+        track(() => showModalCSV.value)
         //track(() => clientList.value);
         clientList.value = await listaClienti();
     })
 
-    const addNotification = $((message: string, type: 'success' | 'error') => {
+    const addNotification = $((message: string, type: "success" | "error" | "loading") => {
         notifications.value = [...notifications.value, { message, type }];
-        // Rimuovi la notifica dopo 3 secondi
-        setTimeout(() => {
-            notifications.value = notifications.value.filter(n => n.message !== message);
-        }, 3000);
+        if (type !== "loading") {
+            setTimeout(() => {
+                notifications.value = notifications.value.filter((n) => n.message !== message);
+            }, 4000);
+        }
     });
 
     const handleUpload = $(async (e: Event, feedbackSignal: typeof sitiFeedback, type: 'siti' | 'network' | 'ip') => {
@@ -424,15 +555,12 @@ export default component$(() => {
             const fileInput = e.target as HTMLInputElement;
             const file = fileInput.files?.[0];
 
-
-
             if (!file) {
                 feedbackSignal.value = { message: "Nessun file selezionato", type: "error" };
                 feedBackSVG[type] = {
                     type: "error",
                     message: "Nessun file selezionato"
                 };
-                addNotification("Nessun file selezionato", 'error');
                 return;
             }
 
@@ -443,7 +571,6 @@ export default component$(() => {
                     type: "error",
                     message: "Il file deve essere un CSV"
                 };
-                addNotification("Il file deve essere un CSV", 'error');
                 return;
             }
 
@@ -453,7 +580,6 @@ export default component$(() => {
                     type: "error",
                     message: "Il file e' vuoto"
                 };
-                addNotification("Il file e' vuoto", 'error');
                 return;
             }
 
@@ -467,12 +593,11 @@ export default component$(() => {
                     type: "error",
                     message: "Il file CSV è vuoto"
                 };
-                addNotification("Il file CSV è vuoto", 'error');
                 return;
             }
 
             if (type == 'siti') {
-                const requiredHeaders = ['nomeSito', 'citta', 'paese', 'datacenter', 'tipologia'];
+                const requiredHeaders = ['nomesito', 'citta', 'paese', 'datacenter', 'tipologia'];
                 if (!requiredHeaders.every(h => csvData.headers.includes(h))) {
                     feedbackSignal.value = {
                         message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`,
@@ -482,7 +607,6 @@ export default component$(() => {
                         type: "error",
                         message: `Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`
                     };
-                    addNotification(`Header mancanti. Richiesti: ${requiredHeaders.join(', ')}`, 'error');
                     return;
                 }
             }
@@ -500,13 +624,12 @@ export default component$(() => {
                         type: "error",
                         message: `Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`
                     };
-                    addNotification(`Header mancanti. Richiesti: ${requiredNetworkFields.join(', ')}`, 'error');
                     return;
                 }
             }
             if (type == 'ip') {
                 const requiredIPFields = [
-                    'nomerete', 'ipretenetwork', 'prefissoretenetwork', 'ip', 'n_prefisso', 'tipo_dispositivo', 'nome_dispositivo', 'brand_dispositivo', 'VID'
+                    'nomerete', 'ipretenetwork', 'prefissoretenetwork', 'ip', 'n_prefisso', 'tipo_dispositivo', 'nome_dispositivo', 'brand_dispositivo'
                 ];
                 if (!requiredIPFields.every(h => csvData.headers.includes(h))) {
                     feedbackSignal.value = {
@@ -517,7 +640,6 @@ export default component$(() => {
                         type: "error",
                         message: `Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`
                     };
-                    addNotification(`Header mancanti. Richiesti: ${requiredIPFields.join(', ')}`, 'error');
                     return;
                 }
             }
@@ -534,8 +656,6 @@ export default component$(() => {
                 name: file.name,
                 size: file.size
             };
-
-            addNotification("File caricato con successo", 'success');
         } catch (err) {
             files[type] = null;
             feedbackSignal.value = {
@@ -546,20 +666,22 @@ export default component$(() => {
                 type: "error",
                 message: "Errore durante l'elaborazione del file"
             };
-            addNotification("Errore durante l'elaborazione del file", 'error');
             console.log(err)
         }
         setTimeout(() => (feedbackSignal.value = null), 2500);
     });
 
     const showPopUpCSV = $(() => {
-        files['siti'] = null;
-        files['network'] = null;
-        files['ip'] = null;
-        showModalCSV.value = false;
-        fileInputRefIP.value = undefined;
-        fileInputRefNetwork.value = undefined;
-        fileInputRefSiti.value = undefined;
+        showModalCSV.value = true;
+        //if (fileInputRefSiti.value) fileInputRefSiti.value.value = "";
+        //if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = "";
+        //if (fileInputRefIP.value) fileInputRefIP.value.value = "";
+        if (formRef.value) {
+            formRef.value.reset();
+        }
+        files.network = null;
+        files.ip = null;
+        files.siti = null;
         sitiFeedback.value = null;
         networkFeedback.value = null;
         ipFeedback.value = null;
@@ -571,7 +693,6 @@ export default component$(() => {
         (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
         (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
         clientType.value = "new";
-        showModalCSV.value = true
     })
 
     const reloadClients = $(async () => {
@@ -579,12 +700,15 @@ export default component$(() => {
             clientList.value = await listaClienti();
 
             showModalCSV.value = false;
-            files['siti'] = null;
-            files['network'] = null;
-            files['ip'] = null;
-            fileInputRefIP.value = undefined;
-            fileInputRefNetwork.value = undefined;
-            fileInputRefSiti.value = undefined;
+            //if (fileInputRefSiti.value) fileInputRefSiti.value.value = "";
+            //if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = "";
+            //if (fileInputRefIP.value) fileInputRefIP.value.value = "";
+            if (formRef.value) {
+                formRef.value.reset();
+            }
+            files.network = null;
+            files.ip = null;
+            files.siti = null;
             sitiFeedback.value = null;
             networkFeedback.value = null;
             ipFeedback.value = null;
@@ -599,47 +723,64 @@ export default component$(() => {
             clientListRefresh.value++
             if (clientListRefresh.value > 255)
                 clientListRefresh.value = 0;
-            addNotification(lang === "en" ? "Record edited successfully" : "Dato modificato con successo", 'success');
+            addNotification(lang === "en" ? "Insert completed" : "Inserimento completato", 'success');
         }
         else
-            addNotification(formAction.value?.error ?? "Errore durante la modifica", 'error');
+            addNotification(lang === "en" ? "Error during insert" : "Errore durante l'inserimento: " + formAction.value?.error, 'error');
     })
 
-    const showPreviewSection = $(async () => {
-
+    const showPreviewSection = $(async (section: 'siti' | 'network' | 'ip') => {
+        viewTableSection.value = section
+        showModalInfoCSV.value = true
     })
-
 
     // console.log(onclientinput, "E DI TIPO", typeof onclientinput)
 
     return (
         <>
             {/* Aggiungi questo div per le notifiche */}
-            <div class="fixed top-4 right-4 z-50 space-y-2">
+            <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
                 {notifications.value.map((notification, index) => (
                     <div
                         key={index}
-                        class={`p-4 rounded-md shadow-lg transition-all duration-300 transform hover:scale-105 ${notification.type === 'success'
-                                ? 'bg-green-500 dark:bg-green-600 text-white'
-                                : 'bg-red-500 dark:bg-red-600 text-white'
-                            }`}
+                        class={[
+                            "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+                            notification.type === "success"
+                                ? "bg-green-500/90 border-green-700 dark:bg-green-600 text-white"
+                                : notification.type === "error"
+                                    ? "bg-red-500/90 border-red-700 dark:bg-red-600 text-white"
+                                    : "bg-white border-blue-400 text-blue-800"
+                        ]}
+                        style={{
+                            filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+                            opacity: 0.98,
+                        }}
                     >
-                        <div class="flex items-center gap-2">
-                            {notification.type === 'success' ? (
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                            ) : (
-                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            )}
-                            <span>{notification.message}</span>
-                        </div>
+                        {/* Icona */}
+                        {notification.type === "success" && (
+                            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        )}
+                        {notification.type === "error" && (
+                            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        )}
+                        {notification.type === "loading" && (
+                            <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                        )}
+
+                        {/* Messaggio */}
+                        <span class="flex-1">{notification.message}</span>
                     </div>
                 ))}
             </div>
-            <div class="size-full lg:px-40 md:px-24 sm:px-12 px-4">
+
+            <div class="size-full lg:px-40 px-24">
                 <Title>{t("dashboard.csv.clientSelection")}
                     <button onClick$={showPopUpCSV} class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 bg-black text-white rounded hover:bg-gray-800 transition-colors text-sm ml-4">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
@@ -684,16 +825,15 @@ export default component$(() => {
                     <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>Importazioni di cliente, sito, network e  IP</span>
+                    <span>{t("dashboard.csv.titleForm")}</span>
                     <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
                 </div>}
             >
                 <div class="w-full flex justify-center items-center">
-                    <Form action={formAction} onSubmit$={reloadClients} class="bg-white shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
+                    <Form action={formAction} onSubmit$={reloadClients} ref={formRef} class="bg-white shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
                         {/* Sezione Cliente - Modificata */}
                         <div class="space-y-4">
-                            <h2 class="text-xl font-semibold">Cliente</h2>
-                            Trascina
+                            <h2 class="text-xl font-semibold">{t("dashboard.csv.subtitleForm")}</h2>
                             <div class="flex gap-4">
                                 {/* Radio per scegliere tra nuovo cliente o esistente */}
                                 <label class="flex items-center gap-2">
@@ -709,7 +849,7 @@ export default component$(() => {
                                         }}
                                         id="clientTypeIDNew"
                                     />
-                                    Crea nuovo cliente
+                                    {t("dashboard.csv.clientSelectNew")}
                                 </label>
 
                                 <label class="flex items-center gap-2">
@@ -723,7 +863,7 @@ export default component$(() => {
                                         }}
                                         id="clientTypeIDExisting"
                                     />
-                                    Seleziona esistente
+                                    {t("dashboard.csv.clientSelectExisting")}
                                 </label>
                             </div>
 
@@ -768,89 +908,222 @@ export default component$(() => {
                             )}
                         </div>
 
-                        {/* Sezione File con feedback visivo */}
-                        {['siti', 'network', 'ip'].map((section) => (
-                            <div key={section} class="space-y-4">
-                                <h2 class="text-xl font-semibold flex items-center gap-3">
-                                    <span class="flex items-center gap-2">
-                                        Importa {section}
-                                        <button
-                                            type="button"
-                                            class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
-                                            onClick$={() => showPreviewSection()}
-                                        >
-                                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
-                                            </svg>
-                                            <span class="tooltip">
-                                                {t("dashboard.infotabella")}
-                                            </span>
-                                        </button>
-                                    </span>
-
-                                    <span class="inline-flex">
-                                        {feedBackSVG[section]?.type === "success" && (
-                                            <div class="has-tooltip">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                                </svg>
-                                                <span class="tooltip">Importazione avvenuta con successo</span>
-                                            </div>
-                                        )}
-                                        {feedBackSVG[section]?.type === "error" && (
-                                            <div class="has-tooltip">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                                                </svg>
-                                                <span class="tooltip">{feedBackSVG[section]?.message}</span>
-                                            </div>
-                                        )}
-                                        {feedBackSVG[section]?.type === "loading" && (
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-                                            </svg>
-                                        )}
-                                    </span>
-                                </h2>
-
-                                <div class="relative">
-                                    <input
-                                        disabled={section === 'siti' && clienteTXT.value.trim() === '' && currentIdC.value.trim() === ''
-                                            || section === 'network' && !files.siti
-                                            || section === 'ip' && !files.network}
-                                        type="file"
-                                        id={`csv-${section}`}
-                                        name={`csv${section}`}
-                                        class="hidden"
-                                        onChange$={(e) => handleUpload(e, sitiFeedback, section as 'siti' | 'network' | 'ip')}
-                                        accept=".csv"
-                                    />
-
-                                    <label
-                                        for={`csv-${section}`}
-                                        class={`
-                                                flex items-center justify-between px-6 py-4 rounded-lg transition-all 
-                                                border-1 border-gray-200 bg-gray-50
-                                                ${(section === 'siti' && !clienteTXT.value.trim() && !currentIdC.value.trim())
-                                                || (section === 'network' && !files.siti)
-                                                || (section === 'ip' && !files.network)
-                                                ? 'cursor-not-allowed opacity-75'
-                                                : 'cursor-pointer hover:bg-gray-100'}
-        `}
+                        <div class="space-y-4">
+                            {/* Sezione SITI */}
+                            <h2 class="text-xl font-semibold flex items-center gap-3">
+                                <span class="flex items-center gap-2">
+                                    {t('dashboard.csv.siti')}
+                                    <button
+                                        type="button"
+                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                        onClick$={() => showPreviewSection('siti')}
                                     >
-                                        <div class="flex items-center gap-3">
-                                            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                        </svg>
+                                        <span class="tooltip">{t("dashboard.infotabella")}</span>
+                                    </button>
+                                </span>
+                                <span class="inline-flex">
+                                    {feedBackSVG.siti?.type === "success" && (
+                                        <div class="has-tooltip">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                             </svg>
-                                            <span class="text-gray-700">
-                                                {/* @ts-ignore */}
-                                                {files[section] ? files[section].name : `Trascina CSV o clicca per selezionare`}
-                                            </span>
+                                            <span class="tooltip">Importazione avvenuta con successo</span>
                                         </div>
-                                    </label>
-                                </div>
+                                    )}
+                                    {feedBackSVG.siti?.type === "error" && (
+                                        <div class="has-tooltip">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                            </svg>
+                                            <span class="tooltip">{feedBackSVG.siti?.message}</span>
+                                        </div>
+                                    )}
+                                    {feedBackSVG.siti?.type === "loading" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                        </svg>
+                                    )}
+                                </span>
+                            </h2>
+                            <div class="relative">
+                                <input
+                                    disabled={clienteTXT.value.trim() === '' && currentIdC.value.trim() === ''}
+                                    type="file"
+                                    id="csv-siti"
+                                    name="csvsiti"
+                                    class="hidden"
+                                    onChange$={(e) => handleUpload(e, sitiFeedback, 'siti')}
+                                    accept=".csv"
+                                />
+                                <label
+                                    for="csv-siti"
+                                    class={`
+                flex items-center justify-between px-6 py-4 rounded-lg transition-all 
+                border-1 border-gray-200 bg-gray-50
+                ${(!clienteTXT.value.trim() && !currentIdC.value.trim())
+                                            ? 'cursor-not-allowed opacity-75'
+                                            : 'cursor-pointer hover:bg-gray-100'}
+            `}
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <span class="text-gray-700">
+                                            {files.siti ? files.siti.name : t("runtime.infoInput")}
+                                        </span>
+                                    </div>
+                                </label>
                             </div>
-                        ))}
+                        </div>
+
+                        <div class="space-y-4">
+                            {/* Sezione NETWORK */}
+                            <h2 class="text-xl font-semibold flex items-center gap-3">
+                                <span class="flex items-center gap-2">
+                                    {t('dashboard.csv.network')}
+                                    <button
+                                        type="button"
+                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                        onClick$={() => showPreviewSection('network')}
+                                    >
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                        </svg>
+                                        <span class="tooltip">{t("dashboard.infotabella")}</span>
+                                    </button>
+                                </span>
+                                <span class="inline-flex">
+                                    {feedBackSVG.network?.type === "success" && (
+                                        <div class="has-tooltip">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
+                                            <span class="tooltip">Importazione avvenuta con successo</span>
+                                        </div>
+                                    )}
+                                    {feedBackSVG.network?.type === "error" && (
+                                        <div class="has-tooltip">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                            </svg>
+                                            <span class="tooltip">{feedBackSVG.network?.message}</span>
+                                        </div>
+                                    )}
+                                    {feedBackSVG.network?.type === "loading" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                        </svg>
+                                    )}
+                                </span>
+                            </h2>
+                            <div class="relative">
+                                <input
+                                    disabled={!files.siti}
+                                    type="file"
+                                    id="csv-network"
+                                    name="csvnetwork"
+                                    class="hidden"
+                                    onChange$={(e) => handleUpload(e, sitiFeedback, 'network')}
+                                    accept=".csv"
+                                />
+                                <label
+                                    for="csv-network"
+                                    class={`
+                flex items-center justify-between px-6 py-4 rounded-lg transition-all 
+                border-1 border-gray-200 bg-gray-50
+                ${!files.siti
+                                            ? 'cursor-not-allowed opacity-75'
+                                            : 'cursor-pointer hover:bg-gray-100'}
+            `}
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <span class="text-gray-700">
+                                            {files.network ? files.network.name : t("runtime.infoInput")}
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            {/* Sezione IP */}
+                            <h2 class="text-xl font-semibold flex items-center gap-3">
+                                <span class="flex items-center gap-2">
+                                    {t('dashboard.csv.ip')}
+                                    <button
+                                        type="button"
+                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                        onClick$={() => showPreviewSection('ip')}
+                                    >
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                                        </svg>
+                                        <span class="tooltip">{t("dashboard.infotabella")}</span>
+                                    </button>
+                                </span>
+                                <span class="inline-flex">
+                                    {feedBackSVG.ip?.type === "success" && (
+                                        <div class="has-tooltip">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
+                                            <span class="tooltip">Importazione avvenuta con successo</span>
+                                        </div>
+                                    )}
+                                    {feedBackSVG.ip?.type === "error" && (
+                                        <div class="has-tooltip">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                            </svg>
+                                            <span class="tooltip">{feedBackSVG.ip?.message}</span>
+                                        </div>
+                                    )}
+                                    {feedBackSVG.ip?.type === "loading" && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600 animate-spin">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                        </svg>
+                                    )}
+                                </span>
+                            </h2>
+                            <div class="relative">
+                                <input
+                                    disabled={!files.network}
+                                    type="file"
+                                    id="csv-ip"
+                                    name="csvip"
+                                    class="hidden"
+                                    onChange$={(e) => handleUpload(e, sitiFeedback, 'ip')}
+                                    accept=".csv"
+                                />
+                                <label
+                                    for="csv-ip"
+                                    class={`
+                flex items-center justify-between px-6 py-4 rounded-lg transition-all 
+                border-1 border-gray-200 bg-gray-50
+                ${!files.network
+                                            ? 'cursor-not-allowed opacity-75'
+                                            : 'cursor-pointer hover:bg-gray-100'}
+            `}
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <span class="text-gray-700">
+                                            {files.ip ? files.ip.name : t("runtime.infoInput")}
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
 
 
                         <button
@@ -861,18 +1134,18 @@ export default component$(() => {
                                 (clientType.value === 'existing' && currentIdC.value.trim() === '')
                             }
                         >
-                            Conferma Importazione
+                            {t("dashboard.csv.confirmImport")}
                         </button>
                         <button
                             type="button"
                             onClick$={() => {
-                                files['siti'] = null;
-                                files['network'] = null;
-                                files['ip'] = null;
+                                if (formRef.value) {
+                                    formRef.value.reset();
+                                }
                                 showModalCSV.value = false;
-                                fileInputRefIP.value = undefined;
-                                fileInputRefNetwork.value = undefined;
-                                fileInputRefSiti.value = undefined;
+                                files.network = null;
+                                files.ip = null;
+                                files.siti = null;
                                 sitiFeedback.value = null;
                                 networkFeedback.value = null;
                                 ipFeedback.value = null;
@@ -887,11 +1160,30 @@ export default component$(() => {
                             }}
                             class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
                         >
-                            Annulla
+                            {t("dashboard.csv.cancel")}
                         </button>
                     </Form>
 
                 </div>
+            </PopupModal>
+
+            <PopupModal
+                visible={showModalInfoCSV.value}
+                title={
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>{t("dashboard.csv.titleInfoCSV")}</span>
+                        <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
+                    </div>
+                }
+                onClosing$={() => { showModalInfoCSV.value = false; }}
+            >
+                {viewTableSection.value != null && (
+                    <TableInfoCSV tableName={viewTableSection.value as string}></TableInfoCSV>
+                )}
+
             </PopupModal>
 
         </>

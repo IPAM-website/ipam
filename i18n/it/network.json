@@ -28,7 +28,10 @@
       "occupedspace": "Spazio occupato",
       "parent": "Rete principale",
       "relativescomponents": "Componenti correlati",
-      "selectnetwork": "Seleziona rete"
+      "selectnetwork": "Seleziona rete",
+      "usingAddressesPt1": "Ci sono ",
+      "usingAddressesPt2": " di ",
+      "usingAddressesPt3": " indirizzi in uso"
     },
     "insertdescription": "Inserisci descrizione",
     "interval": {

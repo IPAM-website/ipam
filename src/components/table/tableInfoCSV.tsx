@@ -1,11 +1,13 @@
 import { component$ } from "@builder.io/qwik";
 import { CSVInfoDBTableMaps } from "~/tableMaps";
+import { inlineTranslate } from "qwik-speak";
 
 interface TableInfoCSVProps {
   tableName: string;
 }
 
 export default component$<TableInfoCSVProps>(({ tableName }) => {
+  const t = inlineTranslate();
   return (
     <>
       <div class="p-4">
@@ -24,8 +26,7 @@ export default component$<TableInfoCSVProps>(({ tableName }) => {
             />
           </svg>
           <p class="text-sm text-gray-700 dark:text-gray-500">
-            Il file <span class="font-semibold text-cyan-700 dark:text-cyan-500">CSV</span> deve
-            avere le seguenti colonne (intestazioni nella prima riga):
+            {t("runtime.tableInfoCSV.titlePt1")} <span class="font-semibold text-cyan-700 dark:text-cyan-500">CSV</span> {t("runtime.tableInfoCSV.titlePt2")}
           </p>
         </div>
         <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-md">
@@ -87,8 +88,7 @@ export default component$<TableInfoCSVProps>(({ tableName }) => {
             />
           </svg>
           <span class="text-sm text-cyan-800 dark:text-cyan-900">
-            Assicurati che le intestazioni siano esattamente come sopra e che
-            ogni riga contenga i dati corrispondenti.
+            {t("runtime.tableInfoCSV.warning")}
           </span>
         </div>
       </div>
