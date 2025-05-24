@@ -129,6 +129,9 @@ export default component$<AddressBoxProps>(
 
     const assembleIP = $(async () => {
       if (disabled) return;
+
+      // await new Promise((resolve)=>setTimeout(resolve,10))
+
       let ip = "";
       const inputs = [input1, input2, input3, input4];
       let ipclass = "";
@@ -256,6 +259,20 @@ export default component$<AddressBoxProps>(
 
 
       let exists = false;
+      console.log("NETWORK:", currentIPNetwork)
+
+      if (checkAvailability) {
+        let sameIP = [];
+        sameIP = (await getSameIPs(
+          ip,
+          currentIPNetwork,
+          parseInt(working_prefix),
+          addressType,
+          siteID,
+        )) as any[];
+        // console.log(sameIP)
+        exists = sameIP.length > 0;
+      }
 
       if (currentIPNetwork && currentIPNetwork != -1) {
         const parentNetwork: ReteModel = (await getNetwork(
@@ -277,6 +294,7 @@ export default component$<AddressBoxProps>(
           reversedPrefix -= 8;
           parentLastIp[i] = parentNetworkIP[i] | binaryPrefix;
         }
+
 
         if (addressType == "network") {
           if (parentNetwork.prefissorete > parseInt(working_prefix)) {
@@ -323,18 +341,8 @@ export default component$<AddressBoxProps>(
           //     errors.push("Outside of network boundaries");
         }
 
-        if (checkAvailability) {
-          let sameIP = [];
-          sameIP = (await getSameIPs(
-            ip,
-            currentIPNetwork,
-            parseInt(working_prefix),
-            addressType,
-            siteID,
-          )) as any[];
-          // console.log(sameIP)
-          exists = sameIP.length > 0;
-        }
+
+
 
       }
       OnInput$({
@@ -368,8 +376,6 @@ export default component$<AddressBoxProps>(
         if (inp.value && parentNetwork.value) {
           inp.value.disabled = true;
           inp.value.value = parentNetwork.value.iprete.split(".")[i];
-          inp.value.style.backgroundColor = "#eee";
-          inp.value.style.color = "#555";
         }
         int_prefix -= 8;
         i++;
@@ -446,78 +452,82 @@ export default component$<AddressBoxProps>(
         <p class="font-semibold">{title}</p>
         <div
           class={
-            "w-full min-w-[240px] *:float-start"
+            "w-full min-w-[240px] flex justify-end"
           }
         >
-          <div class="relative w-[48px]">
-            <input
-              type="text"
-              ref={input1}
-              class={
-                "only-numbers address w-[48px] rounded-md border border-gray-300 p-0.5 px-2 outline-0 hover:border-black focus:border-black" +
-                (disabled ? " bg-gray-300" : "")
-              }
-              onInput$={assembleIP}
-              disabled={disabled}
-            />
-            <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
-              Questo ottetto non è modificabile perché fa parte della porzione
-              di rete
-              <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+          <div class="*:float-start max-w-[240px]">
+
+
+            <div class="relative w-[48px]">
+              <input
+                type="text"
+                ref={input1}
+                class={
+                  "only-numbers address w-[48px] rounded-md border border-gray-300 dark:hover:border-gray-100 p-0.5 px-2 dark:focus:border-gray-100 outline-0 hover:border-black focus:border-black" +
+                  (disabled ? " bg-gray-300 dark:bg-gray-500" : "")
+                }
+                onInput$={assembleIP}
+                disabled={disabled}
+              />
+              <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                Questo ottetto non è modificabile perché fa parte della porzione
+                di rete
+                <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+              </div>
             </div>
-          </div>
-          <span class="w-[10px] text-center">.</span>
-          <div class="relative block w-[48px]">
-            <input
-              type="text"
-              ref={input2}
-              class={
-                "only-numbers address w-[48px] rounded-md border border-gray-300 p-0.5 px-2 outline-0 hover:border-black focus:border-black" +
-                (disabled ? " bg-gray-300" : "")
-              }
-              onInput$={assembleIP}
-              disabled={disabled}
-            />
-            <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
-              Questo ottetto non è modificabile perché fa parte della porzione
-              di rete
-              <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+            <span class="w-[10px] text-center">.</span>
+            <div class="relative block w-[48px]">
+              <input
+                type="text"
+                ref={input2}
+                class={
+                  "only-numbers address w-[48px] rounded-md border border-gray-300 dark:hover:border-gray-100 p-0.5 px-2 dark:focus:border-gray-100 outline-0 hover:border-black focus:border-black" +
+                  (disabled ? " bg-gray-300 dark:bg-gray-500" : "")
+                }
+                onInput$={assembleIP}
+                disabled={disabled}
+              />
+              <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900  px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                Questo ottetto non è modificabile perché fa parte della porzione
+                di rete
+                <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+              </div>
             </div>
-          </div>
-          <span class="w-[10px] text-center">.</span>
-          <div class="relative">
-            <input
-              type="text"
-              ref={input3}
-              class={
-                "only-numbers address w-[48px] rounded-md border border-gray-300 p-0.5 px-2 outline-0 hover:border-black focus:border-black" +
-                (disabled ? " bg-gray-300" : "")
-              }
-              onInput$={assembleIP}
-              disabled={disabled}
-            />
-            <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
-              Questo ottetto non è modificabile perché fa parte della porzione
-              di rete
-              <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+            <span class="w-[10px] text-center">.</span>
+            <div class="relative">
+              <input
+                type="text"
+                ref={input3}
+                class={
+                  "only-numbers address w-[48px] rounded-md border border-gray-300 dark:hover:border-gray-100 dark:focus:border-gray-100 p-0.5 px-2 outline-0 hover:border-black focus:border-black" +
+                  (disabled ? " bg-gray-300 dark:bg-gray-500" : "")
+                }
+                onInput$={assembleIP}
+                disabled={disabled}
+              />
+              <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                Questo ottetto non è modificabile perché fa parte della porzione
+                di rete
+                <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+              </div>
             </div>
-          </div>
-          <span class="w-[10px] text-center">.</span>
-          <div class="relative">
-            <input
-              type="text"
-              ref={input4}
-              class={
-                "only-numbers address w-[48px] rounded-md border border-gray-300 p-0.5 px-2 outline-0 hover:border-black focus:border-black" +
-                (disabled ? " bg-gray-300" : "")
-              }
-              onInput$={assembleIP}
-              disabled={disabled}
-            />
-            <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
-              Questo ottetto non è modificabile perché fa parte della porzione
-              di rete
-              <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+            <span class="w-[10px] text-center">.</span>
+            <div class="relative">
+              <input
+                type="text"
+                ref={input4}
+                class={
+                  "only-numbers address w-[48px] rounded-md border border-gray-300 dark:hover:border-gray-100 dark:focus:border-gray-100 p-0.5 px-2 outline-0 hover:border-black focus:border-black" +
+                  (disabled ? " bg-gray-300 dark:bg-gray-500" : "")
+                }
+                onInput$={assembleIP}
+                disabled={disabled}
+              />
+              <div class="pointer-events-none invisible absolute -top-9 left-1/2 z-20 -translate-x-1/2 rounded bg-gray-900 px-3 py-1 text-xs text-white opacity-0 shadow transition-all group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                Questo ottetto non è modificabile perché fa parte della porzione
+                di rete
+                <div class="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-gray-900"></div>
+              </div>
             </div>
           </div>
         </div>

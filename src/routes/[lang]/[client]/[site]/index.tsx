@@ -396,7 +396,7 @@ export default component$(() => {
 
   return (
     <>
-      <div class="size-full overflow-hidden bg-white">
+      <div class="size-full overflow-hidden bg-white dark:bg-transparent">
         <div class="fixed top-4 right-4 z-50 space-y-2">
           {notifications.value.map((notification, index) => (
             <div
@@ -422,11 +422,11 @@ export default component$(() => {
                   <option value="info" onClick$={handleNavClick}>Info</option>
               </nav> */}
         <div class="animateEnter flex w-full justify-center">
-          <nav class="mt-4 flex gap-1 rounded-xl bg-white px-2 py-1 shadow sm:w-1/4">
+          <nav class="mt-4 flex gap-1 rounded-xl bg-white dark:bg-gray-500 px-2 py-1 shadow sm:w-1/4">
             <button
               onClick$={handleNavClick}
               value="address"
-              class="flex-1 rounded-lg border border-transparent px-4 py-2 font-medium text-gray-700 transition hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200"
+              class="flex-1 rounded-lg border border-transparent px-4 py-2 font-medium text-gray-700 dark:bg-gray-500 dark:text-gray-100 transition hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200"
             // Aggiungi qui una condizione per la voce attiva, ad esempio:
             // class={isActive ? "bg-blue-200 text-blue-800" : "..."}
             >
@@ -435,7 +435,7 @@ export default component$(() => {
             <button
               onClick$={handleNavClick}
               value="info"
-              class="flex-1 rounded-lg border border-transparent px-4 py-2 font-medium text-gray-700 transition hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200"
+              class="flex-1 rounded-lg border border-transparent px-4 py-2 font-medium text-gray-700 dark:bg-gray-500 dark:text-gray-100 transition hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200"
             // Aggiungi qui una condizione per la voce attiva, ad esempio:
             // class={isActive ? "bg-blue-200 text-blue-800" : "..."}
             >
@@ -447,9 +447,9 @@ export default component$(() => {
         {page.value == "address" && (
           <div class="animateEnter">
             <Table>
-              <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+              <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 dark:border-gray-700 dark:bg-gray-800 bg-gray-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="text-lg font-semibold text-gray-800">{t("network.networks")}</span>
+                  <span class="text-lg font-semibold text-gray-800 dark:text-gray-100">{t("network.networks")}</span>
                 </div>
               </div>
               <Dati_Headers
@@ -479,6 +479,7 @@ export default component$(() => {
                   hasParent.value = false;
                   broadcastIP.value = "";
                   netMode.value = 1;
+                  if (updateAddr1.value) updateAddr1.value();
                   if (updateAddr2.value) updateAddr2.value();
                 }}
               ></ButtonAdd>
@@ -487,7 +488,7 @@ export default component$(() => {
         )}
         {page.value == "info" && (
           <div class="mt-8 flex flex-col gap-8 md:flex-row mx-8 md:mx-0">
-            <div class="inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 border-gray-300 px-5 py-3">
+            <div class="inline-flex flex-1 flex-col items-start dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100 dark:**:border-gray-600 justify-start gap-1 rounded-md border-1 border-gray-300 px-5 py-3">
               <div class="flex h-[50px] w-full items-center overflow-hidden">
                 <div class="text-lg font-semibold text-black">{t("site.siteinformation")}</div>
               </div>
@@ -511,21 +512,21 @@ export default component$(() => {
               </div>
             </div>
 
-            <div class="mx-auto flex-initial rounded-md border-1 border-[#cdcdcd] max-md:w-60">
-              <div class="flex flex-1 cursor-pointer flex-col *:p-3 *:px-10">
+            <div class="mx-auto flex-initial rounded-md border-1 border-[#cdcdcd] dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 max-md:w-60">
+              <div class="flex flex-1 *:cursor-pointer flex-col dark:*:border-gray-600 *:p-3 *:px-10">
                 <div class="flex flex-1 border-b border-[#f3f3f3]">
-                  <div class="w-full text-center font-['Inter'] text-base font-semibold text-black">{t("site.views")}</div>
+                  <div class="w-full text-center font-['Inter'] text-base font-semibold text-black cursor-default">{t("site.views")}</div>
                 </div>
                 <button
                   type="button"
-                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
+                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                   onClick$={() => nav("0/addresses/view")}
                 >
                   {t("ipaddresses")}
                 </button>
                 <button
                   type="button"
-                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
+                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                   onClick$={() => nav("0/intervals/view")}
                 >
                   {t("ipintervals")}
@@ -539,21 +540,21 @@ export default component$(() => {
                 </button> */}
                 <button
                   type="button"
-                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
+                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                   onClick$={() => nav("0/aggregates/view")}
                 >
                   {t("network.aggregates.aggregate")}
                 </button>
                 <button
                   type="button"
-                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
+                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                   onClick$={() => nav("0/vfr/view")}
                 >
                   VFR
                 </button>
                 <button
                   type="button"
-                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 text-left"
+                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
                   onClick$={() => nav("0/vlan/view")}
                 >
                   VLAN
@@ -684,7 +685,7 @@ export default component$(() => {
             {attempted.value &&
               ipErrors.value.length > 0 &&
               ipErrors.value.map((x) => (
-                <p class="w-full text-end text-red-500" key={x}>{x}</p>
+                <p class="w-full text-end text-red-500 mb-2" key={x}>{x}</p>
               ))}
             <AddressBox
               title={t("network.broadcastip")}

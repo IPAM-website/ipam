@@ -5,5 +5,15 @@
     "result3": "Username not found",
     "result4": "Server error",
     "resultundefined": "uknown result"
+  },
+  "full": {
+    "it": "Italian",
+    "en": "English"
+  },
+  "action": {
+    "result1": "Insert finished successfully",
+    "result2": "Update finished successfully",
+    "result3": "Error during insert",
+    "result4": "Error during update"
   }
 }

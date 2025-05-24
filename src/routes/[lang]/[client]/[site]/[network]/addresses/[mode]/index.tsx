@@ -82,6 +82,10 @@ export const getAddresses = server$(async function (
   filter.query = (filter.query as string).trim();
   let addresses: IndirizziModel[] = [];
 
+
+  if(isNaN(parseInt(this.params.site)) || isNaN(parseInt(this.params.network)))
+    return [];
+  
   if (filter.empty == 1) {
     const queryResult =
       await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete 
@@ -339,9 +343,9 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
-            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-3 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
-                <span class="text-lg font-semibold text-gray-800">{t("network.addresses.addresslist")}</span>
+                <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.addresses.addresslist")}</span>
                 <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
               </div>
               <div class="flex items-center gap-2">

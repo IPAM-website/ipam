@@ -231,12 +231,12 @@ export default component$<DatiProps>(
       <>
         {/* Pulsante Ricarica */}
         <div class="flex items-center px-1 pe-3">
-          <div class="m-5 mb-3 flex-auto font-['Inter'] text-base font-semibold text-black">
+          <div class="m-5 mb-3 flex-auto font-['Inter'] text-base font-semibold text-black dark:text-gray-200">
             {title}
           </div>
           <div class="has-tooltip flex h-full items-center">
             <button
-              class="mx-2 cursor-pointer rounded-md border-[1.5px] border-black bg-white px-0.5 py-0.5 hover:bg-gray-100"
+              class="mx-2 cursor-pointer rounded-md border-[1.5px] border-black dark:border-gray-500 px-0.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-600"
               onClick$={() => {
                 settings.visible = true;
               }}
@@ -270,8 +270,8 @@ export default component$<DatiProps>(
             disabled={store.globalLoading}
             class={`flex items-center rounded-md px-3.5 py-1.5 ${
               store.globalLoading
-                ? "cursor-wait bg-gray-400"
-                : "cursor-pointer bg-black text-white hover:bg-gray-900"
+                ? "cursor-wait bg-gray-400 dark:bg-gray-600"
+                : "cursor-pointer bg-black text-white hover:bg-gray-900 dark:hover:bg-gray-700"
             } transition-colors`}
           >
             {store.globalLoading ? (
@@ -300,15 +300,15 @@ export default component$<DatiProps>(
             )}
           </button>
         </div>
-        <div class="mx-13 flex items-center">
+        <div class="mx-13 mt-2 flex items-center">
           <Slot></Slot>
         </div>
         <div class="mx-auto w-11/12">
           {/* Messaggio di errore con progress bar */}
           {store.error && (
-            <div class="relative mb-4 rounded-lg bg-red-100 p-3 text-red-700 shadow">
+            <div class="relative mb-4 rounded-lg bg-red-100 p-3 dark:bg-red-600 text-red-700 dark:text-red-200 shadow">
               {store.error}
-              <div class="animate-progress absolute bottom-0 left-0 h-1 bg-red-300"></div>
+              <div class="animate-progress absolute bottom-0 left-0 h-1 bg-red-300 dark:bg-red-600"></div>
             </div>
           )}
 
@@ -316,7 +316,7 @@ export default component$<DatiProps>(
           {initialLoad.value ? (
             <div class="space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} class="flex border-t border-neutral-200">
+                <div key={i} class="flex border-t border-neutral-200 dark:border-neutral-800">
                   {TableMaps[nT.value].keys.map((_, j) => (
                     <div key={j} class="flex-1 p-4">
                       <div class="skeleton h-6 w-full rounded"></div>
@@ -332,7 +332,7 @@ export default component$<DatiProps>(
           ) : (
             <>
               {/* Intestazioni della tabella */}
-              <div class="flex rounded-t-lg bg-gray-50">
+              <div class="flex rounded-t-lg bg-gray-50 dark:bg-gray-700">
                 {settings.tableColumnsHeader.map((header) => {
                   const index =
                     TableMaps[nT.value].headers[lang].indexOf(header);
@@ -341,7 +341,7 @@ export default component$<DatiProps>(
                   return (
                     <div
                       key={index}
-                      class="flex flex-1 cursor-pointer items-center px-4 py-3 text-sm font-semibold text-zinc-500"
+                      class="flex flex-1 cursor-pointer items-center px-4 py-3 text-sm font-semibold text-zinc-500 dark:text-gray-200 dark:*:text-gray-100"
                       onClick$={() => {
                         if (header == "") return;
                         orderFilter[key] = ((orderFilter[key] + 2) % 3) - 1;
@@ -399,7 +399,7 @@ export default component$<DatiProps>(
                   <div
                     key={rowIndex}
                     class={
-                      "flex border-t border-neutral-200 transition-colors hover:bg-gray-50 " +
+                      "flex border-t border-neutral-200 dark:border-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-600 " +
                       (onRowClick != undefined ? "cursor-pointer" : "")
                     }
                     onClick$={() => {
@@ -409,7 +409,7 @@ export default component$<DatiProps>(
                     {settings.tableColumnsKey.map((key, colIndex) => (
                       <div
                         key={colIndex}
-                        class="flex-1 p-4 font-['Inter'] text-base leading-normal font-medium text-black"
+                        class="flex-1 p-4 font-['Inter'] text-base leading-normal font-medium text-black dark:text-gray-100" 
                       >
                         {row[key] instanceof Date
                           ? row[key].toLocaleString().split(",")[0]
@@ -508,7 +508,7 @@ export default component$<DatiProps>(
           visible={settings.visible}
           onClosing$={handleSettingsClosing}
         >
-          <div class="my-2 ms-2 mb-5 text-gray-700">
+          <div class="my-2 ms-2 mb-5 text-gray-700 dark:text-gray-400">
             {/* {$localize`Click on the column name to move it to the other list. After clicking save, this will change the view of the table.`} */}
             {t("table.columnsettingsdescription")}
           </div>
@@ -531,7 +531,7 @@ export default component$<DatiProps>(
                         <li
                           key={index}
                           value={TableMaps[nT.value].keys[index]}
-                          class="cursor-pointer rounded-lg p-0.5 ps-2 transition-all hover:bg-gray-100"
+                          class="cursor-pointer rounded-lg p-0.5 ps-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-600"
                           onClick$={() => {
                             settings.previewTableColumnsHeader.push(
                               TableMaps[nT.value].headers[lang][index],
@@ -550,7 +550,7 @@ export default component$<DatiProps>(
             </div>
             <div class="relative top-4 flex flex-auto flex-col items-center justify-center">
               <button
-                class="has-tooltip"
+                class="has-tooltip rounded-[50%]"
                 onClick$={() => {
                   const other_columns_head = TableMaps[nT.value].headers[
                     lang
@@ -567,7 +567,7 @@ export default component$<DatiProps>(
                   settings.previewTableColumnsKey = other_columns_key;
                 }}
               >
-                <div class="cursor-pointer rounded-[50%] p-1.5 transition-all hover:bg-gray-200">
+                <div class="cursor-pointer rounded-[50%] p-1.5 transition-all hover:bg-gray-200 dark:hover:bg-gray-600">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -598,7 +598,7 @@ export default component$<DatiProps>(
                       <div class="flex items-center" key = {index}>
                         <li
                           value={settings.tableColumnsKey[index]}
-                          class="flex-1 cursor-pointer rounded-lg p-0.5 ps-2 transition-all hover:bg-gray-100"
+                          class="flex-1 cursor-pointer rounded-lg p-0.5 ps-2 transition-all hover:bg-gray-100 dark:hover:bg-gray-600"
                           onClick$={() => {
                             settings.previewTableColumnsHeader.splice(index, 1);
                             settings.previewTableColumnsKey.splice(index, 1);
@@ -635,7 +635,7 @@ export default component$<DatiProps>(
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-4 text-gray-400 hover:text-black"
+                            class="size-4 text-gray-400 hover:text-black dark:hover:text-gray-50"
                             style={{
                               visibility: index != 0 ? "visible" : "hidden",
                             }}
@@ -675,7 +675,7 @@ export default component$<DatiProps>(
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="mx-0.5 size-4 text-gray-400 hover:text-black"
+                            class="mx-0.5 size-4 text-gray-400 hover:text-black dark:hover:text-gray-50"
                             style={{
                               visibility:
                                 index <
@@ -698,7 +698,7 @@ export default component$<DatiProps>(
               </div>
             </div>
           </div>
-          <div class="mt-3 flex w-full justify-end gap-1">
+          <div class="mt-5 flex w-full justify-end gap-1">
             <button
               class="cursor-pointer rounded-sm bg-red-500 p-0.5 px-2 text-gray-50 transition-all hover:bg-red-400"
               onClick$={() => {

@@ -25,7 +25,7 @@ export default component$<TextBoxFormProps>(
     return (
       <>
         <div class="my-2 ml-2 flex items-center">
-          <label for={"chk" + id} class="font-semibold text-black select-none">
+          <label for={"chk" + id} class="font-semibold text-black dark:text-gray-200 select-none">
             {nameCHK}
           </label>
           <input

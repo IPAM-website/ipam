@@ -5,5 +5,15 @@
     "result3": "Username non trovato",
     "result4": "Errore del server",
     "resultundefined": "BOH VABBE"
+  },
+  "full": {
+    "it": "Italiano",
+    "en": "Inglese"
+  },
+  "action": {
+    "result1": "Inserimento avvenuto correttamente",
+    "result2": "Modifica avvenuta correttamente",
+    "result3": "Errore durante l'inserimento",
+    "result4": "Errore durante la modifica"
   }
 }

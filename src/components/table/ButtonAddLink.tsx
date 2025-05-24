@@ -1,4 +1,5 @@
 import { component$ } from "@builder.io/qwik";
+import { useNavigate } from "@builder.io/qwik-city";
 
 interface ButtonProps {
   nomePulsante: string;
@@ -6,10 +7,11 @@ interface ButtonProps {
 }
 
 export default component$<ButtonProps>(({ nomePulsante, href }) => {
+  const nav = useNavigate();
   return (
-    <a
+    <button
       class="m-4 mb-8 flex h-9 w-7/10 max-w-[300px] cursor-pointer items-center justify-center rounded-lg bg-black px-4 transition-all duration-200 ease-in hover:w-4/5 hover:max-w-[360px]"
-      href={href}
+      onClick$={()=>nav(href)}
     >
       <div class="flex items-center gap-2">
         <svg
@@ -30,6 +32,6 @@ export default component$<ButtonProps>(({ nomePulsante, href }) => {
           {nomePulsante}
         </span>
       </div>
-    </a>
+    </button>
   );
 });

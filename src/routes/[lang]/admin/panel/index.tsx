@@ -5,6 +5,7 @@ import type {
 import {
   routeLoader$,
   server$,
+  useNavigate,
 } from "@builder.io/qwik-city";
 import jwt from "jsonwebtoken";
 import Title from "~/components/layout/Title";
@@ -100,6 +101,7 @@ export default component$(() => {
   // const logs = useLogsLoader();
   const info = useSignal<infoProps>();
   const lang = getLocale("en");
+  const nav = useNavigate();
 
   useTask$(async () => {
     info.value = await getInfo();
@@ -108,13 +110,13 @@ export default component$(() => {
   const t = inlineTranslate();
   return (
     <>
-      <div class="size-full overflow-hidden bg-white px-0 md:px-24 lg:px-40">
+      <div class="size-full overflow-hidden  px-0 md:px-24 lg:px-40">
         <Title
           haveReturn={true}
           url={"/" + lang + "/dashboard"}
         >{t("admin.panel")}</Title>
         <div class="mt-8 flex flex-col gap-8 md:flex-row">
-          <div class="inline-flex w-full flex-4 flex-col items-start justify-start gap-1 rounded-lg border-1 border-[#cdcdcd] px-5 py-3 md:w-72">
+          <div class="inline-flex w-full flex-4 flex-col dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 items-start justify-start gap-1 rounded-lg border-1 border-[#cdcdcd] px-5 py-3 md:w-72">
             <div class="flex h-[50px] w-full items-center overflow-hidden">
               <div class="text-xl font-semibold text-black">{t("admin.variousinfo")}</div>
             </div>
@@ -144,34 +146,34 @@ export default component$(() => {
             </div>
           </div>
 
-          <div class="flex-initial rounded-lg border-1 border-[#cdcdcd]">
-            <div class="flex flex-1 cursor-pointer flex-col *:p-2">
+          <div class="flex-initial rounded-lg dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 border-1 border-[#cdcdcd]">
+            <div class="flex flex-1 flex-col *:p-2">
               <div class="flex flex-1 border-b border-[#f3f3f3]">
                 <div class="w-full text-center font-['Inter'] text-base font-semibold text-black">{t("admin.operations")}</div>
               </div>
-              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100">
-                <a
-                  href={"/" + lang + "/admin/panel/tecnici"}
-                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black"
-                >{t("admin.viewalltecnici")}</a>
+              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer">
+                <button
+                  onClick$={()=>nav("/" + lang + "/admin/panel/tecnici")}
+                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black cursor-pointer"
+                >{t("admin.viewalltecnici")}</button>
               </div>
-              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100">
-                <a
-                  href={"/" + lang + "/admin/panel/clienti"}
-                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black"
-                >{t("admin.viewallclienti")}</a>
+              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer">
+                <button
+                  onClick$={()=>nav("/" + lang + "/admin/panel/clienti")}
+                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black cursor-pointer"
+                >{t("admin.viewallclienti")}</button>
               </div>
-              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100">
-                <a
-                  href={"/" + lang + "/admin/panel/utenti_clienti"}
-                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black"
-                >{t("admin.viewallutenti")}</a>
+              <div class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer">
+                <button
+                  onClick$={()=>nav("/" + lang + "/admin/panel/utenti_clienti")}
+                  class="flex-1 py-1 text-center font-['Inter'] text-base text-black cursor-pointer"
+                >{t("admin.viewallutenti")}</button>
               </div>
             </div>
           </div>
         </div>
         <div class="mt-8 flex w-full">
-          <div class="inline-flex w-full items-center justify-start gap-2.5 overflow-hidden rounded-lg border-1 border-[#cdcdcd] p-2 md:w-3/4">
+          <div class="inline-flex w-full dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 items-center justify-start gap-2.5 overflow-hidden rounded-lg border-1 border-[#cdcdcd] p-2 md:w-3/4">
             <div class="inline-flex flex-1 flex-col items-start justify-start">
               <div class="border-b border-[#f3f3f3]">
                 <div class="justify-start font-['Inter'] text-base leading-normal font-semibold text-black">

@@ -66,7 +66,7 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito))
-      throw new Error("idsito non disponibile")
+      return [];
     const query =
       await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
                                 WHERE siti_rete.idsito=${idsito}`;
@@ -98,7 +98,7 @@ export const getAllAggregatesByNetwork = server$(async function (
 
   try {
     if (isNaN(idsito))
-      throw new Error("idsito non disponibile")
+      return [];
     const networks = await getAllNetworksBySite(idsito);
     const prefixes: number[] = [];
 

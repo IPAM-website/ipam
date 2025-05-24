@@ -13,6 +13,7 @@ import {
   routeAction$,
   server$,
   useLocation,
+  useNavigate,
   z,
   zod$,
 } from "@builder.io/qwik-city";
@@ -23,7 +24,8 @@ import type {
   CittaModel,
   ClienteModel,
   PaeseModel,
-  SiteModel} from "~/dbModels";
+  SiteModel
+} from "~/dbModels";
 import Accordion from "~/components/layout/Accordion/Accordion";
 import PopupModal from "~/components/ui/PopupModal";
 import SelectTextboxForm from "~/components/form/formComponents/SelectTextboxForm";
@@ -43,7 +45,7 @@ type fmData = SiteModel & { nomecitta: string; nomepaese: string };
 export const getCitiesOfClients = server$(async function (idcliente: number) {
   try {
     if (isNaN(idcliente))
-        return [];
+      return [];
     const query =
       await sql`SELECT DISTINCT citta.* FROM citta INNER JOIN siti ON citta.idcitta=siti.idcitta WHERE siti.idcliente=${idcliente}`;
     return query as unknown as CittaModel[];
@@ -62,7 +64,7 @@ export const getClient = server$(async function (idclient: number) {
   };
   try {
     if (isNaN(idclient))
-        return client;
+      return client;
     const query =
       await sql`SELECT * FROM clienti WHERE clienti.idcliente=${idclient}`;
     client = query[0] as ClienteModel;
@@ -86,7 +88,7 @@ export const getCitiesHints = server$(async function () {
 export const deleteSite = server$(async function (idsito: number) {
   try {
     if (isNaN(idsito))
-        return false;
+      return false;
     await sql`DELETE FROM siti WHERE idsito=${idsito}`;
     return true;
   } catch (e) {
@@ -108,7 +110,7 @@ export const getAllCountries = server$(async () => {
 export const getClientCountries = server$(async (idcliente: number) => {
   try {
     if (isNaN(idcliente))
-        return [];
+      return [];
     const data =
       await sql`SELECT DISTINCT paesi.* FROM paesi INNER JOIN citta ON paesi.idpaese=citta.idpaese INNER JOIN siti ON citta.idcitta=siti.idcitta WHERE siti.idcliente=${idcliente} ORDER BY nomepaese`;
     return data as unknown as PaeseModel[];
@@ -241,6 +243,7 @@ export default component$(() => {
   const createSite = useCreateSite();
   const updateSite = useUpdateSite();
   const loc = useLocation();
+  const nav = useNavigate();
   const lang = getLocale("en");
 
   const sites = useSignal<SiteModel[]>([]);
@@ -275,8 +278,6 @@ export default component$(() => {
 
   const isClient = useSignal(false);
   const cityName = useSignal("");
-
-  const isSearching = useSignal(false);
 
   useTask$(async () => {
     countries.value = await getAllCountries();
@@ -408,6 +409,7 @@ export default component$(() => {
   const seeLocMobile = useSignal(true);
   const seeSiteMobile = useSignal(true);
 
+
   const t = inlineTranslate();
 
   return (
@@ -425,13 +427,13 @@ export default component$(() => {
           </div>
         ))}
       </div>
-      <Title haveReturn={!isClient.value} url={loc.url.origin}>
+      <Title haveReturn={!isClient.value} url={loc.url.origin + "/" + lang + "/dashboard"}>
         {client.value?.nomecliente}
       </Title>
       <br />
       {/* VISUALIZZAZIONE DELLE CITTA E PAESI */}
       <div class="flex flex-col gap-2 md:flex-row">
-        <div class="mx-5 flex flex-col rounded-md border border-gray-200 p-2 shadow md:h-[60vh] md:w-1/4 md:p-3">
+        <div class="mx-5 flex flex-col rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-2 shadow md:h-[60vh] md:w-1/4 md:p-3">
           <div
             class="ms-1 flex items-center gap-2"
             onClick$={() => {
@@ -458,7 +460,7 @@ export default component$(() => {
               {t("location")}
               <button
                 onClick$={() => (siteAddMode.value = 1)}
-                class="has-tooltip rounded-lg p-0.5 hover:bg-gray-200 active:bg-gray-100"
+                class="has-tooltip rounded-lg p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 active:bg-gray-100"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -480,7 +482,7 @@ export default component$(() => {
           </div>
           <hr class="text-gray-300 transition-all duration-400 linear" style={{ opacity: seeLocMobile.value ? 1 : 0 }} />
           <div
-            class="space-y-1 transition-all duration-400 linear max-md:max-h-[500px]"
+            class="space-y-1 transition-all  duration-400 linear max-md:max-h-[500px] h-full"
             style={{
               maxHeight: seeLocMobile.value ? "" : 0,
               overflowY: seeLocMobile.value ? "auto" : "hidden",
@@ -506,7 +508,7 @@ export default component$(() => {
                     {filterCity?.map((j) => (
                       <button
                         id={"btn" + j.idcitta}
-                        class="w-full cursor-pointer rounded-md px-3 py-0.5 text-start outline-0 hover:bg-gray-50 focus:bg-gray-100"
+                        class="w-full cursor-pointer dark:text-gray-50 dark:bg-transparent dark:hover:bg-gray-700 rounded-md px-3 py-0.5 text-start outline-0 hover:bg-gray-50 focus:bg-gray-100 dark:focus:bg-gray-600"
                         onClick$={() => {
                           selected.value = j.idcitta;
                           cityName.value = j.nomecitta;
@@ -521,14 +523,14 @@ export default component$(() => {
                 );
               })
             ) : (
-              <div class="h-full text-center text-sm text-gray-400">
+              <div class="h-full text-center justify-center flex items-center text-sm text-gray-400">
                 {/* {$localize`Non ci sono paesi con almeno un sito`} */}
                 {t("client.nocountries")}
               </div>
             )}
           </div>
         </div>
-        <div class="mx-5 flex flex-col rounded-md border border-gray-200 p-3 shadow md:h-[60vh] md:w-3/4">
+        <div class="mx-5 flex flex-col rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-3 shadow md:h-[60vh] md:w-3/4">
           <div
             class="ms-1 flex items-center gap-2"
             onClick$={() => {
@@ -590,8 +592,8 @@ export default component$(() => {
             }}
           >
             {selected.value !== -1 ? (
-              <div class="h-full space-y-1 overflow-x-hidden">
-                <span class="ms-1 text-sm text-gray-400">
+              <div class="h-full space-y-1 overflow-x-hidden pt-2">
+                <span class="ms-2 text-sm text-gray-400">
                   {cityName.value[0].toUpperCase() +
                     cityName.value.slice(1).toLowerCase()}
                 </span>
@@ -599,9 +601,9 @@ export default component$(() => {
                 {sites.value.length > 0 ? (
                   sites.value.map((x: SiteModel) => (
                     <div class="mx-2 flex items-center justify-between" key={x.idsito}>
-                      <a
-                        href={`${x.idsito}/`}
-                        class="flex items-center gap-3 text-sm text-blue-600 hover:underline"
+                      <button
+                        onClick$={() => nav(`${x.idsito}/`)}
+                        class="flex items-center gap-3 text-sm text-blue-600 dark:text-blue-500 cursor-pointer hover:underline"
                       >
                         {x.datacenter && x.tipologia == "active" && (
                           <svg
@@ -610,7 +612,7 @@ export default component$(() => {
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-5 text-gray-700"
+                            class="size-5 text-gray-700 dark:text-gray-200"
                           >
                             <path
                               stroke-linecap="round"
@@ -626,7 +628,7 @@ export default component$(() => {
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-5 text-gray-700"
+                            class="size-5 text-gray-700 dark:text-gray-200"
                           >
                             <path
                               stroke-linecap="round"
@@ -642,7 +644,7 @@ export default component$(() => {
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-5 text-gray-700"
+                            class="size-5 text-gray-700 dark:text-gray-200"
                           >
                             <path
                               stroke-linecap="round"
@@ -658,7 +660,7 @@ export default component$(() => {
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-5 text-gray-700"
+                            class="size-5 text-gray-700 dark:text-gray-200"
                           >
                             <path
                               stroke-linecap="round"
@@ -674,7 +676,7 @@ export default component$(() => {
                             viewBox="0 0 24 24"
                             stroke-width="1.5"
                             stroke="currentColor"
-                            class="size-5 text-gray-700"
+                            class="size-5 text-gray-700dark:text-gray-200 "
                           >
                             <path
                               stroke-linecap="round"
@@ -684,7 +686,7 @@ export default component$(() => {
                           </svg>
                         )}
                         {x.nomesito}
-                      </a>
+                      </button>
                       <div>
                         {siteUpdateMode.value && (
                           <>
@@ -845,23 +847,17 @@ export default component$(() => {
                   "idcitta",
                 )[0] as HTMLInputElement;
                 input.value = e.value;
-                // console.log(e.value);
+                console.log("result:", e.value);
                 const input2 = document.getElementsByName(
                   "nomecitta",
                 )[0] as HTMLInputElement;
                 input2.value = e.text;
                 if (e.value != "") {
-                  if (isSearching.value) {
-                    isSearching.value = true;
-                    setTimeout(async () => {
-                      selectedCountry.value = await server$(async () => {
-                        return (
-                          await sql`SELECT idpaese FROM citta WHERE idcitta = ${e.value}`
-                        )[0].idpaese.toString();
-                      })();
-                      isSearching.value = false;
-                    }, 1000);
-                  }
+                  selectedCountry.value = await server$(async () => {
+                    return (
+                      await sql`SELECT idpaese FROM citta WHERE idcitta = ${e.value}`
+                    )[0].idpaese.toString();
+                  })();
                 }
               }}
               OnInput$={(e) => {
@@ -905,7 +901,7 @@ export default component$(() => {
                   x.nomepaese.length > 16
                     ? x.nomepaese.substring(0, 17) + "..."
                     : x.nomepaese;
-                return <option value={x.idpaese} key={"opt"+x.idpaese}>{renderedText}</option>;
+                return <option value={x.idpaese} key={"opt" + x.idpaese}>{renderedText}</option>;
               })}
             </SelectForm>
           </div>

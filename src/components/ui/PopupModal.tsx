@@ -31,7 +31,7 @@ export default component$(
     return (
       <div
         ref={mask}
-        class="fixed top-0 left-0 z-100 flex h-[100vh] w-[100vw] items-center justify-center bg-[rgba(1,1,1,0.25)]"
+        class="fixed top-0 left-0 z-100 flex h-[100vh] w-[100vw] items-center justify-center bg-[rgba(1,1,1,0.25)] dark:bg-[rgba(1,1,1,0.5)]"
         style={{ display: visible ? "flex" : "none" }}
         onClick$={(e) => {
           if ((e.target as HTMLDivElement | undefined) === mask.value) {
@@ -42,10 +42,10 @@ export default component$(
       >
         <div
           ref={popup}
-          class="mx-auto w-full rounded-md border border-gray-200 bg-white p-4 shadow-2xl filter transition-all md:w-1/2"
+          class="mx-auto w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-2xl filter transition-all md:w-1/2"
         >
           <div class="flex flex-row">
-            <h1 class="mb-2 w-full font-semibold">{title}</h1>
+            <h1 class="mb-2 w-full font-semibold text-gray-900 dark:text-white">{title}</h1>
             <button
               class="cursor-pointer"
               onClick$={() => {
@@ -59,7 +59,7 @@ export default component$(
                 viewBox="0 0 24 24"
                 stroke-width="1.5"
                 stroke="currentColor"
-                class="size-5"
+                class="size-5 text-gray-900 dark:text-white"
               >
                 <path
                   stroke-linecap="round"

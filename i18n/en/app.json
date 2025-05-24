@@ -36,5 +36,8 @@
   "selectnetwork": "Select network",
   "selectoption": "Select option",
   "surname": "Surname",
-  "other":"Other"
+  "other":"Other",
+  "addresses":"Addresses",
+  "aggregates":"Aggregates",
+  "intervals":"Intervals"
 }

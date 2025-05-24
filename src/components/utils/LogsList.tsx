@@ -64,7 +64,7 @@ export default component$(() => {
     });
 
     return (
-        <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+        <div class="bg-white p-4 rounded-lg shadow-lg dark:bg-gray-900 dark:border-neutral-800 dark:text-gray-50 dark:**:text-gray-50  dark:**:border-gray-700 border border-gray-300">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">Log del Sistema</h2>
@@ -88,7 +88,7 @@ export default component$(() => {
                     logs.value.map((log, idx) => {
                         const logParts = log.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} UTC) \[.*?\] (\w+):\s+(.*)/);
                         return (
-                            <div key={idx} class="p-3 hover:bg-gray-50 even:bg-gray-50">
+                            <div key={idx} class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 even:bg-gray-50">
                                 <div class="flex items-start gap-2 text-sm">
                                     <div class="w-[6px] h-[6px] mt-2 rounded-full bg-gray-400"></div>
                                     <div class="flex-1">
@@ -122,7 +122,7 @@ export default component$(() => {
             <div class="mt-4 flex gap-2 justify-end">
                 <button
                     onClick$={() => location.reload()}
-                    class="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 cursor-pointer transition-colors"
+                    class="flex items-center gap-2 px-4 py-2 bg-gray-800 dark:hover:bg-gray-700 text-white rounded-lg hover:bg-gray-900 cursor-pointer transition-colors"
                 >
                     <svg
                         class="w-4 h-4"
@@ -141,7 +141,7 @@ export default component$(() => {
                 </button>
                 <button
                     onClick$={downloadLogs}
-                    class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-green-600 dark:hover:bg-green-500 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
                     <svg
                         class="w-4 h-4"

@@ -37,5 +37,7 @@
   "selectnetwork": "Seleziona rete",
   "selectoption": "Seleziona opzione",
   "surname": "Cognome",
-  "other":"Altro"
+  "other": "Altro",
+  "addresses": "Indirizzi",
+  "intervals": "Intervalli"
 }

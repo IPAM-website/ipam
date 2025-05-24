@@ -1,6 +1,6 @@
 import { $, component$, getLocale, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 import type { RequestHandler, DocumentHead } from "@builder.io/qwik-city";
-import { routeLoader$, routeAction$, zod$, z, Form } from "@builder.io/qwik-city";
+import { routeLoader$, routeAction$, zod$, z, Form, useNavigate } from "@builder.io/qwik-city";
 import ClientList from "~/components/lists/ClientList";
 import Title from "~/components/layout/Title";
 import PopupModal from "~/components/ui/PopupModal";
@@ -353,12 +353,12 @@ export const onRequest: RequestHandler = async ({ redirect, sharedMap, html }) =
             correct = result[0].idcliente.toString();
         }
     }
-    catch (e:any) {
-        if(e.code != 'ECONNREFUSED')
+    catch (e: any) {
+        if (e.code != 'ECONNREFUSED')
             throw redirect(302, getBaseURL() + "login");
-        else{
-            const errorpage = fs.readFileSync("~/../errors/dbconnection.html","utf-8");
-            html(200,errorpage);
+        else {
+            const errorpage = fs.readFileSync("~/../errors/dbconnection.html", "utf-8");
+            html(200, errorpage);
         }
     }
     if (correct != "")
@@ -372,6 +372,7 @@ export const useUser = routeLoader$(({ sharedMap }) => {
 export default component$(() => {
     const clientListRefresh = useSignal(0);
     const lang = getLocale("en")
+    const nav = useNavigate();
     // Stati di feedback per ogni sezione
     const sitiFeedback = useSignal<null | { message: string; type: "success" | "error" }>(null);
     const networkFeedback = useSignal<null | { message: string; type: "success" | "error" }>(null);
@@ -618,16 +619,27 @@ export default component$(() => {
                 {notifications.value.map((notification, index) => (
                     <div
                         key={index}
-                        class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
-                            ? 'bg-green-500 text-white'
-                            : 'bg-red-500 text-white'
+                        class={`p-4 rounded-md shadow-lg transition-all duration-300 transform hover:scale-105 ${notification.type === 'success'
+                                ? 'bg-green-500 dark:bg-green-600 text-white'
+                                : 'bg-red-500 dark:bg-red-600 text-white'
                             }`}
                     >
-                        {notification.message}
+                        <div class="flex items-center gap-2">
+                            {notification.type === 'success' ? (
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            ) : (
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            )}
+                            <span>{notification.message}</span>
+                        </div>
                     </div>
                 ))}
             </div>
-            <div class="size-full lg:px-40 px-24">
+            <div class="size-full lg:px-40 md:px-24 sm:px-12 px-4">
                 <Title>{t("dashboard.csv.clientSelection")}
                     <button onClick$={showPopUpCSV} class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 bg-black text-white rounded hover:bg-gray-800 transition-colors text-sm ml-4">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
@@ -640,24 +652,27 @@ export default component$(() => {
 
 
                 {user.admin && (
-                    <div class="flex gap-1 items-center mt-4">
-                        <a href={`/${getLocale("en")}/admin/panel`} class="hover:underline">
-                            {t("dashboard.gotoadmin")}
-                        </a>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="mt-0.5 size-4"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"
-                            />
-                        </svg>
+                    <div class="flex items-center mt-4">
+                        <div class="flex gap-1 hover:gap-2 cursor-pointer transition-all dark:hover:text-blue-400 items-center">
+
+                            <button onClick$={()=>nav(`/${lang}/admin/panel`)} class="cursor-pointer" >
+                                {t("dashboard.gotoadmin")}
+                            </button>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="mt-0.5 size-6"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"
+                                />
+                            </svg>
+                        </div>
                     </div>
                 )}
             </div>

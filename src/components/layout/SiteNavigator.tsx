@@ -16,6 +16,7 @@ import SelectForm from "../form/formComponents/SelectForm";
 import type { ReteModel } from "~/dbModels";
 import cssStyle from "./SiteNavigator.css?inline";
 import sql from "../../../db";
+import { inlineTranslate } from "qwik-speak";
 
 export const getNetworks = server$(async function () {
   return (await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito = ${this.params.site}`) as ReteModel[];
@@ -78,6 +79,8 @@ export default component$(
       }
     });
 
+    const t = inlineTranslate();
+
     return (
       <div class="flex flex-col gap-4 md:flex-row">
         <div class="flex w-full flex-col items-center justify-between max-xl:gap-2 xl:flex-row">
@@ -93,7 +96,7 @@ export default component$(
           <nav
             ref={refnav}
             class={
-              "mt-4 rounded-xl bg-white px-2 py-1 shadow max-sm:fixed max-sm:top-0 max-sm:left-0 max-sm:hidden sm:block " +
+              "mt-4 rounded-xl bg-white dark:bg-gray-700 px-2 py-1 shadow max-sm:fixed max-sm:top-0 max-sm:left-0 max-sm:hidden sm:block " +
               (navClosing.value ? "hideFullScreen" : "showFullScreen")
             }
           >
@@ -102,10 +105,10 @@ export default component$(
                 <button
                   onClick$={() => smartRedirect("/info")}
                   class={
-                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
+                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 dark:hover:bg-blue-200 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset ` +
                     (loc.url.pathname.includes("/info")
-                      ? " bg-blue-200 text-blue-800"
-                      : "text-gray-700")
+                      ? " bg-blue-200 dark:text-blue-600 text-blue-800"
+                      : " dark:text-gray-100 text-gray-700")
                   }
                 >
                   Info
@@ -118,13 +121,13 @@ export default component$(
                 <button
                   onClick$={() => smartRedirect("/addresses")}
                   class={
-                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
+                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 dark:hover:bg-blue-200 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
                     (loc.url.pathname.includes("/addresses")
-                      ? " bg-blue-200 text-blue-800"
-                      : "text-gray-700")
+                      ? " bg-blue-200 dark:text-blue-600 text-blue-800"
+                      : " dark:text-gray-100 text-gray-700")
                   }
                 >
-                  Addresses
+                  {t("addresses")}
                 </button>
               </li>
               <li>
@@ -134,13 +137,13 @@ export default component$(
                 <button
                   onClick$={() => smartRedirect("/aggregates")}
                   class={
-                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
+                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 dark:hover:bg-blue-200 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
                     (loc.url.pathname.includes("/aggregates")
-                      ? " bg-blue-200 text-blue-800"
-                      : "text-gray-700")
+                      ? " bg-blue-200 dark:text-blue-600 text-blue-800"
+                      : " dark:text-gray-100 text-gray-700")
                   }
                 >
-                  Aggregate
+                  {t("aggregates")}
                 </button>
               </li>
               <li>
@@ -150,31 +153,31 @@ export default component$(
                 <button
                   onClick$={() => smartRedirect("/intervals")}
                   class={
-                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
+                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 dark:hover:bg-blue-200 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
                     (loc.url.pathname.includes("/intervals")
-                      ? " bg-blue-200 text-blue-800"
-                      : "text-gray-700")
+                      ? " bg-blue-200 dark:text-blue-600 text-blue-800"
+                      : " dark:text-gray-100 text-gray-700")
                   }
                 >
-                  Intervals
+                  {t("intervals")}
                 </button>
               </li>
               <li>
                 <span class="h-6 w-px self-center bg-gray-200"></span>
               </li>
-              <li>
+              {/* <li>
                 <button
                   onClick$={() => smartRedirect("/vrf")}
                   class={
-                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
+                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 dark:hover:bg-blue-200 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
                     (loc.url.pathname.includes("/vrf")
-                      ? " bg-blue-200 text-blue-800"
-                      : "text-gray-700")
+                      ? " bg-blue-200 dark:text-blue-600 text-blue-800"
+                      : " dark:text-gray-100 text-gray-700")
                   }
                 >
                   VRF
                 </button>
-              </li>
+              </li> */}
               <li>
                 <span class="h-6 w-px self-center bg-gray-200"></span>
               </li>
@@ -182,10 +185,10 @@ export default component$(
                 <button
                   onClick$={() => smartRedirect("/vlan")}
                   class={
-                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
+                    `rounded-lg border border-transparent px-4 py-2 font-medium transition-all hover:bg-blue-100 dark:hover:bg-blue-200 hover:text-blue-700 focus:bg-blue-200 focus:text-blue-800 focus:ring-2 focus:ring-blue-400 focus:outline-none focus:ring-inset active:bg-blue-200 ` +
                     (loc.url.pathname.includes("/vlan")
-                      ? " bg-blue-200 text-blue-800"
-                      : "text-gray-700")
+                      ? " bg-blue-200 dark:text-blue-600 text-blue-800"
+                      : " dark:text-gray-100 text-gray-700")
                   }
                 >
                   VLANs

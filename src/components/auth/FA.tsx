@@ -16,7 +16,7 @@ import { server$, useNavigate } from "@builder.io/qwik-city";
 import sql from "../../../db";
 import { inlineTranslate } from "qwik-speak";
 
-import BackgroundImage from "~/../public/images/datacenter1.png?jsx"
+import BackgroundImage from "~/images/datacenter1.png?jsx"
 
 interface LoginData {
   userP?: string;

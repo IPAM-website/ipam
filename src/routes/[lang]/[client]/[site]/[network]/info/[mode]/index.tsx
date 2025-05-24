@@ -37,7 +37,7 @@ export const useSiteNet = routeLoader$(async ({ params }) => {
 });
 
 export const getNet = server$(async function () {
-  if(this.params.network == "")
+  if(!this.params.network || this.params.network == "")
     return {} as ReteModel;
   return (
     await sql`SELECT * FROM rete WHERE idrete = ${this.params.network}`
@@ -47,7 +47,7 @@ export const getNet = server$(async function () {
 export const getNetworkSpace = server$(async (idrete: number) => {
   try {
     if(isNaN(idrete))
-      throw new Error("idrete non disponibile")
+      return 0;
     const query =
       (await sql`SELECT * FROM rete WHERE rete.idretesup = ${idrete} ORDER BY iprete`) as ReteModel[];
     let result = 0;
@@ -69,7 +69,7 @@ export const getNetworkSpace = server$(async (idrete: number) => {
 export const getParentNetwork = server$(async (idrete: number) => {
   try {
     if(isNaN(idrete))
-      throw new Error("idrete non disponibile")
+      return [];
     const query = (
       await sql`SELECT r2.* FROM rete INNER JOIN rete as r2 ON rete.idretesup=r2.idrete WHERE rete.idrete = ${idrete}`
     )[0] as ReteModel;
@@ -83,7 +83,7 @@ export const getParentNetwork = server$(async (idrete: number) => {
 export const getChildrenNetworks = server$(async (idrete: number) => {
   try {
     if(isNaN(idrete))
-      throw new Error("idrete non disponibile")
+      return [];
     const query =
       (await sql`SELECT * FROM rete WHERE rete.idretesup = ${idrete}`) as ReteModel[];
     return query;
@@ -140,7 +140,7 @@ export default component$(() => {
       {network.value ? (
         <div class="flex w-full flex-col gap-4 p-1">
           <div class="flex flex-col gap-4 md:flex-row">
-            <div class="mt-4 inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 border-gray-300 px-5 py-3 shadow-md">
+            <div class="mt-4 inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 border-gray-300 dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 px-5 py-3 shadow-md">
               <div class="flex h-[50px] w-full items-center overflow-hidden">
                 <div class="text-lg font-semibold text-black">{t("network.info.networkinformation")}</div>
               </div>
@@ -175,7 +175,7 @@ export default component$(() => {
                 </div>
               </div>
             </div>
-            <div class="mt-4 inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 border-gray-300 px-5 py-3 shadow-md">
+            <div class="mt-4 inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 border-gray-300 px-5 py-3 shadow-md">
               <div class="flex h-[50px] w-full items-center overflow-hidden">
                 <div class="text-lg font-semibold text-black">{t("network.info.relativescomponents")}</div>
               </div>
@@ -223,7 +223,7 @@ export default component$(() => {
             </div>
           </div>
           <div class="flex w-1/2 gap-4 max-sm:w-full sm:min-w-[620px]">
-            <div class="flex w-full rounded-md border border-gray-300 p-3 shadow-md">
+            <div class="flex w-full rounded-md border dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 border-gray-300 p-3 shadow-md">
               <div class="relative me-5 flex-1">
                 <h2 class="m-2 mb-1 text-[16pt] font-semibold">
                   Network Usage

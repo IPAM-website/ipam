@@ -85,9 +85,9 @@ const TableMaps: { [key: string]: TableMap } = {
       en: ["Address", "Prefix", "Name", "Description", "VRF", "ID", ""],
     },
     keys: [
-      "nomerete",
       "iprete",
       "prefissorete",
+      "nomerete",
       "descrizione",
       "vrf",
       "idrete",
