@@ -321,9 +321,11 @@ export const insertNetworkFromCSV = server$(async function (data: string[][]) {
 })
 
 export const search = server$(async function (data) {
+  console.log(data)
   try {
     const pathParts = new URL(this.request!.url).pathname.split('/');
     const sitoId = parseInt(pathParts[3]);
+    console.log(sitoId)
     const query = await sql`
       SELECT *
       FROM rete

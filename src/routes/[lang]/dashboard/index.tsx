@@ -697,9 +697,9 @@ export default component$(() => {
     })
 
     const reloadClients = $(async () => {
+        addNotification(lang === "en" ? "Clients updating..." : "Clienti in aggiornamento...", 'loading');
         if (formAction.value?.success) {
             clientList.value = await listaClienti();
-
             showModalCSV.value = false;
             //if (fileInputRefSiti.value) fileInputRefSiti.value.value = "";
             //if (fileInputRefNetwork.value) fileInputRefNetwork.value.value = "";
@@ -722,14 +722,17 @@ export default component$(() => {
                 (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
             if (document.getElementById("clientTypeIDExisting") as HTMLInputElement != null)
                 (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
-            clientType.value = "new";
+            clientType.value = "new";   
             clientListRefresh.value++
             if (clientListRefresh.value > 255)
                 clientListRefresh.value = 0;
             addNotification(lang === "en" ? "Insert completed" : "Inserimento completato", 'success');
         }
-        else
+        else {
             addNotification(lang === "en" ? "Error during insert" : "Errore durante l'inserimento: " + formAction.value?.error, 'error');
+        }
+
+        notifications.value = notifications.value.filter(n => n.type !== "loading");
     })
 
     const showPreviewSection = $(async (section: 'siti' | 'network' | 'ip') => {
@@ -836,56 +839,35 @@ export default component$(() => {
                             <h2 class="text-xl font-semibold">{t("dashboard.csv.subtitleForm")}</h2>
                             <div class="flex gap-4">
                                 {/* Radio per scegliere tra nuovo cliente o esistente */}
-                                {clientListRefresh.value ? (
-                                    <>
-                                        <label class="flex items-center gap-2">
-                                            <input
-                                                type="radio"
-                                                name="clientType"
-                                                value="new"
-                                                checked
-                                                class="form-radio text-blue-600"
-                                                onChange$={() => {
-                                                    clientType.value = 'new';
-                                                    currentIdC.value = '';
-                                                }}
-                                                id="clientTypeIDNew"
-                                            />
-                                            {t("dashboard.csv.clientSelectNew")}
-                                        </label>
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="clientType"
+                                        value="new"
+                                        checked
+                                        class="form-radio text-blue-600"
+                                        onChange$={() => {
+                                            clientType.value = 'new';
+                                            currentIdC.value = '';
+                                        }}
+                                        id="clientTypeIDNew"
+                                    />
+                                    {t("dashboard.csv.clientSelectNew")}
+                                </label>
 
-                                        <label class="flex items-center gap-2">
-                                            <input
-                                                type="radio"
-                                                name="clientType"
-                                                value="existing"
-                                                class="form-radio text-blue-600"
-                                                onChange$={() => {
-                                                    clientType.value = 'existing';
-                                                }}
-                                                id="clientTypeIDExisting"
-                                            />
-                                            {t("dashboard.csv.clientSelectExisting")}
-                                        </label>
-                                    </>
-                                ) : (
-                                    <>
-                                        <label class="flex items-center gap-2">
-                                            <input
-                                                type="radio"
-                                                name="clientType"
-                                                value="new"
-                                                checked
-                                                class="hidden"
-                                                onChange$={() => {
-                                                    clientType.value = 'new';
-                                                    currentIdC.value = '';
-                                                }}
-                                                id="clientTypeIDNew2"
-                                            />
-                                        </label>
-                                    </>
-                                )}
+                                <label class="flex items-center gap-2">
+                                    <input
+                                        type="radio"
+                                        name="clientType"
+                                        value="existing"
+                                        class="form-radio text-blue-600"
+                                        onChange$={() => {
+                                            clientType.value = 'existing';
+                                        }}
+                                        id="clientTypeIDExisting"
+                                    />
+                                    {t("dashboard.csv.clientSelectExisting")}
+                                </label>
 
                             </div>
 
