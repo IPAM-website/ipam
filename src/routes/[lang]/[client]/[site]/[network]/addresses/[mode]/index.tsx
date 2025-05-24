@@ -39,6 +39,7 @@ import PopupModal from "~/components/ui/PopupModal";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { inlineTranslate } from "qwik-speak";
+import { getUser } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -188,8 +189,97 @@ export const deleteIP = server$(async function (this, data) {
 
 type Notification = {
   message: string;
-  type: "success" | "error";
+  type: "success" | "error" | "loading";
 };
+
+function ipToLong(ip: string) {
+  return ip.split('.').reduce((acc: number, octet: string) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+}
+
+function isIPInSubnet(ip: string, subnet: string, prefix: number) {
+  const ipLong = ipToLong(ip);
+  const subnetLong = ipToLong(subnet);
+  const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+  return (ipLong & mask) === (subnetLong & mask);
+}
+
+export const insertIPFromCSV = server$(async function (data: string[][]) {
+  const lang  = getLocale("en")
+  try {
+    const expectedHeaders = ["ip", "nome_dispositivo","tipo_dispositivo","brand_dispositivo","n_prefisso"];
+
+    if (data.length === 0) {
+      throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
+    }
+
+    const headerRow = data[0];
+    const receivedHeaders = headerRow.map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+
+    if (receivedHeaders.length !== expectedHeaders.length) {
+      throw new Error(lang == "it" ? `Numero di colonne errato. Attese ${expectedHeaders.length}, ricevute ${receivedHeaders.length}` : `Number of columns incorrect. Expected ${expectedHeaders.length}, received ${receivedHeaders.length}`);
+    }
+
+    if (!receivedHeaders.every((h, index) => h === expectedHeaders[index].toLowerCase())) {
+      throw new Error(lang == "it" ? `Intestazioni non valide. Atteso: ${expectedHeaders.join(", ")}` : `Invalid headers. Expected: ${expectedHeaders.join(", ")}`);
+    }
+    //console.log(data)
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const [ipRow, nome_dispositivoRow, brand_dispositivoRow, tipo_dispositivoRow, n_prefissoRow] = row;
+      const ip = ipRow.replace(/^"|"$/g, '').trim();
+      const nome_dispositivo = nome_dispositivoRow.replace(/^"|"$/g, '').trim();
+      const brand_dispositivo = brand_dispositivoRow.replace(/^"|"$/g, '').trim();
+      const tipo_dispositivo = tipo_dispositivoRow.replace(/^"|"$/g, '').trim();
+      const n_prefisso = parseInt(n_prefissoRow.replace(/^"|"$/g, '').trim());
+      if (isNaN(n_prefisso))
+        throw new Error("Prefisso non valido");
+      //console.log(ip,nome_dispositivo,brand_dispositivo,tipo_dispositivo,n_prefisso)
+
+      const pathParts = new URL(this.request.url).pathname.split('/');
+      const reteId = parseInt(pathParts[4]);
+      //console.log(reteId)
+
+      const rete = await sql`
+      SELECT iprete, prefissorete
+      FROM rete
+      WHERE idrete = ${reteId}
+    `;
+      if (rete.length === 0) throw new Error("Rete non trovata");
+
+      const reteIndirizzo = rete[0].iprete;
+      const retePrefisso = rete[0].prefissorete;
+
+      if (!isIPInSubnet(ip, reteIndirizzo, retePrefisso)) {
+        throw new Error(`L'indirizzo IP ${ip} non appartiene alla rete selezionata`);
+      }
+
+      const existingAddress = await sql`
+        SELECT * FROM indirizzi
+        WHERE ip = ${ip}
+        AND idrete = ${reteId}
+      `;
+      if (existingAddress.length > 0) {
+        throw new Error("Indirizzo esistente");
+      } 
+
+      const user = await getUser()
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        await tx`INSERT INTO indirizzi(ip, idrete, n_prefisso, tipo_dispositivo, nome_dispositivo, brand_dispositivo, data_inserimento) VALUES (${ip},${reteId},${n_prefisso},${tipo_dispositivo},${nome_dispositivo},${brand_dispositivo},${new Date()})`;
+      })
+    }
+    return {
+      success: true,
+      message:  lang === 'it' ? "Indirizzo inserito con successo" : "Address inserted successfully"
+    }
+  } catch (e) {
+    console.log(e);
+    return {
+      success: false,
+      message: lang === 'it' ? "Errore durante l'inserimento nel DB: " + e : "Error during insertion in the DB: " + e
+    }
+  }
+})
 
 export default component$(() => {
   // const notify = useNotify();
@@ -227,14 +317,13 @@ export default component$(() => {
     }
   });
 
-  const addNotification = $((message: string, type: "success" | "error") => {
+  const addNotification = $((message: string, type: "success" | "error" | "loading") => {
     notifications.value = [...notifications.value, { message, type }];
-    // Rimuovi la notifica dopo 3 secondi
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(
-        (n) => n.message !== message,
-      );
-    }, 3000);
+    if (type !== "loading") {
+      setTimeout(() => {
+        notifications.value = notifications.value.filter((n) => n.message !== message);
+      }, 4000);
+    }
   });
 
   const handleError = $((error: any) => {
@@ -245,14 +334,24 @@ export default component$(() => {
     );
   });
 
-  const handleOkay = $(() => {
+  const handleOkay = $(async (data: any) => {
+    addNotification(lang === "en" ? "Operation in progress..." : "Operazione in corso...", "loading");
     // console.log("ok");
-    addNotification(
-      lang === "en"
-        ? "Import completed successfully"
-        : "Importazione completata con successo",
-      "success",
-    );
+    try {
+      const result = await insertIPFromCSV(data)
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      if (result.success) {
+        reloadFN.value?.()
+        addNotification(result.message, 'success');
+      } else {
+        addNotification(result.message, 'error');
+      }
+    }
+    catch (err) {
+      console.log(err)
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      addNotification(lang === "en" ? "Error during import: " + err : "Errore durante l'importazione: " + err, 'error');
+    }
   });
 
   const handleModify = $((row: any) => {
@@ -261,18 +360,21 @@ export default component$(() => {
   });
 
   const handleDelete = $(async (row: any) => {
-    if (await deleteIP({ address: row.ip }))
-      addNotification(
-        lang === "en" ? "Deleted successfully" : "Eliminato con successo",
-        "success",
-      );
-    else
+    addNotification(lang === "en" ? "Deleting..." : "Eliminazione in corso...", "loading");
+    if (await deleteIP({ address: row.ip })) {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", "success");
+      reloadFN.value?.()
+    }
+    else {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(
         lang === "en"
           ? "Error during deletion"
           : "Errore durante l'eliminazione",
         "error",
       );
+    }
   });
 
   const reloadData = $(async () => {
@@ -292,6 +394,46 @@ export default component$(() => {
 
   return (
     <>
+      <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
+        {notifications.value.map((notification, index) => (
+          <div
+            key={index}
+            class={[
+              "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+              notification.type === "success"
+                ? "bg-green-500/90 border-green-700 text-white"
+                : notification.type === "error"
+                  ? "bg-red-500/90 border-red-700 text-white"
+                  : "bg-white border-blue-400 text-blue-800"
+            ]}
+            style={{
+              filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+              opacity: 0.98,
+            }}
+          >
+            {/* Icona */}
+            {notification.type === "success" && (
+              <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {notification.type === "error" && (
+              <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            {notification.type === "loading" && (
+              <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            )}
+
+            {/* Messaggio */}
+            <span class="flex-1">{notification.message}</span>
+          </div>
+        ))}
+      </div>
       {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split('/info')[0].split('/').slice(0,4).join('/') : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
       {mode == "view" ? (
         <div>
@@ -304,8 +446,7 @@ export default component$(() => {
                                         </SelectForm>
                                     </div>
                                 </div>
-                                <div class="flex w-full mt-2">
-                                    <div class="flex-auto"></div>
+                                notifications.value = notifications.value.filter(n => n.type !== "loading");     <div class="flex-auto"></div>
                                     <button class=" flex gap-1 items-center p-2 px-4 border-gray-300 hover:bg-gray-100 disabled:bg-gray-100 disabled:text-gray-500 border cursor-pointer disabled:cursor-default text-gray-900 rounded-lg mx-2" disabled={filter.params.subsite == ''} onClick$={() => {
                                         window.location.href = loc.url.pathname;
                                     }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
@@ -382,6 +523,18 @@ export default component$(() => {
                                         </div>} */}
               </div>
             </div>
+            <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+              <ButtonAddLink
+                nomePulsante={t("network.addesses.addaddress")}
+                href={loc.url.href.replace("view", "insert")}
+              ></ButtonAddLink>
+              <div>
+                <ImportCSV
+                  OnError={handleError}
+                  OnOk={handleOkay}
+                />
+              </div>
+            </div>
             <Dati
               DBTabella="indirizzi"
               title={t("network.addesses.ipaddresslist")}
@@ -392,17 +545,6 @@ export default component$(() => {
               funcReloadData={reloadData}
               onReloadRef={getREF}
             ></Dati>
-            <div class="flex">
-              <ButtonAddLink
-                nomePulsante={t("network.addesses.addaddress")}
-                href={loc.url.href.replace("view", "insert")}
-              ></ButtonAddLink>
-              <ImportCSV
-                OnError={handleError}
-                OnOk={handleOkay}
-                nomeImport="indirizzi"
-              />
-            </div>
           </Table>
         </div>
       ) : (

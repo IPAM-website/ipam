@@ -1,5 +1,5 @@
 import { $, component$, getLocale, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
-import type { DocumentHead} from "@builder.io/qwik-city";
+import type { DocumentHead } from "@builder.io/qwik-city";
 import { Form, routeAction$, server$, z, zod$ } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import Table from "~/components/table/Table";
@@ -16,11 +16,12 @@ import PopupModal from "~/components/ui/PopupModal";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { inlineTranslate } from "qwik-speak";
+import { getUser } from "~/fnUtils";
 
 // Aggiungi questo tipo per la notifica
 type Notification = {
   message: string;
-  type: 'success' | 'error';
+  type: "success" | "error" | "loading";
 };
 
 export interface FilterObject {
@@ -176,6 +177,59 @@ export const search = server$(async (data) => {
   }
 })
 
+export const insertRow = server$(async (data: string[][]) => {
+  try {
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const [nomeuclienteRow, cognomeuclienteRow, emailuclienteRow, pwduclienteRow, nomeClienteRow] = row;
+      //console.log(nomeucliente, cognomeucliente, emailucliente, pwducliente, idcliente)
+      const nomeucliente = nomeuclienteRow.replace(/^"|"$/g, '').trim();
+      const cognomeucliente = cognomeuclienteRow.replace(/^"|"$/g, '').trim();
+      const emailucliente = emailuclienteRow.replace(/^"|"$/g, '').trim();
+      const pwducliente = pwduclienteRow.replace(/^"|"$/g, '').trim();
+      const nomecliente = nomeClienteRow.replace(/^"|"$/g, '').trim();
+
+      //Ricerca idcliente
+      const idcliente = await sql`SELECT idcliente FROM clienti WHERE nomecliente = ${nomecliente}`;
+      if (idcliente.length == 0)
+        throw new Error("Cliente non trovato");
+      console.log(idcliente[0].idcliente)
+
+      const user = await getUser()
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        await tx`
+          INSERT INTO usercliente 
+            (nomeucliente, cognomeucliente, emailucliente, pwducliente, idcliente) 
+          VALUES 
+            (${nomeucliente}, ${cognomeucliente}, ${emailucliente}, ${bcrypt.hashSync(pwducliente, 12)}, ${parseInt(idcliente[0].idcliente)})
+        `;
+      })
+    }
+    return {
+      success: true,
+      "it": {
+        message: "Utente inserito con successo"
+      },
+      "en": {
+        message: "User inserted successfully"
+      }
+    }
+  }
+  catch (e) {
+    console.log(e);
+    return {
+      success: false,
+      "it": {
+        message: "Errore durante l'inserimento del cliente: " + e
+      },
+      "en": {
+        message: "Error during user insertion: " + e
+      }
+    }
+  }
+})
+
 export default component$(() => {
   useStyles$(styles);
   const dati = useSignal();
@@ -217,12 +271,13 @@ export default component$(() => {
   // })
 
   // Funzione per aggiungere una notifica
-  const addNotification = $((message: string, type: 'success' | 'error') => {
+  const addNotification = $((message: string, type: "success" | "error" | "loading") => {
     notifications.value = [...notifications.value, { message, type }];
-    // Rimuovi la notifica dopo 3 secondi
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(n => n.message !== message);
-    }, 3000);
+    if (type !== "loading") {
+      setTimeout(() => {
+        notifications.value = notifications.value.filter((n) => n.message !== message);
+      }, 4000);
+    }
   });
 
   const Modify = $(async (row: any) => {
@@ -243,21 +298,29 @@ export default component$(() => {
 
   const Delete = $(async (row: any) => {
     //console.log(extractRow(row));
-    if (await deleteRow(extractRow(row)))
+    addNotification("Eliminazione in corso...", "loading");
+    if (await deleteRow(extractRow(row))) {
       addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", 'success');
-    else
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+    }
+    else {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang === "en" ? "Error during deletion" : "Errore durante l'eliminazione", 'error');
+    }
   })
 
   const reloadTable = $(() => {
     if (formAction.value.value?.success) {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang === "en" ? "Record added successfully" : "Dato aggiunto con successo", 'success');
       showDialog.value = false;
       isEditing.value = false;
       reloadFN.value?.();
     }
-    else
+    else {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang === "en" ? "Error during adding" : "Errore durante l'aggiunta", 'error');
+    }
   })
 
   const openClientiDialog = $(async () => {
@@ -285,8 +348,30 @@ export default component$(() => {
     addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
   })
 
-  const handleOkay = $(() => {
-    addNotification(lang === "en" ? "Import completed successfully" : "Importazione completata con successo", 'success');
+  const handleOkay = $(async (data: any) => {
+    addNotification("Operazione in corso...", "loading");
+    try {
+      const result = await insertRow(data);
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      if(result.success){
+        if (lang === 'it' || lang === 'en') {
+          addNotification(result[lang].message, 'success');
+        } else {
+          addNotification(result['en'].message, 'success'); // Fallback to English
+        }
+        reloadFN.value?.();
+      }else{
+        if (lang === 'it' || lang === 'en') {
+          addNotification(result[lang].message, 'error');
+        } else {
+          addNotification(result['en'].message, 'error'); // Fallback to English
+        }
+      }
+    }
+    catch (error) {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
+      addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
+    }
   })
 
   const reload = $(async () => {
@@ -313,16 +398,43 @@ export default component$(() => {
     <>
       <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0">
         {/* Aggiungi questo div per le notifiche */}
-        <div class="fixed top-4 right-4 z-50 space-y-2">
+        <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
           {notifications.value.map((notification, index) => (
             <div
               key={index}
-              class={`p-4 rounded-md shadow-lg ${notification.type === 'success'
-                ? 'bg-green-500 text-white'
-                : 'bg-red-500 text-white'
-                }`}
+              class={[
+                "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+                notification.type === "success"
+                  ? "bg-green-500/90 border-green-700 text-white"
+                  : notification.type === "error"
+                    ? "bg-red-500/90 border-red-700 text-white"
+                    : "bg-white border-blue-400 text-blue-800"
+              ]}
+              style={{
+                filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+                opacity: 0.98,
+              }}
             >
-              {notification.message}
+              {/* Icona */}
+              {notification.type === "success" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {notification.type === "error" && (
+                <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              {notification.type === "loading" && (
+                <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              )}
+
+              {/* Messaggio */}
+              <span class="flex-1">{notification.message}</span>
             </div>
           ))}
         </div>
@@ -341,7 +453,7 @@ export default component$(() => {
                 value={filter.value.value}
                 ref={txtQuickSearch}
                 placeholder={t("quicksearch")}
-                onInput$={(e:InputEvent) => {
+                onInput$={(e: InputEvent) => {
                   filter.value.value = (e.target as HTMLInputElement).value;
                   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                   if (reloadFN) reloadFN.value?.();
@@ -350,7 +462,19 @@ export default component$(() => {
               />
             </div>
           </div>
-
+          <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+            {/* Bottoni azione in basso a sinistra */}
+            <ButtonAdd
+              nomePulsante={t("admin.uc.addrelation")}
+              onClick$={openClientiDialog}
+            />
+            <div>
+              <Import
+                OnError={handleError}
+                OnOk={handleOkay}
+              />
+            </div>
+          </div>
           {/* Tabella dati */}
           <Dati
             dati={dati.value}
@@ -360,17 +484,6 @@ export default component$(() => {
             DBTabella="usercliente"
             onReloadRef={reload2}
             funcReloadData={reload}
-          />
-
-          {/* Bottoni azione in basso a sinistra */}
-          <ButtonAdd
-            nomePulsante={t("admin.uc.addrelation")}
-            onClick$={openClientiDialog}
-          />
-          <Import
-            nomeImport="usercliente"
-            OnError={handleError}
-            OnOk={handleOkay}
           />
         </Table>
       </div>
@@ -497,7 +610,7 @@ export default component$(() => {
                       id="PwdT"
                       placeholder={t("admin.uc.formuser.password")}
                       nameT="pwd"
-                      title={ "Password*"}
+                      title={"Password*"}
                       value={password.value}
                     />
                     {formAction.value.value?.failed && formAction.value.value.fieldErrors.pwd && (
@@ -541,21 +654,21 @@ export default component$(() => {
           </div>
         </div>
       )}
-        <PopupModal
-          visible={showPreview.value}
-          title={
-            <div class="flex items-center gap-2">
-              <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Formato richiesto per l'importazione CSV</span>
-              <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
-            </div>
-          }
-          onClosing$={() => { showPreview.value = false; }}
-        >
+      <PopupModal
+        visible={showPreview.value}
+        title={
+          <div class="flex items-center gap-2">
+            <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Formato richiesto per l'importazione CSV</span>
+            <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
+          </div>
+        }
+        onClosing$={() => { showPreview.value = false; }}
+      >
         <TableInfoCSV tableName="usercliente"></TableInfoCSV>
-        </PopupModal>
+      </PopupModal>
       )
 
 

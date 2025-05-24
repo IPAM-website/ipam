@@ -8,7 +8,7 @@ interface ButtonProps {
 export default component$<ButtonProps>(({ nomePulsante, href }) => {
   return (
     <a
-      class="m-4 mb-8 flex h-9 w-7/10 max-w-[300px] cursor-pointer items-center justify-center rounded-lg bg-black px-4 transition-all duration-200 ease-in hover:w-4/5 hover:max-w-[360px]"
+      class="m-4 mb-8 flex h-9 w-7/10 max-w-[300px] cursor-pointer items-center justify-center rounded-lg bg-gray-800 px-4 transition-all duration-200 ease-in hover:w-4/5 hover:bg-gray-900"
       href={href}
     >
       <div class="flex items-center gap-2">

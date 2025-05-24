@@ -28,7 +28,7 @@ import type { ReteModel, VLANModel} from "~/dbModels";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
-import ImportCSV from "~/components/table/ImportCSV";
+//import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
 import { inlineTranslate } from "qwik-speak";
 // import { useNotify } from "~/services/notifications";
@@ -228,7 +228,7 @@ export default component$(() => {
     }, 3000);
   });
 
-  const handleError = $((error: any) => {
+  /*const handleError = $((error: any) => {
     console.log(error);
     addNotification(
       lang === "en" ? "Error during import" : "Errore durante l'importazione",
@@ -244,7 +244,7 @@ export default component$(() => {
         : "Importazione completata con successo",
       "success",
     );
-  });
+  });*/
 
   const handleModify = $((row: any) => {
     Object.assign(vlan, row as RowAddress);
@@ -475,11 +475,11 @@ export default component$(() => {
                 nomePulsante={t("network.vlan.addvlan")}
                 href={loc.url.href.replace("view", "insert")}
               ></ButtonAddLink>
-              <ImportCSV
+              {/* <ImportCSV
                 OnError={handleError}
                 OnOk={handleOkay}
                 nomeImport="vlan"
-              />
+              /> */}
             </div>
           </Table>
         </div>

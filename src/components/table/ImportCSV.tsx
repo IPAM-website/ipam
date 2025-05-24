@@ -2,13 +2,10 @@
 import { component$, useSignal, $ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 import { inlineTranslate } from "qwik-speak";
-import sql from "~/../db";
-import { DBTableMaps } from "~/tableMaps";
 
 interface ButtonProps {
-  nomeImport: string;
-  OnError: (error: any) => void;
-  OnOk: () => void;
+  OnError: (error: string) => void;
+  OnOk: (dataParsed: string[][]) => void;
 }
 
 export const processCSV = server$(async (csvContent: string) => {
@@ -18,8 +15,14 @@ export const processCSV = server$(async (csvContent: string) => {
       .map((row) => row.trim())
       .filter((row) => row.length > 0);
 
+    // Detect separator by checking which occurs more frequently in the first row
+    const firstRow = rows[0];
+    const semicolonCount = firstRow.split(';').length - 1;
+    const commaCount = firstRow.split(',').length - 1;
+    const separator = semicolonCount > commaCount ? /;\s*/ : /,\s*/;
+
     return rows.map((row) => {
-      const values = row.split(/;\s*/).map((value) => {
+      const values = row.split(separator).map((value) => {
         return value.trim().replace(/^"|"$/g, "");
       });
       return values;
@@ -33,24 +36,7 @@ export const processCSV = server$(async (csvContent: string) => {
   }
 });
 
-export const dbInsert = server$(async ({ data, tabella }) => {
-  try {
-    const [, ...rows] = data;
-    const tableMap = DBTableMaps[tabella].keys;
-    //console.log(tabella)
-    // console.log(DBTableMaps[tabella]);
-    // console.log(rows)
-    // console.log(data);
-    // const query =
-      await sql`INSERT INTO ${sql(tabella)} (${sql(tableMap)}) VALUES ${sql(rows)}`;
-    //console.log(query)
-  } catch (err) {
-    console.log(err);
-    throw new Error("Errore durante l'inserimento nel DB");
-  }
-});
-
-export default component$<ButtonProps>(({ nomeImport, OnError, OnOk }) => {
+export default component$<ButtonProps>(({ OnError, OnOk }) => {
   const showTooltip = useSignal(false);
   const csvData = useSignal<string[][]>([]);
   const headers = useSignal<string[]>([]);
@@ -91,7 +77,6 @@ export default component$<ButtonProps>(({ nomeImport, OnError, OnOk }) => {
 
       const file = input.files[0];
       fileName.value = file.name.toLowerCase();
-      //console.log(fileName.value);
 
       if (!fileName.value.endsWith(".csv")) {
         throw new Error("Per favore seleziona un file CSV");
@@ -102,17 +87,14 @@ export default component$<ButtonProps>(({ nomeImport, OnError, OnOk }) => {
 
       csvData.value = parsedData;
       headers.value = parsedData[0] || [];
-      await dbInsert({ data: parsedData, tabella: nomeImport });
 
       isLoading.value = false;
-
-      OnOk();
+      OnOk(csvData.value);
     } catch (err) {
       const errorMsg = (err as Error).message;
       if (errorMsg !== "Nessun file selezionato") {
         error.value = errorMsg || "Errore nel processing del file";
-
-          OnError(error.value);
+        OnError(error.value);
       }
     } finally {
       isLoading.value = false;
@@ -124,25 +106,43 @@ export default component$<ButtonProps>(({ nomeImport, OnError, OnOk }) => {
 
   return (
     <>
+
       <div
-        class="has-tooltip relative mt-4 inline-flex h-[40px] cursor-pointer rounded-md border-1 border-gray-300 p-2 transition-all duration-200 hover:translate-y-1"
+        class="has-tooltip relative inline-flex h-[40px] cursor-pointer rounded-md border-1 border-gray-300 p-2 transition-all duration-200 hover:translate-y-1"
         onMouseEnter$={() => (showTooltip.value = true)}
         onMouseLeave$={() => (showTooltip.value = false)}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="size-6"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3"
-          />
-        </svg>
+        {isLoading.value ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6 animate-spin"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M16.023 9.348h4.992v-4.992M2.985 19.644v-4.992H6.978M2.978 3.626v16.622c0 .548.496 1.042 1.12 1.042h16.622c.624 0 1.12-.494 1.12-1.042V3.626c0-.548-.496-1.042-1.12-1.042H4.117c-.624 0-1.12.494-1.12 1.042z"
+            />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 3.75H6.912a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M12 3v8.25m0 0-3-3m3 3 3-3"
+            />
+          </svg>
+        )}
         <input
           type="file"
           accept=".csv"
@@ -151,7 +151,6 @@ export default component$<ButtonProps>(({ nomeImport, OnError, OnOk }) => {
           class="absolute inset-0 cursor-pointer opacity-0"
           disabled={isLoading.value}
         />
-
         <span class="tooltip">{t("importcsv")}</span>
       </div>
     </>

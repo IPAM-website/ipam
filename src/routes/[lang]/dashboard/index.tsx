@@ -534,7 +534,7 @@ export default component$(() => {
         track(() => formAction.value);
         track(() => viewTableSection.value)
         track(() => showModalCSV.value)
-        //track(() => clientList.value);
+        track(() => clientListRefresh.value)
         clientList.value = await listaClienti();
     })
 
@@ -689,8 +689,10 @@ export default component$(() => {
         feedBackSVG['network'] = null;
         feedBackSVG['ip'] = null;
         currentIdC.value = "";
-        (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-        (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+        if (document.getElementById("clientTypeIDNew") != null)
+            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+        if (document.getElementById("clientTypeIDExisting") != null)
+            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
         clientType.value = "new";
     })
 
@@ -716,8 +718,10 @@ export default component$(() => {
             feedBackSVG['network'] = null;
             feedBackSVG['ip'] = null;
             currentIdC.value = "";
-            (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-            (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+            if (document.getElementById("clientTypeIDNew") as HTMLInputElement != null)
+                (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+            if (document.getElementById("clientTypeIDExisting") as HTMLInputElement != null)
+                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
             clientType.value = "new";
             clientListRefresh.value++
             if (clientListRefresh.value > 255)
@@ -832,35 +836,57 @@ export default component$(() => {
                             <h2 class="text-xl font-semibold">{t("dashboard.csv.subtitleForm")}</h2>
                             <div class="flex gap-4">
                                 {/* Radio per scegliere tra nuovo cliente o esistente */}
-                                <label class="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        name="clientType"
-                                        value="new"
-                                        checked
-                                        class="form-radio text-blue-600"
-                                        onChange$={() => {
-                                            clientType.value = 'new';
-                                            currentIdC.value = '';
-                                        }}
-                                        id="clientTypeIDNew"
-                                    />
-                                    {t("dashboard.csv.clientSelectNew")}
-                                </label>
+                                {clientListRefresh.value ? (
+                                    <>
+                                        <label class="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                name="clientType"
+                                                value="new"
+                                                checked
+                                                class="form-radio text-blue-600"
+                                                onChange$={() => {
+                                                    clientType.value = 'new';
+                                                    currentIdC.value = '';
+                                                }}
+                                                id="clientTypeIDNew"
+                                            />
+                                            {t("dashboard.csv.clientSelectNew")}
+                                        </label>
 
-                                <label class="flex items-center gap-2">
-                                    <input
-                                        type="radio"
-                                        name="clientType"
-                                        value="existing"
-                                        class="form-radio text-blue-600"
-                                        onChange$={() => {
-                                            clientType.value = 'existing';
-                                        }}
-                                        id="clientTypeIDExisting"
-                                    />
-                                    {t("dashboard.csv.clientSelectExisting")}
-                                </label>
+                                        <label class="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                name="clientType"
+                                                value="existing"
+                                                class="form-radio text-blue-600"
+                                                onChange$={() => {
+                                                    clientType.value = 'existing';
+                                                }}
+                                                id="clientTypeIDExisting"
+                                            />
+                                            {t("dashboard.csv.clientSelectExisting")}
+                                        </label>
+                                    </>
+                                ) : (
+                                    <>
+                                        <label class="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                name="clientType"
+                                                value="new"
+                                                checked
+                                                class="hidden"
+                                                onChange$={() => {
+                                                    clientType.value = 'new';
+                                                    currentIdC.value = '';
+                                                }}
+                                                id="clientTypeIDNew2"
+                                            />
+                                        </label>
+                                    </>
+                                )}
+
                             </div>
 
                             {/* Input testo per nuovo cliente */}
@@ -1150,8 +1176,10 @@ export default component$(() => {
                                 feedBackSVG['network'] = null;
                                 feedBackSVG['ip'] = null;
                                 currentIdC.value = "";
-                                (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
-                                (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
+                                if (document.getElementById("clientTypeIDNew") as HTMLInputElement != null)
+                                    (document.getElementById("clientTypeIDNew") as HTMLInputElement).checked = true;
+                                if (document.getElementById("clientTypeIDExisting") as HTMLInputElement != null)
+                                    (document.getElementById("clientTypeIDExisting") as HTMLInputElement).checked = false;
                                 clientType.value = "new";
                             }}
                             class="w-full py-3 px-6 bg-white  rounded-lg hover:bg-gray-200 transition-all border duration-250 border-gray-300 cursor-pointer"
