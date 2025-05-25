@@ -13,8 +13,8 @@ import { inlineTranslate } from "qwik-speak";
 
 // IMMAGINI
 
-import BackgroundImage from '~/../public/images/datacenter1.png?jsx';
-import Logo from '~/../public/logo.svg?jsx';
+import BackgroundImage from '~/images/datacenter1.png?jsx';
+import Logo from '~/images/logo.svg?jsx';
 
 export const onGet: RequestHandler = async ({ cookie, redirect, env, locale }) => {
   if (cookie.has("jwt")) {

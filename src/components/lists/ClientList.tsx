@@ -1,5 +1,6 @@
 import type {
-  Signal} from "@builder.io/qwik";
+  Signal
+} from "@builder.io/qwik";
 import {
   component$,
   useSignal,
@@ -12,9 +13,9 @@ import type { ClienteModel } from "~/dbModels";
 import { inlineTranslate } from "qwik-speak";
 
 export interface ClientListProps {
-  client ?: Signal<number>,
-  currentTec ?: number,
-  refresh ?: number
+  client?: Signal<number>,
+  currentTec?: number,
+  refresh?: number
 }
 
 export const getClients = server$(async () => {
@@ -55,7 +56,7 @@ export default component$((props: ClientListProps) => {
 
   const t = inlineTranslate();
 
-  useTask$(async ({track}) => {
+  useTask$(async ({ track }) => {
     track(() => props.refresh);
     clientList.value = null;
     clientList.value = await getClients() as any;
@@ -82,6 +83,8 @@ export default component$((props: ClientListProps) => {
             focus:ring-2 focus:ring-blue-200
             bg-white/80
             relative
+            dark:bg-gray-600
+            
             overflow-hidden
           "
               onClick$={() => {
@@ -96,6 +99,7 @@ export default component$((props: ClientListProps) => {
               px-7 py-7
               transition-colors duration-200
               relative
+              
               z-10
             "
               >
@@ -129,10 +133,12 @@ export default component$((props: ClientListProps) => {
                 text-2xl font-bold tracking-tight
                 transition-colors duration-200
                 group-hover:text-blue-900
+                dark:group-hover:text-blue-400
                 text-shadow
+                dark:text-gray-100
+                text-gray-600
                 "
                   style={{
-                    color: "#233",
                     textShadow: "0 2px 8px rgba(0,0,0,0.08)",
                   }}
                 >
@@ -156,9 +162,9 @@ export default component$((props: ClientListProps) => {
           );
         })
       ) : (
-          <div class="max-w-[400px] min-w-[300px] rounded-2xl bg-white border border-gray-200 p-10 text-center shadow-md flex flex-col items-center justify-center">
-            <span class="text-2xl font-bold text-gray-400 mb-2">{t("noclients")}</span>
-          </div>
+        <div class="max-w-[400px] min-w-[300px] rounded-2xl bg-white border border-gray-200 p-10 text-center shadow-md flex flex-col items-center justify-center">
+          <span class="text-2xl font-bold text-gray-400 mb-2">{t("noclients")}</span>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import type {
-  Signal} from "@builder.io/qwik";
+  Signal
+} from "@builder.io/qwik";
 import {
   $,
   component$,
@@ -11,7 +12,8 @@ import {
   useTask$,
 } from "@builder.io/qwik";
 import type {
-  RequestHandler} from "@builder.io/qwik-city";
+  RequestHandler
+} from "@builder.io/qwik-city";
 import {
   routeAction$,
   routeLoader$,
@@ -24,7 +26,7 @@ import {
 import sql from "~/../db";
 import SelectForm from "~/components/form/formComponents/SelectForm";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
-import type { ReteModel, VLANModel} from "~/dbModels";
+import type { ReteModel, VLANModel } from "~/dbModels";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
@@ -105,7 +107,7 @@ export const getVLANs = server$(async function (this, filter = { empty: 1 }) {
 });
 
 export const useSiteName = routeLoader$(async ({ params }) => {
-  if(isNaN(parseInt(params.site)))
+  if (isNaN(parseInt(params.site)))
     return;
   return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
     .nomesito;
@@ -156,8 +158,8 @@ export const getAllVLAN = server$(async function () {
 export const getAllNetworksBySite = server$(async function (idsito: number) {
   let networks: ReteModel[] = [];
   try {
-    if(isNaN(idsito))
-      throw new Error("idsito non disponibile")
+    if (isNaN(idsito))
+      return [];
     const query =
       await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
                                 WHERE siti_rete.idsito=${idsito}`;
@@ -171,7 +173,7 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 
 export const deleteVLAN = server$(async function (this, data) {
   try {
-    if(isNaN(data.vid))
+    if (isNaN(data.vid))
       throw new Error("vid non disponibile")
     await sql`DELETE FROM vlan WHERE vid=${data.vid}`;
     return true;
@@ -289,8 +291,8 @@ export default component$(() => {
               <div
                 key={index}
                 class={`rounded-md p-4 shadow-lg ${notification.type === "success"
-                    ? "bg-green-500 text-white"
-                    : "bg-red-500 text-white"
+                  ? "bg-green-500 text-white"
+                  : "bg-red-500 text-white"
                   }`}
               >
                 {notification.message}
@@ -390,6 +392,11 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 md:flex-row md:items-center md:justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.vlan.vlanlist")}</span>
+              </div>
+            </div>
             <Dati
               DBTabella="vlan"
               title={t("network.vlan.vlanlist")}

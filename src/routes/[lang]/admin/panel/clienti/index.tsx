@@ -1,6 +1,7 @@
-import { $, component$, getLocale, useSignal, useStyles$, useTask$  } from "@builder.io/qwik";
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+import { $, component$, getLocale, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { Form, routeAction$, server$ , z, zod$ } from "@builder.io/qwik-city";
+import { Form, routeAction$, server$, z, zod$ } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
@@ -25,7 +26,7 @@ export interface FilterObject {
 }
 
 export const extractRow = (row: any) => {
-  if(!row) return {};
+  if (!row) return {};
   const { idcliente, nomecliente } = row;
   return {
     idcliente,
@@ -318,7 +319,7 @@ export default component$(() => {
 
   return (
     <>
-      <div class="size-full bg-white overflow-hidden lg:px-40 md:px-24 px-0">
+      <div class="size-full overflow-hidden lg:px-40 md:px-24 px-0">
         {/* Aggiungi questo div per le notifiche */}
         <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
           {notifications.value.map((notification, index) => (
@@ -363,9 +364,9 @@ export default component$(() => {
 
         <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{t("admin.panel")}</Title>
         <Table title={t("admin.client.list")}>
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
             <div class="flex items-center gap-2">
-              <span class="font-semibold text-lg text-gray-800">{t("admin.tech.list")}</span>
+              <span class="font-semibold text-lg text-gray-800 dark:text-gray-100">{t("admin.client.list")}</span>
               <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
             </div>
             <div class="flex items-center gap-2">
@@ -374,7 +375,7 @@ export default component$(() => {
                 value={filter.value.value}
                 ref={txtQuickSearch}
                 placeholder={t("quicksearch")}
-                onInput$={(e:InputEvent) => {
+                onInput$={(e: InputEvent) => {
                   filter.value.value = (e.target as HTMLInputElement).value;
                   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                   if (reloadFN) reloadFN.value?.();
@@ -393,12 +394,14 @@ export default component$(() => {
         </Table>
       </div>
 
-      {showDialog.value && 
+      {showDialog.value &&
 
         <div class="dialog-overlayAdmin openAdmin">
           <div class="dialog-contentAdmin">
-            <div class="absolute top-4 right-4 cursor-pointer hover:bg-gray-200 rounded-md transition-all duration-300" onClick$={closeClientiDialog}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></div>
-            <Form action={formAction.value} onSubmit$={reloadTable} class="max-w-xl mx-auto bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 animate-fade-in">
+            <div class="absolute top-4 right-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-all duration-300" onClick$={closeClientiDialog}>
+              {/* <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg> */}
+              </div>
+            <Form action={formAction.value} onSubmit$={reloadTable} class="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-100 dark:border-gray-500 animate-fade-in">
               {/* Titolo */}
               <div class="flex items-center gap-3 mb-6">
                 <div class="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-100">
@@ -406,7 +409,7 @@ export default component$(() => {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <h3 class="text-2xl font-extrabold text-gray-800 tracking-tight">
+                <h3 class="text-2xl font-extrabold text-gray-800 dark:text-gray-200 tracking-tight">
                   {isEditing.value ? t("admin.client.modclient") : t("admin.client.addclient")}
                 </h3>
                 <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 text-xs font-semibold tracking-wide border border-cyan-200">Form</span>

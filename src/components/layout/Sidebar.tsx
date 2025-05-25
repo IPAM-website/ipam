@@ -20,9 +20,10 @@ export const toggleSidebar = $(() => {
   if (sidebar) {
     sidebar.classList.toggle("w-[240px]");
     sidebar.classList.toggle("w-[0px]");
+    sidebar.classList.toggle("border-1");
   }
   if (cover) {
-    cover.classList.toggle("bg-black/10");
+    cover.classList.toggle("bg-black/8");
     cover.classList.toggle("hidden");
   }
   document.body.classList.toggle("overflow-hidden");
@@ -56,9 +57,7 @@ export default component$(() => {
     loc.params.client +
     "/" +
     loc.params.site +
-    "/" +
-    loc.params.network +
-    "/";
+    "/0/";
 
   const t = inlineTranslate();
 
@@ -66,12 +65,12 @@ export default component$(() => {
     <div>
       <div
         id="sidebar"
-        class="fixed top-0 left-0 z-20 h-full w-[0px] overflow-hidden border-1 border-gray-200 bg-white transition-all"
+        class="fixed top-0 left-0 z-20 h-full w-[0px] overflow-hidden border-gray-200 dark:border-gray-950 bg-white dark:bg-gray-900 transition-all "
       >
         <div class="h-full w-[240px] p-2">
-          <div class="flex h-full flex-col overflow-hidden bg-white">
+          <div class="flex h-full flex-col overflow-hidden bg-white dark:bg-gray-900 text-black dark:text-gray-50">
             <div>
-              <div class="client-name justify-center font-['Inter'] text-[18pt] leading-[40px] font-semibold text-black">
+              <div class="client-name justify-center font-['Inter'] text-[18pt] leading-[40px] font-semibold ">
                 ---
               </div>
               <div class="site-name justify-center font-['Inter'] text-[14pt] leading-[20px] font-semibold text-[#808080]">
@@ -88,81 +87,81 @@ export default component$(() => {
 
                 <Accordion title={t("sidebar.ip.title")}>
                   <NavLink
-                    href={baseSiteUrl + "addresses/view"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "addresses/view"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.ip.view")}</NavLink>
                   <NavLink
-                    href={baseSiteUrl + "addresses/insert"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "addresses/insert"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.ip.add")}</NavLink>
                 </Accordion>
 
                 <Accordion title={t("sidebar.intervals.title")}>
                   <NavLink
-                    href={baseSiteUrl + "intervals/view"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "intervals/view"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.intervals.view")}</NavLink>
                   <NavLink
-                    href={baseSiteUrl + "intervals/create"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "intervals/create"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.intervals.add")}</NavLink>
                 </Accordion>
 
                 <Accordion title={t("sidebar.aggregates.title")}>
                   <NavLink
-                    href={baseSiteUrl + "aggregates/view"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "aggregates/view"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.aggregates.view")}</NavLink>
                   <NavLink
-                    href={baseSiteUrl + "aggregates/create"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "aggregates/create"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.aggregates.add")}</NavLink>
                 </Accordion>
 
                 <Accordion title="VFR">
                   <NavLink
-                    href={baseSiteUrl + "VFR/view"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "VFR/view"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.vrf.view")}</NavLink>
                   <NavLink
-                    href={baseSiteUrl + "VFR/create"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "VFR/create"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.vrf.add")}</NavLink>
                 </Accordion>
 
                 <Accordion title="VLAN">
                   <NavLink
-                    href={baseSiteUrl + "VLAN/view"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "VLAN/view"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.vlan.view")}</NavLink>
                   <NavLink
-                    href={baseSiteUrl + "VLAN/create"}
-                    activeClass="text-black"
-                    class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black"
-                    onClick$={toggleSidebar}
+                  href={baseSiteUrl + "VLAN/create"}
+                  activeClass="text-black"
+                  class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
+                  onClick$={toggleSidebar}
                   >{t("sidebar.vlan.view")}</NavLink>
                 </Accordion>
               </div>
             ) : (
-              <div class="my-1 text-sm text-gray-600">
+              <div class="my-1 text-sm text-gray-600 dark:text-gray-200">
                 {/* {$localize`No options available here. Select a site from the dashboard to start.`} */}
                 {t("sidebar.nooptions")}
               </div>
@@ -170,44 +169,47 @@ export default component$(() => {
 
             <div>
               {(loc.params.site || !isClient.value) && (
-                <div class="my-3 flex-1 justify-start text-center font-['Inter'] text-base leading-normal font-semibold text-black">{t("sidebar.buttonstitle")}</div>
+                <div class="my-3 flex-1 justify-start text-center font-['Inter'] text-base leading-normal font-semibold text-black dark:text-gray-50">{t("sidebar.buttonstitle")}</div>
               )}
 
               {!isClient.value && (
-                <a
-                  href={"/" + lang + "/dashboard"}
-                  class="block cursor-pointer rounded-lg bg-[#0094ff] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#0083ee]"
+                <button
+                  type="button"
+                  class="block w-full cursor-pointer rounded-lg bg-[#0094ff] dark:bg-[#0072dd] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#0083ee]"
+                  onClick$={() => nav("/" + lang + "/dashboard")}
                 >
-                  {/* {$localize`Change client`} */}
                   {t("sidebar.buttons.changeclient")}
-                </a>
+                </button>
               )}
 
               {loc.params.site && (
-                <a
-                  href={baseSiteUrl.replace(loc.params.site + "/", "")}
-                  class="my-1 block cursor-pointer rounded-lg bg-[#d506ff] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#c405ee]"
+                <button
+                  type="button"
+                  class="my-1 block w-full cursor-pointer rounded-lg bg-[#d506ff] dark:bg-[#b506ff] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#c405ee]"
+                  onClick$={() => nav(baseSiteUrl.replace(loc.params.site + "/", ""))}
                 >
                   {t("sidebar.buttons.changesite")}
-                </a>
+                </button>
               )}
 
               {loc.params.site && (
-                <a
-                  href={baseSiteUrl}
-                  class="my-1 block cursor-pointer rounded-lg bg-[#1ada3a] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#10d030]"
+                <button
+                  type="button"
+                  class="my-1 block w-full cursor-pointer rounded-lg bg-[#1ada3a] dark:bg-[#10d030] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#10d030]"
+                  onClick$={() => nav(baseSiteUrl)}
                 >
                   {t("sidebar.buttons.gotosite")}
-                </a>
+                </button>
               )}
 
               {user.value?.admin && (
-                <a
-                  href={"/" + lang + "/admin/panel"}
-                  class="my-1 block cursor-pointer rounded-lg bg-[#ff8936] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#ee7825]"
+                <button
+                  type="button"
+                  class="my-1 block w-full cursor-pointer rounded-lg bg-[#ff8936] dark:bg-[#ff6936] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#ee7825]"
+                  onClick$={() => nav("/" + lang + "/admin/panel")}
                 >
                   {t("sidebar.buttons.adminpanel")}
-                </a>
+                </button>
               )}
             </div>
 
@@ -219,7 +221,7 @@ export default component$(() => {
                 <span class="text-md font-semibold text-black">
                   {user.value?.mail}
                 </span> */}
-                <span dangerouslySetInnerHTML={t("sidebar.email@@Log as {{email}}",{email:user.value?.mail})}></span>
+                <span dangerouslySetInnerHTML={t("sidebar.email@@Log as {{email}}", { email: user.value?.mail })} class="dark:text-gray-400"></span>
               </div>
 
               <button

@@ -23,7 +23,9 @@
     "qwik-speak-extract": "qwik-speak-extract --supportedLangs=en,it --assetsPath=i18n",
     "serve": "node server/entry.express",
     "start": "vite --open --mode ssr",
-    "qwik": "qwik"
+    "qwik": "qwik",
+    "bfp": "docker compose up",
+    "rbfp": "docker image rm ipnova-app && docker compose up"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.13.0",

@@ -31,7 +31,10 @@ import Dati from "~/components/table/Dati_Headers";
 import { inlineTranslate } from "qwik-speak";
 // import { useNotify } from "~/services/notifications";
 
-export const onRequest: RequestHandler = ({ params, redirect, url }) => {
+export const onRequest: RequestHandler = ({ params, redirect, url,locale }) => {
+  /* disattivazione della pagina VRF */
+  throw redirect(302, `/${locale()}/${params.client}/${params.site}/${params.network}/info/` );
+
   if (!["view", "insert", "update"].includes(params.mode)) {
     const splitURL = url.href.split("/");
     splitURL.pop();

@@ -9,7 +9,7 @@ interface ButtonProps {
 export default component$<ButtonProps>(({ nomePulsante, onClick$ }) => {
   return (
     <div
-      class="m-4 mb-8 flex h-9 w-7/10 max-w-[300px] cursor-pointer items-center justify-center rounded-lg bg-gray-800 px-4 transition-all duration-200 ease-in hover:w-4/5 hover:bg-gray-900"
+      class="m-4 mb-8 flex h-9 w-7/10 max-w-[300px] cursor-pointer items-center justify-center rounded-lg bg-gray-800 dark:bg-gray-950 dark:hover:bg-gray-900 px-4 transition-all duration-200 ease-in hover:w-4/5 hover:bg-gray-900"
       onClick$={onClick$}
     >
       <div class="flex h-full items-center gap-2">

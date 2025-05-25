@@ -9,6 +9,70 @@
   font-family: Inter;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+}
+
+@layer theme {
+  
+}
+
+:root {
+  /* Light theme */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f3f4f6;
+  --color-text: #111827;
+  --color-text-secondary: #4b5563;
+  --color-border: #e5e7eb;
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-card: #ffffff;
+  --color-input-bg: #ffffff;
+  --color-input-border: #d1d5db;
+}
+
+ .dark {
+  --color-bg: #111827;
+  --color-bg-secondary: #1f2937;
+  --color-text: #f9fafb;
+}
+  /*
+  --color-text-secondary: #9ca3af;
+  --color-border: #374151;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #3b82f6;
+  --color-card: #1f2937;
+  --color-input-bg: #1f2937;
+  --color-input-border: #4b5563;
+} */
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Form elements */
+input, select, textarea {
+}
+
+/* Cards */
+.bg-card {
+  background-color: var(--color-card);
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+
 .badge {
   padding-left: 0.75rem;   /* px-3 */
   padding-right: 0.75rem;  /* px-3 */

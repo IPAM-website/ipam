@@ -16,7 +16,7 @@ export default component$<AccordionTitleProps>(({ title, clicked }) => {
       >
         <div class="flex flex-1 justify-start ps-4 font-['Inter'] text-base font-semibold text-black">
           <p
-            class="me-2 w-full text-start"
+            class="me-2 w-full text-start dark:text-gray-50"
             style={{ userSelect: "none" }}
           >
             {title}
@@ -28,7 +28,7 @@ export default component$<AccordionTitleProps>(({ title, clicked }) => {
             stroke-width="1.5"
             stroke="currentColor"
             class={
-              "me-2 mt-1 size-4 transition-all " +
+              "me-2 mt-1 size-4 dark:text-gray-200 transition-all " +
               (clicked.value ? "rotate-z-180" : "")
             }
           >

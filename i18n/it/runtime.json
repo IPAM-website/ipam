@@ -11,5 +11,15 @@
       "titlePt2": "deve avere le seguenti colonne (intestazioni nella prima riga):",
       "warning": "Assicurati che le intestazioni siano esattamente come mostrato sopra e che ogni riga contenga i dati corrispondenti."
     }
+  },
+  "full": {
+    "it": "Italiano",
+    "en": "Inglese"
+  },
+  "action": {
+    "result1": "Inserimento avvenuto correttamente",
+    "result2": "Modifica avvenuta correttamente",
+    "result3": "Errore durante l'inserimento",
+    "result4": "Errore durante la modifica"
   }
 }

@@ -43,6 +43,10 @@
   animation: shimmer 1.5s infinite;
 }
 
+.dark > * > .skeleton {
+  background: linear-gradient(90deg, #a0a0a0 25%, #909090 50%, #a0a0a0 75%);
+}
+
 .loader-spinner-small {
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;

@@ -1,4 +1,4 @@
-import { component$, isDev} from "@builder.io/qwik";
+import { component$, isDev } from "@builder.io/qwik";
 import {
   QwikCityProvider,
   RouterOutlet,
@@ -31,6 +31,14 @@ export default component$(() => {
             href={`${import.meta.env.BASE_URL}manifest.json`}
           />
         )}
+        <script dangerouslySetInnerHTML={`
+  (function() {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+`} />
         <RouterHead />
       </head>
       <body lang="en">

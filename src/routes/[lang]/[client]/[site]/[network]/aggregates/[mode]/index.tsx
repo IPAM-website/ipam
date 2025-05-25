@@ -66,7 +66,7 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito))
-      throw new Error("idsito non disponibile")
+      return [];
     const query =
       await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
                                 WHERE siti_rete.idsito=${idsito}`;
@@ -98,7 +98,7 @@ export const getAllAggregatesByNetwork = server$(async function (
 
   try {
     if (isNaN(idsito))
-      throw new Error("idsito non disponibile")
+      return [];
     const networks = await getAllNetworksBySite(idsito);
     const prefixes: number[] = [];
 
@@ -306,6 +306,11 @@ export default component$(() => {
                             </PopupModal> */}
 
           <Table>
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 md:flex-row md:items-center md:justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.aggregates.aggregatelist")}</span>
+              </div>
+            </div>
             <Dati
               DBTabella="aggregati"
               title={t("network.aggregates.aggregatelist")}
@@ -315,6 +320,7 @@ export default component$(() => {
               modifyWhen={mmw}
               onReloadRef={getREF}
             >
+
               {" "}
               {/* funcReloadData={reloadData} */}
               {/* <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
@@ -346,10 +352,11 @@ export default component$(() => {
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
                                     </button></div>} */}
             </Dati>
+
             {/* <ButtonAddLink nomePulsante={$localize`Aggiungi aggregato`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink> */}
             {/* <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="aggregati" /> */}
           </Table>
-        </div>
+        </div >
       ) : (
         <CRUDForm data={aggregate.value} reloadFN={reloadFN} />
       )}

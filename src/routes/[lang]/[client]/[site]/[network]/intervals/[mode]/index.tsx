@@ -153,7 +153,7 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito))
-      throw new Error("idsito non disponibile")
+      return [];
     const query =
       await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
                                 WHERE siti_rete.idsito=${idsito}`;
@@ -380,6 +380,11 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 md:flex-row md:items-center md:justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.interval.intervallist")}</span>
+              </div>
+            </div>
             <Dati
               DBTabella="intervalli"
               title={t("network.interval.intervallist")}

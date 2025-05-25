@@ -1,14 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import {
   component$,
   Slot,
   useSignal,
   useTask$,
 } from "@builder.io/qwik";
+import type { RequestHandler} from "@builder.io/qwik-city";
 import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import SiteNavigator from "~/components/layout/SiteNavigator";
 import Title from "~/components/layout/Title";
 import sql from "~/../db";
 import { inlineTranslate } from "qwik-speak";
+
+export const onRequest : RequestHandler = ({redirect, params,locale})=>{
+  if(isNaN(parseInt(params.network)))
+    throw redirect(302, `/${locale("en")}/${params.client}/${params.site}/0/info/view`);
+}
 
 export const useNetworkName = routeLoader$(async function (event) {
   if (!event.params.network && event.params.network == "0") return { nomerete: "", iprete: "-1" };
