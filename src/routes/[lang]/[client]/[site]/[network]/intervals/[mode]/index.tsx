@@ -385,6 +385,17 @@ export default component$(() => {
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.interval.intervallist")}</span>
               </div>
             </div>
+            <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+              <ButtonAddLink
+                nomePulsante={t("network.interval.addinterval")}
+                href={loc.url.href.replace("view", "insert")}
+              ></ButtonAddLink>
+              {/* <ImportCSV
+                OnError={handleError}
+                OnOk={handleOkay}
+                nomeImport="intervallo"
+              /> */}
+            </div>
             <Dati
               DBTabella="intervalli"
               title={t("network.interval.intervallist")}
@@ -424,17 +435,6 @@ export default component$(() => {
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
                                     </button></div>} */}
             </Dati>
-            <div class="flex">
-              <ButtonAddLink
-                nomePulsante={t("network.interval.addinterval")}
-                href={loc.url.href.replace("view", "insert")}
-              ></ButtonAddLink>
-              {/* <ImportCSV
-                OnError={handleError}
-                OnOk={handleOkay}
-                nomeImport="intervallo"
-              /> */}
-            </div>
           </Table>
         </div>
       ) : (

@@ -110,7 +110,7 @@ export default component$(() => {
   const t = inlineTranslate();
   return (
     <>
-      <div class="size-full overflow-hidden  px-0 md:px-24 lg:px-40">
+      <div class="size-full overflow-hidden  px-0 md:px-24 lg:px-40 animateEnter">
         <Title
           haveReturn={true}
           url={"/" + lang + "/dashboard"}
