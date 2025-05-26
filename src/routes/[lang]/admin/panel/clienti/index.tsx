@@ -37,7 +37,7 @@ export const extractRow = (row: any) => {
 export const deleteRow = server$(async function (this, data) {
   try {
     const user = await getUser()
-    await sql.begin(async(tx)=>{
+    await sql.begin(async (tx) => {
       await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
       await tx`DELETE FROM clienti WHERE clienti.idcliente = ${data.idcliente}`;
     })
@@ -275,18 +275,18 @@ export default component$(() => {
     addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
   })
 
-  const handleOk = $(async (data:  any) => {
+  const handleOk = $(async (data: any) => {
     addNotification(lang == 'it' ? "Operazione in corso..." : "Operation in progress...", 'loading');
-    try{
+    try {
       const result = await ImportCSV(data)
       notifications.value = notifications.value.filter(n => n.type !== "loading");
-      if(result.success){
+      if (result.success) {
         addNotification(result.message, 'success');
         reloadFN.value?.();
-      }else{
+      } else {
         addNotification(result.message, 'error');
       }
-    }catch(e){
+    } catch (e) {
       console.log(e)
       notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang == 'it' ? "Errore durante l'importazione: " + e : "Error during import: " + e, 'error');
@@ -364,35 +364,35 @@ export default component$(() => {
 
         <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{t("admin.panel")}</Title>
         <div class="animateEnter">
-        <Table title={t("admin.client.list")}>
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
-            <div class="flex items-center gap-2">
-              <span class="font-semibold text-lg text-gray-800 dark:text-gray-100">{t("admin.client.list")}</span>
-              <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+          <Table title={t("admin.client.list")}>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-lg text-gray-800 dark:text-gray-100">{t("admin.client.list")}</span>
+                <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+              </div>
+              <div class="flex items-center gap-2">
+                <TextBoxForm
+                  id="txtfilter"
+                  value={filter.value.value}
+                  ref={txtQuickSearch}
+                  placeholder={t("quicksearch")}
+                  onInput$={(e: InputEvent) => {
+                    filter.value.value = (e.target as HTMLInputElement).value;
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (reloadFN) reloadFN.value?.();
+                  }}
+                  search={true}
+                />
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <TextBoxForm
-                id="txtfilter"
-                value={filter.value.value}
-                ref={txtQuickSearch}
-                placeholder={t("quicksearch")}
-                onInput$={(e: InputEvent) => {
-                  filter.value.value = (e.target as HTMLInputElement).value;
-                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                  if (reloadFN) reloadFN.value?.();
-                }}
-                search={true}
-              />
+            <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+              <ButtonAdd nomePulsante={t("admin.client.addclient")} onClick$={openClientiDialog}></ButtonAdd>
+              <div>
+                <Import OnError={handleError} OnOk={handleOk}></Import>
+              </div>
             </div>
-          </div>
-          <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
-            <ButtonAdd nomePulsante={t("admin.client.addclient")} onClick$={openClientiDialog}></ButtonAdd>
-            <div>
-              <Import OnError={handleError} OnOk={handleOk}></Import>
-            </div>
-          </div>
-          <Dati dati={dati.value} title={t("admin.client.list")} nomeTabella={t("admin.client.clients")} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
-        </Table>
+            <Dati dati={dati.value} title={t("admin.client.list")} nomeTabella={t("admin.client.clients")} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
+          </Table>
         </div>
       </div>
 
@@ -402,7 +402,7 @@ export default component$(() => {
           <div class="dialog-contentAdmin">
             <div class="absolute top-4 right-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-all duration-300" onClick$={closeClientiDialog}>
               {/* <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg> */}
-              </div>
+            </div>
             <Form action={formAction.value} onSubmit$={reloadTable} class="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-100 dark:border-gray-500 animate-fade-in">
               {/* Titolo */}
               <div class="flex items-center gap-3 mb-6">

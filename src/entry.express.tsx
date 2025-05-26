@@ -7,6 +7,7 @@
  * - https://qwik.dev/docs/deployments/node/
  *
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   createQwikCity,
   type PlatformNode,

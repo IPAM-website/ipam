@@ -15,7 +15,7 @@ export default component$(() => {
 
   return (
     <>
-      <div class="mb-8 flex h-16 w-full border-b dark:bg-gray-800 border-[#dfdfdf] dark:border-[#4f4f4f] bg-white *:h-full *:items-center">
+      <div class="sm:px-8 mb-8 flex h-16 w-full border-b dark:bg-gray-800 border-[#dfdfdf] dark:border-[#4f4f4f] bg-white *:h-full *:items-center">
         <div class="flex flex-none items-center justify-between ps-3 sm:ps-0 sm:justify-end pe-2">
           <button class="cursor-pointer" onClick$={toggleSidebar}>
             <svg

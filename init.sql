@@ -1,3 +1,34 @@
+CREATE OR REPLACE FUNCTION notify_change()
+RETURNS TRIGGER AS $$
+DECLARE
+    payload JSON;
+BEGIN
+    IF (TG_OP = 'DELETE') THEN
+        payload := json_build_object(
+            'operation', 'DELETE',
+            'table', TG_TABLE_NAME,
+            'data', row_to_json(OLD)
+        );
+    ELSIF (TG_OP = 'UPDATE') THEN
+        payload := json_build_object(
+            'operation', 'UPDATE',
+            'table', TG_TABLE_NAME,
+            'old', row_to_json(OLD),
+            'new', row_to_json(NEW)
+        );
+    ELSIF (TG_OP = 'INSERT') THEN
+        payload := json_build_object(
+            'operation', 'INSERT',
+            'table', TG_TABLE_NAME,
+            'data', row_to_json(NEW)
+        );
+    END IF;
+
+    PERFORM pg_notify('data_changes', payload::text);
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION update_modified_column() 
 RETURNS TRIGGER AS $$
 BEGIN
@@ -337,6 +368,63 @@ ALTER SYSTEM SET wal_level = replica;
 ALTER SYSTEM SET archive_mode = on;
 ALTER SYSTEM SET archive_command = 'gzip < %p > /backup/wal/%f.gz';
 
+CREATE TRIGGER tecnici_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Tecnici
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER paesi_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Paesi
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER citta_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Citta
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER clienti_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Clienti
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER usercliente_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON UserCliente
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER siti_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Siti
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER rete_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Rete
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER siti_rete_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Siti_Rete
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER vlan_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON VLAN
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER vrf_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON VRF
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER indirizzi_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Indirizzi
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER aggregati_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Aggregati
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER aggregati_rete_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Aggregati_Rete
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+CREATE TRIGGER intervalli_notify_trigger
+AFTER INSERT OR UPDATE OR DELETE ON Intervalli
+FOR EACH ROW EXECUTE FUNCTION notify_change();
+
+
 -- Crea tabella di audit
 CREATE TABLE IF NOT EXISTS audit_log (
     id SERIAL PRIMARY KEY,
@@ -413,6 +501,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
 -- Applica il trigger a tutte le tabelle (escludendo solo la tabella di audit)
 DO $$
 DECLARE
@@ -422,11 +511,12 @@ BEGIN
         SELECT table_name
         FROM information_schema.tables
         WHERE table_schema = 'public' 
+        AND table_type = 'BASE TABLE'
         AND table_name NOT IN ('audit_log')
     LOOP
-        EXECUTE format('CREATE TRIGGER audit_trigger_%I
+        EXECUTE format('CREATE TRIGGER notify_trigger_%I
                         AFTER INSERT OR UPDATE OR DELETE ON %I
-                        FOR EACH ROW EXECUTE FUNCTION audit_trigger()', tbl, tbl);
+                        FOR EACH ROW EXECUTE FUNCTION notify_change()', tbl, tbl);
     END LOOP;
 END $$;
 

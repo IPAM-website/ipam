@@ -12,4 +12,4 @@ COPY --from=builder /app .
 ENV NODE_ENV=production
 COPY .env .
 EXPOSE 3000
-CMD ["npm","run","serve"]
+CMD ["npm", "run", "serve"]

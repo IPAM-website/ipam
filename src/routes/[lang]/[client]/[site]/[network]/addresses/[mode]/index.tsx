@@ -10,6 +10,7 @@ import {
   useSignal,
   useStore,
   useTask$,
+  useVisibleTask$
 } from "@builder.io/qwik";
 import type {
   RequestHandler
@@ -303,6 +304,18 @@ export default component$(() => {
   const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
   const showPreview = useSignal(false);
+
+  useVisibleTask$(() => {
+    const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
+    eventSource.onmessage = async (event) => {
+      try {
+        reloadFN.value?.();
+      } catch (e) {
+        console.error('Errore parsing SSE:', event?.data);
+      }
+    };
+    return () => eventSource.close();
+  });
 
   useTask$(({ track }) => {
     track(() => loc.params.network);

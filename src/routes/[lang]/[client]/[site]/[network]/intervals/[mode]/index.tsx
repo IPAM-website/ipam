@@ -433,7 +433,7 @@ export default component$(() => {
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                                         </svg>
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
-                                    </button></div>} */}
+                                    < /button></div>} */}
             </Dati>
           </Table>
         </div>

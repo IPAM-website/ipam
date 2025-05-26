@@ -89,6 +89,7 @@ export default component$<DatiProps>(
     });
 
     const reloadData = $(async () => {
+      //console.log("reloadData in dati headers")
       store.globalLoading = true;
       try {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
