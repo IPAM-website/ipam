@@ -1,163 +1,111 @@
-import { $, component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $ } from "@builder.io/qwik";
 
 export default component$(() => {
-    const logs = useSignal<string[]>([]);
-    const status = useSignal<'loading' | 'ok' | 'error'>('loading');
-    const lastUpdate = useSignal<string>(new Date().toLocaleTimeString());
+    const logs = useSignal<string>("");
+    const loading = useSignal(true);
+    const copied = useSignal(false);
 
-    // eslint-disable-next-line qwik/no-use-visible-task
-    useVisibleTask$(({ cleanup }) => {
-        const controller = new AbortController();
-
-        const fetchLogs = async () => {
-            try {
-                const res = await fetch('/api/logs?_=' + Date.now(), {
-                    signal: controller.signal,
-                    cache: 'no-cache'
-                });
-
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
-
-                if (!data?.success || !Array.isArray(data.logs)) {
-                    throw new Error('Formato risposta non valido');
-                }
-
-                logs.value = data.logs;
-                status.value = 'ok';
-                lastUpdate.value = new Date().toLocaleTimeString();
-
-            } catch (err) {
-                status.value = 'error';
-                logs.value = [`[${new Date().toLocaleTimeString()}] Errore: ${err as string}`];
-            }
-        };
-
-        fetchLogs();
-        const timer = setInterval(fetchLogs, 3000);
-
-        cleanup(() => {
-            clearInterval(timer);
-            controller.abort();
-        });
+    useVisibleTask$(async () => {
+        try {
+            const response = await fetch("/api/logs");
+            logs.value = await response.text();
+        } catch (error) {
+            logs.value = "Errore nel caricamento dei log";
+        }
+        loading.value = false;
     });
 
-    // Funzione per scaricare i log come file txt
-    const downloadLogs = $(async () => {
-        try {
-            const response = await fetch('/api/logs/download');
-            if (!response.ok) throw new Error('Download failed');
+    // Preview: ultime 30 righe
+    const getPreview = $(() => {
+        if (!logs.value) return "";
+        const lines = logs.value.split("\n");
+        return lines.slice(-30).join("\n");
+    });
 
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
+    const copyLogs = $(async () => {
+        navigator.clipboard.writeText(await getPreview());
+        copied.value = true;
+        setTimeout(() => (copied.value = false), 1200);
+    });
 
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `logs_completi_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch (err) {
-            alert('Errore durante il download: ' + err as string);
-        }
+    const downloadLogs = $(() => {
+        const blob = new Blob([logs.value], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "postgresql.log";
+        a.click();
+        URL.revokeObjectURL(url);
     });
 
     return (
-        <div class="bg-white p-4 rounded-lg shadow-lg dark:bg-gray-900 dark:border-neutral-800 dark:text-gray-50 dark:**:text-gray-50  dark:**:border-gray-700 border border-gray-300">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-xl font-bold text-gray-800">Log del Sistema</h2>
-                    <p class="text-sm text-gray-500">
-                        Ultimo aggiornamento: {lastUpdate.value}
-                    </p>
+        <div class="w-full mt-5 mb-10 h-2/3 flex flex-col">
+            {/* Header */}
+            <div class="flex items-center justify-between rounded-t-lg border border-b-0 border-gray-300 bg-white px-6 py-3
+              dark:border-gray-700 dark:bg-gray-800">
+                <div class="flex items-center gap-2">
+                    <svg class="h-6 w-6 text-black dark:text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="16" rx="2" />
+                        <path d="M8 2v4M16 2v4" />
+                    </svg>
+                    <span class="text-black dark:text-white font-semibold text-base">Anteprima Log PostgreSQL</span>
                 </div>
-                <div class={`w-3 h-3 rounded-full ${status.value === 'ok' ? 'bg-green-500' :
-                        status.value === 'loading' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'
-                    }`}></div>
+                <div class="flex gap-2">
+                    <button
+                        onClick$={copyLogs}
+                        class="flex items-center gap-1 rounded px-3 py-1.5 bg-white text-gray-600 font-medium border border-gray-200 hover:bg-gray-50 transition
+               dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                        title="Copia anteprima"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="9" y="9" width="13" height="13" rx="2" />
+                            <rect x="3" y="3" width="13" height="13" rx="2" />
+                        </svg>
+                        <span class="hidden sm:inline">Copia</span>
+                    </button>
+                    <button
+                        onClick$={downloadLogs}
+                        class="flex items-center gap-1 rounded px-3 cursor-pointer py-1.5 bg-gray-800 text-white font-medium border border-gray-800 hover:bg-gray-900 transition
+               dark:bg-gray-200 dark:hover:bg-white dark:hover:text-gray-800 dark:text-gray-900"
+                        title="Scarica log completo"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M12 16v-8m0 8l-4-4m4 4l4-4" />
+                            <rect x="4" y="20" width="16" height="2" rx="1" />
+                        </svg>
+                        <span class="hidden sm:inline">Scarica</span>
+                    </button>
+                </div>
             </div>
-
-            <div class="h-96 overflow-y-auto">
-                {logs.value.length === 0 ? (
-                    <div class="text-center p-4 text-gray-500">
-                        {status.value === 'loading'
-                            ? 'Caricamento in corso...'
-                            : 'Nessun log disponibile'}
-                    </div>
+            {/* Corpo log */}
+            <div class="flex-grow bg-gray-50 rounded-b-lg border border-t-0 border-gray-300 p-0 relative
+              dark:bg-gray-950 dark:border-gray-700">
+                {loading.value ? (
+                    <div class="text-gray-400 dark:text-gray-500 py-8 text-center">Caricamento log...</div>
                 ) : (
-                    logs.value.map((log, idx) => {
-                        const logParts = log.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} UTC) \[.*?\] (\w+):\s+(.*)/);
-                        return (
-                            <div key={idx} class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 even:bg-gray-50">
-                                <div class="flex items-start gap-2 text-sm">
-                                    <div class="w-[6px] h-[6px] mt-2 rounded-full bg-gray-400"></div>
-                                    <div class="flex-1">
-                                        {logParts && (
-                                            <>
-                                                <div class="flex gap-2 items-baseline">
-                                                    <span class="text-gray-500">{logParts[1]}</span>
-                                                    <span class={`px-2 py-1 rounded text-xs font-medium ${logParts[2] === 'ERROR' ? 'bg-red-100 text-red-800' :
-                                                            logParts[2] === 'WARNING' ? 'bg-yellow-100 text-yellow-800' :
-                                                                'bg-blue-100 text-blue-800'
-                                                        }`}>
-                                                        {logParts[2]}
-                                                    </span>
-                                                </div>
-                                                <div class="mt-1 font-mono text-gray-700">
-                                                    {logParts[3]}
-                                                </div>
-                                            </>
-                                        )}
-                                        {!logParts && (
-                                            <div class="text-gray-700">{log}</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })
+                    <pre
+                        class="w-full h-full max-h-full font-mono text-xs text-gray-800 bg-gray-100 rounded-b-lg p-4 overflow-auto border-0
+               scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200
+               dark:text-green-200 dark:bg-gray-900 dark:scrollbar-thumb-gray-700 dark:scrollbar-track-gray-900"
+                        style={{
+                            minHeight: "100%",
+                            maxHeight: "100%",
+                            boxSizing: "border-box",
+                        }}
+                    >
+                        {getPreview()}
+                    </pre>
                 )}
-            </div>
-
-            <div class="mt-4 flex gap-2 justify-end">
-                <button
-                    onClick$={() => location.reload()}
-                    class="flex items-center gap-2 px-4 py-2 bg-gray-800 dark:hover:bg-gray-700 text-white rounded-lg hover:bg-gray-900 cursor-pointer transition-colors"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                    </svg>
-                    <span>Aggiorna ora</span>
-                </button>
-                <button
-                    onClick$={downloadLogs}
-                    class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-green-600 dark:hover:bg-green-500 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                    <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
-                        />
-                    </svg>
-                    <span>Scarica log</span>
-                </button>
+                {copied.value && (
+                    <div class="absolute top-4 right-8 rounded bg-gray-900 text-white px-3 py-1 text-sm shadow transition dark:bg-blue-700">
+                        Copiato!
+                    </div>
+                )}
+                {!loading.value && (
+                    <div class="text-right text-xs text-gray-400 mt-2 px-4 pb-2 dark:text-gray-500">
+                        Mostrando le ultime 30 righe del log
+                    </div>
+                )}
             </div>
         </div>
     );

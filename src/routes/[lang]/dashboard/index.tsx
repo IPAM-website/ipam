@@ -788,15 +788,32 @@ export default component$(() => {
                 ))}
             </div>
 
-            <div class="size-full lg:px-40 md:px-24 sm:px-12 px-4">
+            <div class="size-full lg:px-40 md:px-24 sm:px-12 px-4 animateEnter">
                 <Title>{t("dashboard.csv.clientSelection")}
-                    <button onClick$={showPopUpCSV} class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 bg-black text-white rounded hover:bg-gray-800 transition-colors text-sm ml-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        {t("dashboard.csv.import")}
-                    </button>
                 </Title>
+                <div class="mt-4 flex items-center">
+                    <button
+                        onClick$={showPopUpCSV}
+                        class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 dark:bg-gray-200 dark:text-black bg-gray-800 dark:hover:bg-white text-white font-semibold rounded shadow border border-gray-300 hover:bg-gray-900 focus:outline-none focus:ring-2 transition-all"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="h-5 w-5"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                            />
+                        </svg>
+                        <span>{t("dashboard.csv.import")}</span>
+                    </button>
+
+                </div>
                 <ClientList refresh={clientListRefresh.value} />
 
 
@@ -838,14 +855,7 @@ export default component$(() => {
                         <span class="ml-2 px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-700 text-xs font-semibold tracking-wide">CSV</span>
                     </div>}
             >
-                <div
-                    class="w-full flex justify-center items-center mb-2"
-                    style={{
-                        maxHeight: "80vh",
-                        overflowY: "auto",
-                    }}
-                >
-                    <Form action={formAction} onSubmit$={reloadClients} ref={formRef} class=" shadow-lg rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6">
+                <Form action={formAction} onSubmit$={reloadClients} ref={formRef} class="rounded-lg px-8 py-6 w-full max-w-2xl mx-auto space-y-6 animate-fade-in">
                         {/* Sezione Cliente - Modificata */}
                         <div class="space-y-4">
                             <h2 class="text-xl font-semibold">{t("dashboard.csv.subtitleForm")}</h2>
@@ -931,10 +941,10 @@ export default component$(() => {
                                     {t('dashboard.csv.siti')}
                                     <button
                                         type="button"
-                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer dark:bg-white dark:hover:bg-gray-200"
                                         onClick$={() => showPreviewSection('siti')}
                                     >
-                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 text-white dark:text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
                                         </svg>
                                         <span class="tooltip">{t("dashboard.infotabella")}</span>
@@ -1003,10 +1013,10 @@ export default component$(() => {
                                     {t('dashboard.csv.network')}
                                     <button
                                         type="button"
-                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer dark:bg-white dark:hover:bg-gray-200"
                                         onClick$={() => showPreviewSection('network')}
                                     >
-                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 text-white dark:text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
                                         </svg>
                                         <span class="tooltip">{t("dashboard.infotabella")}</span>
@@ -1075,10 +1085,10 @@ export default component$(() => {
                                     {t('dashboard.csv.ip')}
                                     <button
                                         type="button"
-                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer"
+                                        class="has-tooltip flex items-center justify-center w-7 h-7 rounded-full bg-black hover:bg-gray-800 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-cyan-400 cursor-pointer dark:bg-white dark:hover:bg-gray-200"
                                         onClick$={() => showPreviewSection('ip')}
                                     >
-                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4 text-white dark:text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
                                         </svg>
                                         <span class="tooltip">{t("dashboard.infotabella")}</span>
@@ -1181,8 +1191,6 @@ export default component$(() => {
                             {t("dashboard.csv.cancel")}
                         </button>
                     </Form>
-
-                </div>
             </PopupModal>
 
             <PopupModal

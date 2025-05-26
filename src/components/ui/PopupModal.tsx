@@ -31,7 +31,7 @@ export default component$(
     return (
       <div
         ref={mask}
-        class="fixed top-0 left-0 z-100 flex h-[100vh] w-[100vw] items-center justify-center bg-[rgba(1,1,1,0.25)] dark:bg-[rgba(1,1,1,0.5)]"
+        class="fixed top-0 left-0 z-100 flex h-[100vh] w-[100vw] items-center justify-center bg-[rgba(1,1,1,0.25)] dark:bg-[rgba(1,1,1,0.5)] animate-fade-in"
         style={{ display: visible ? "flex" : "none" }}
         onClick$={(e) => {
           if ((e.target as HTMLDivElement | undefined) === mask.value) {

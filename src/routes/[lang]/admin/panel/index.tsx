@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import Title from "~/components/layout/Title";
 import { useLogsLoader } from './logs.loader';
 import sql from "~/../db";
-//import LogsList from "~/components/utils/LogsList";
+import LogsList from "~/components/utils/LogsList";
 import type { UtenteModel } from "~/dbModels";
 import { inlineTranslate } from "qwik-speak";
 
@@ -110,7 +110,7 @@ export default component$(() => {
   const t = inlineTranslate();
   return (
     <>
-      <div class="size-full overflow-hidden  px-0 md:px-24 lg:px-40">
+      <div class="size-full overflow-hidden  px-0 md:px-24 lg:px-40 animateEnter">
         <Title
           haveReturn={true}
           url={"/" + lang + "/dashboard"}
@@ -172,30 +172,9 @@ export default component$(() => {
             </div>
           </div>
         </div>
-        <div class="mt-8 flex w-full">
-          <div class="inline-flex w-full dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 items-center justify-start gap-2.5 overflow-hidden rounded-lg border-1 border-[#cdcdcd] p-2 md:w-3/4">
-            <div class="inline-flex flex-1 flex-col items-start justify-start">
-              <div class="border-b border-[#f3f3f3]">
-                <div class="justify-start font-['Inter'] text-base leading-normal font-semibold text-black">
-                  Logs
-                </div>
-                <div class="w-full flex mt-8">
 
-                  <div class="container mx-auto p-4">
+        <LogsList />
 
-                    {/* Altri componenti */}
-
-                    <section class="mt-8">
-                      {/*<LogsList />*/}
-                    </section>
-                  </div>
-                </div>
-
-
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );

@@ -12,12 +12,12 @@ export default component$<InfoTableProps>(({ showPreviewInfo }) => {
     <>
       <button
         type="button"
-        class="has-tooltip flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-black shadow transition-colors hover:bg-gray-800 dark:hover:bg-gray-900 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
+        class="has-tooltip flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-black shadow transition-colors hover:bg-gray-800 dark:hover:bg-white dark:bg-gray-200 focus:ring-2 focus:ring-cyan-400 focus:outline-none"
         onClick$={showPreviewInfo}
         tabIndex={0}
       >
         <svg
-          class="h-4 w-4 text-white"
+          class="h-4 w-4 text-white dark:text-gray-800"
           fill="none"
           stroke="currentColor"
           stroke-width="2"

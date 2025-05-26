@@ -363,6 +363,7 @@ export default component$(() => {
         </div>
 
         <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{t("admin.panel")}</Title>
+        <div class="animateEnter">
         <Table title={t("admin.client.list")}>
           <div class="flex flex-col md:flex-row md:items-center md:justify-between dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 gap-2 mb-4 bg-gray-50 px-4 py-3 rounded-t-xl border-b border-gray-200">
             <div class="flex items-center gap-2">
@@ -392,6 +393,7 @@ export default component$(() => {
           </div>
           <Dati dati={dati.value} title={t("admin.client.list")} nomeTabella={t("admin.client.clients")} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
         </Table>
+        </div>
       </div>
 
       {showDialog.value &&

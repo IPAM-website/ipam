@@ -47,18 +47,18 @@ export default component$(() => {
           </div>
           <div class="">
             <button
-              class="group bg-gray-900 text-white p-2 rounded-lg cursor-pointer flex items-center justify-start transition-all gap-2 max-w-[36px] md:hover:max-w-[100px] duration-300 overflow-hidden relative"
+              class="group bg-gray-900 text-white p-2 rounded-lg cursor-pointer flex items-center justify-start transition-all gap-2 max-w-[36px] md:hover:max-w-[100px] duration-300 overflow-hidden relative dark:bg-gray-200 dark:hover:bg-gray-100 dark:hover:text-gray-800 dark:text-gray-200 "
               onClick$={async () => {
               await fetch("/api/cookie", { method: "DELETE" });
               nav("/" + lang + "/login");
               }}
             >
-              <span class="flex items-center">
+              <span class="flex items-center dark:text-gray-800 dark:hover:text-gray-800 dark:hover:bg-gray-100 dark:group-hover:text-gray-800 dark:group-hover:bg-gray-100 dark:group-hover:border-gray-100">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
-                stroke-width="1.5"
+                stroke-width="2"
                 stroke="currentColor"
                 class="size-5"
               >
@@ -70,7 +70,7 @@ export default component$(() => {
               </svg>
               </span>
               <span
-              class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none md:group-hover:pointer-events-auto"
+              class="whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none md:group-hover:pointer-events-auto dark:text-gray-800 dark:group-hover:text-gray-800 dark:group-hover:bg-gray-100 dark:group-hover:border-gray-100"
               >
               Logout
               </span>

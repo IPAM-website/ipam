@@ -225,7 +225,7 @@ export default component$(() => {
               </div>
 
               <button
-                class="my-1 block w-full cursor-pointer rounded-lg bg-gray-800 p-1 text-center font-['Inter'] text-base leading-normal font-medium text-white hover:bg-black"
+                class="my-1 block w-full cursor-pointer rounded-lg bg-gray-800 p-1 text-center font-['Inter'] text-base leading-normal font-medium text-white hover:bg-black dark:bg-gray-200 dark:hover:bg-gray-100 dark:hover:text-gray-900 dark:text-gray-800"
                 onClick$={async () => {
                   await fetch("/api/cookie", { method: "DELETE" });
                   nav("/" + lang + "/login");
