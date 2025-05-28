@@ -4,7 +4,7 @@
 /* eslint-disable qwik/valid-lexical-scope */
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import type { ReteModel } from "~/dbModels";
 
 interface AddressBoxProps {
@@ -39,6 +39,7 @@ export const getSameIPs = server$(async function (
   type: string,
   siteID: number,
 ) {
+  const sql = sqlForQwik(this.env)
   try {
     if (isNaN(prefix)) return [];
     if (type == "host") {
@@ -56,7 +57,8 @@ export const getSameIPs = server$(async function (
   }
 });
 
-export const getNetwork = server$(async (idrete: number) => {
+export const getNetwork = server$(async function (idrete: number) {
+  const sql = sqlForQwik(this.env)
   try {
     const query = (
       await sql`SELECT * FROM rete WHERE rete.idrete = ${idrete}`
@@ -68,7 +70,8 @@ export const getNetwork = server$(async (idrete: number) => {
   }
 });
 
-export const getNetworkSpace = server$(async (idrete: number) => {
+export const getNetworkSpace = server$(async function (idrete: number) {
+  const sql = sqlForQwik(this.env)
   try {
     const query =
       (await sql`SELECT * FROM rete WHERE rete.idretesup = ${idrete} ORDER BY iprete`) as ReteModel[];

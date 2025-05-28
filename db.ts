@@ -1,26 +1,44 @@
-import postgres from "postgres";
+import postgres, {type Sql } from 'postgres';
+import type { RequestEventBase } from '@builder.io/qwik-city';
 
-const {
-  POSTGRES_USER,
-  POSTGRES_PASSWORD,
-  POSTGRES_DB,
-  POSTGRES_HOST,
-  POSTGRES_PORT,
-} = process.env;
+type EnvLike = RequestEventBase['env'] | NodeJS.ProcessEnv;
 
-if (!POSTGRES_USER || !POSTGRES_PASSWORD || !POSTGRES_DB || !POSTGRES_HOST) {
-  throw new Error("Missing required environment variables");
+function getEnvVar(env: EnvLike, key: string): string | undefined {
+  // Se è un oggetto Qwik, ha il metodo get
+  if (typeof (env as any).get === 'function') {
+    return (env as RequestEventBase['env']).get(key);
+  }
+  // Altrimenti è process.env
+  return (env as NodeJS.ProcessEnv)[key];
+}
+let sql: Sql | null = null
+
+export function createSqlClient(env: EnvLike) {
+  if(sql) return sql;
+  const hostname = getEnvVar(env, 'POSTGRES_HOST');
+  const username = getEnvVar(env, 'POSTGRES_USER');
+  const password = getEnvVar(env, 'POSTGRES_PASSWORD');
+  const db = getEnvVar(env, 'POSTGRES_DB');
+  const portEnv = getEnvVar(env, 'POSTGRES_PORT');
+
+  if (!hostname || !username || !password || !db) {
+    console.error('CRITICAL: Missing one or more PostgreSQL environment variables');
+    throw new Error('Server database configuration is incomplete');
+  }
+
+  const port = portEnv ? parseInt(portEnv, 10) : 5432;
+  sql = postgres({
+    host: hostname,
+    username,
+    password,
+    db,
+    port,
+    max: 20,
+    idle_timeout: 30,
+    connect_timeout: 5,
+  });
+
+  return sql;
 }
 
-const sql = postgres({
-  hostname: POSTGRES_HOST,
-  database: POSTGRES_DB,
-  username: POSTGRES_USER,
-  password: POSTGRES_PASSWORD,
-  port: parseInt(POSTGRES_PORT || "5432"),
-  idle_timeout: 20,
-});
-
-// console.log('Connected to PostgreSQL')
-
-export default sql;
+export const sqlForQwik = (env: RequestEventBase['env']) => createSqlClient(env);

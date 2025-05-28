@@ -16,7 +16,7 @@ import {
 import TableMaps from "~/tableMaps";
 import { server$ } from "@builder.io/qwik-city";
 import tableStyle from "./tableStyle.css?inline";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import ConfirmDialog from "~/components/ui/confirmDialog";
 import PopupModal from "../ui/PopupModal";
 import { inlineTranslate } from "qwik-speak";
@@ -95,7 +95,8 @@ export default component$<DatiProps>(
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const freshData = funcReloadData
           ? await funcReloadData()
-          : await server$(async () => {
+          : await server$(async function()  {
+            const sql = sqlForQwik(this.env)
             //console.log("Fetching data from server for table:", nT.value);
             const result = await sql`SELECT * FROM ${sql(nT.value)}`;
             return Array.isArray(result) ? result : [];
@@ -273,7 +274,7 @@ export default component$<DatiProps>(
             disabled={store.globalLoading}
             class={`flex items-center rounded-md px-3.5 py-1.5 ${store.globalLoading
                 ? "cursor-wait bg-gray-400 dark:bg-gray-600"
-                : "cursor-pointer bg-black text-white hover:bg-gray-900 dark:hover:bg-gray-700 dark:bg-gray-200 dark:hover:bg-white dark:text-black"
+                : "cursor-pointer bg-black text-white hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-white dark:text-black"
               } transition-colors`}
           >
             {store.globalLoading ? (

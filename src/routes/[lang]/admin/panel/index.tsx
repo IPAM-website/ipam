@@ -10,7 +10,7 @@ import {
 import jwt from "jsonwebtoken";
 import Title from "~/components/layout/Title";
 import { useLogsLoader } from './logs.loader';
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import LogsList from "~/components/utils/LogsList";
 import type { UtenteModel } from "~/dbModels";
 import { inlineTranslate } from "qwik-speak";
@@ -65,7 +65,8 @@ export const onGet: RequestHandler = async ({
   }
 };
 
-export const getInfo = server$(async () => {
+export const getInfo = server$(async function() {
+  const sql = sqlForQwik(this.env);
   const info: infoProps = {
     ntecnici: "0",
     nclienti: "0",

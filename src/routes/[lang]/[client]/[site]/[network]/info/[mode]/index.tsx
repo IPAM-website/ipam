@@ -15,7 +15,7 @@ import {
   useNavigate,
 } from "@builder.io/qwik-city";
 import { inlineTranslate } from "qwik-speak";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import type { ReteModel } from "~/dbModels";
 
 export const onRequest: RequestHandler = ({ redirect, params, url }) => {
@@ -23,20 +23,23 @@ export const onRequest: RequestHandler = ({ redirect, params, url }) => {
     throw redirect(301, url.pathname.replace(params.mode, "view"));
 };
 
-export const useSiteName = routeLoader$(async ({ params }) => {
+export const useSiteName = routeLoader$(async ({ params, env }) => {
+  const sql = sqlForQwik(env);
   if(params.site=="")
     return "";
   return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
     .nomesito;
 });
 
-export const useSiteNet = routeLoader$(async ({ params }) => {
+export const useSiteNet = routeLoader$(async ({ params, env }) => {
+  const sql = sqlForQwik(env);
   if(params.site=="")
     return [];
   return (await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE idsito = ${params.site}`) as ReteModel[];
 });
 
 export const getNet = server$(async function () {
+  const sql = sqlForQwik(this.env);
   if(!this.params.network || this.params.network == "")
     return {} as ReteModel;
   return (
@@ -44,7 +47,8 @@ export const getNet = server$(async function () {
   )[0] as ReteModel;
 });
 
-export const getNetworkSpace = server$(async (idrete: number) => {
+export const getNetworkSpace = server$(async function (idrete: number) {
+  const sql = sqlForQwik(this.env);
   try {
     if(isNaN(idrete))
       return 0;
@@ -66,7 +70,8 @@ export const getNetworkSpace = server$(async (idrete: number) => {
   }
 });
 
-export const getParentNetwork = server$(async (idrete: number) => {
+export const getParentNetwork = server$(async function (idrete: number) {
+  const sql = sqlForQwik(this.env);
   try {
     if(isNaN(idrete))
       return [];
@@ -80,7 +85,8 @@ export const getParentNetwork = server$(async (idrete: number) => {
   }
 });
 
-export const getChildrenNetworks = server$(async (idrete: number) => {
+export const getChildrenNetworks = server$(async function (idrete: number) {
+  const sql = sqlForQwik(this.env);
   try {
     if(isNaN(idrete))
       return [];
@@ -124,11 +130,24 @@ export default component$(() => {
 
   const loading = useSignal(true);
 
-  useVisibleTask$(() => {
+  useVisibleTask$(({ track }) => {
+    track(()=> lengthBar.value)
     if (lengthBar.value > window.innerWidth - 40)
       lengthBar.value = window.innerWidth - 40;
     loading.value = false;
   });
+
+  /*useVisibleTask$(() => {
+    const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
+    eventSource.onmessage = async (event) => {
+      try {
+        
+      } catch (e) {
+        console.error('Errore parsing SSE:', event?.data);
+      }
+    };
+    return () => eventSource.close();
+  });*/
 
   const t = inlineTranslate();
 

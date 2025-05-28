@@ -30,9 +30,9 @@ export default component$<ConfirmDialogProps>(
 
     return (
       <div class={`dialog-overlay ${isOpen ? "open" : ""}`}>
-        <div class="dialog-content">
-          <h3 class="dialog-title">{title}</h3>
-          <p class="dialog-message">{message}</p>
+        <div class="dialog-content black:bg-gray-800 black:text-white">
+          <h3 class="dialog-title text-black dark:text-white">{title}</h3>
+          <p class="dialog-message text-gray-700 dark:text-gray-400">{message}</p>
           <div class="dialog-actions">
             <button onClick$={onCancel} class="dialog-button cancel">
               {cancelText}

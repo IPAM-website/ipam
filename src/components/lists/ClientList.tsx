@@ -7,7 +7,7 @@ import {
   useTask$,
 } from "@builder.io/qwik";
 import { server$, useNavigate } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import { getBaseURL } from "~/fnUtils";
 import type { ClienteModel } from "~/dbModels";
 import { inlineTranslate } from "qwik-speak";
@@ -18,7 +18,8 @@ export interface ClientListProps {
   refresh?: number
 }
 
-export const getClients = server$(async () => {
+export const getClients = server$(async function () {
+  const sql = sqlForQwik(this.env)
   try {
     const query = await sql`SELECT * FROM clienti`;
     return query;

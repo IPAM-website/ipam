@@ -4,7 +4,7 @@ import { routeAction$, Form, zod$, z } from "@builder.io/qwik-city";
 import Textbox from '~/components/form/formComponents/TextboxLogin';
 import FMButton from '~/components/form/formComponents/FMButton';
 import Password from '~/components/form/formComponents/Password';
-import sql from "~/../db"
+import {  sqlForQwik } from "~/../db"
 import FA from "~/components/auth/FA";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -27,7 +27,8 @@ export const onGet: RequestHandler = async ({ cookie, redirect, env, locale }) =
   }
 }
 
-export const useLogin = routeAction$(async (data) => {
+export const useLogin = routeAction$(async (data,  { env }) => {
+    const sql = sqlForQwik(env)
   let success = false;
   let type_message = 0;
   let userP = undefined;

@@ -11,7 +11,7 @@ import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { getBaseURL, getUser } from "~/fnUtils";
 import type { ClienteModel, TecnicoModel } from "~/dbModels";
 import { parseCSV } from "~/components/utils/parseCSV";
-import sql from "../../../../db";
+import { sqlForQwik } from "../../../../db";
 import { listaClienti } from "../admin/panel/utenti_clienti";
 import countries from 'i18n-iso-countries';
 import { inlineTranslate } from "qwik-speak";
@@ -22,7 +22,8 @@ type Notification = {
     type: "success" | "error" | "loading";
 };
 
-export const useCSVInsert = routeAction$(async (data) => {
+export const useCSVInsert = routeAction$(async (data, { env }) => {
+    const sql = sqlForQwik(env)
     const translateCountry = (input: string): string => {
         const code = countries.getAlpha2Code(input, 'it'); // Cerca in italiano
         if (!code) throw new Error(`Paese non riconosciuto: ${input}`);
@@ -467,7 +468,8 @@ export const useCSVInsert = routeAction$(async (data) => {
 }))
 
 
-export const onRequest: RequestHandler = async ({ redirect, sharedMap, html }) => {
+export const onRequest: RequestHandler = async ({ redirect, sharedMap, html, env }) => {
+    const sql = sqlForQwik(env)
     let correct = "";
     try {
         const user = await getUser();

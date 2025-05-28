@@ -13,7 +13,7 @@ import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { server$, useNavigate } from "@builder.io/qwik-city";
 
-import sql from "../../../db";
+import { sqlForQwik } from "../../../db";
 import { inlineTranslate } from "qwik-speak";
 
 import BackgroundImage from "~/images/datacenter1.png?jsx"
@@ -67,7 +67,8 @@ export const QRverify = server$(async ({ tokenP, secret }) => {
   }
 });
 
-export const QRupdateDB = server$(async ({ userP, secret, tabella }) => {
+export const QRupdateDB = server$(async function ({ userP, secret, tabella }) {
+  const sql = sqlForQwik(this.env);
   const user = JSON.parse(userP);
   //console.log(tabella);
   try {
@@ -93,6 +94,7 @@ export default component$<LoginData>((props) => {
   const firstTime = useSignal(false);
   const verifiedClicked = useSignal(false);
   const tabella = useSignal(props.table);
+  const clientId = useSignal<string | null>(null);
   const cookie = useStore({
     mail: "",
     admin: false,
@@ -164,6 +166,13 @@ export default component$<LoginData>((props) => {
         body: JSON.stringify(cookie),
         credentials: "include",
       });
+      let id = localStorage.getItem('clientId');
+      if (!id) {
+        id = crypto.randomUUID();
+        localStorage.setItem('clientId', id);
+      }
+      clientId.value = id;
+
       nav("/" + getLocale("en") + "/dashboard");
       // window.location.href = "/"+getLocale("en")+"/dashboard";
     } else {

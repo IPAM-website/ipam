@@ -9,7 +9,7 @@ import type { RequestHandler} from "@builder.io/qwik-city";
 import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import SiteNavigator from "~/components/layout/SiteNavigator";
 import Title from "~/components/layout/Title";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import { inlineTranslate } from "qwik-speak";
 
 export const onRequest : RequestHandler = ({redirect, params,locale})=>{
@@ -18,6 +18,7 @@ export const onRequest : RequestHandler = ({redirect, params,locale})=>{
 }
 
 export const useNetworkName = routeLoader$(async function (event) {
+  const sql = sqlForQwik(event.env);
   if (!event.params.network && event.params.network == "0") return { nomerete: "", iprete: "-1" };
   return (
     await sql`SELECT nomerete, iprete FROM rete WHERE idrete = ${event.params.network}`

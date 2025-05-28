@@ -4,10 +4,11 @@ import {
   type RequestHandler,
 } from "@builder.io/qwik-city";
 import { setClientName } from "~/components/layout/Sidebar";
-import sql from "../../../../db";
+import { sqlForQwik } from "../../../../db";
 import { getBaseURL, getUser } from "~/fnUtils";
 
-export const onRequest: RequestHandler = async ({ redirect }) => {
+export const onRequest: RequestHandler = async ({ redirect, env }) => {
+  const sql = sqlForQwik(env);
   try {
     const user = await getUser();
     //console.log(user);
@@ -24,6 +25,7 @@ export const onRequest: RequestHandler = async ({ redirect }) => {
 };
 
 export const getClientName = server$(async function () {
+  const sql = sqlForQwik(this.env);
   return (
     await sql`SELECT nomecliente FROM clienti WHERE idcliente = ${this.params.client}`
   )[0].nomecliente;

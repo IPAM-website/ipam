@@ -5,9 +5,10 @@ import {
   server$,
 } from "@builder.io/qwik-city";
 import {  setSiteName } from "~/components/layout/Sidebar";
-import sql from "../../../../../db";
+import { sqlForQwik } from "../../../../../db";
 
 export const getSiteName = server$(async function () {
+  const sql = sqlForQwik(this.env)
   return (
     await sql`SELECT nomesito FROM siti WHERE idsito = ${this.params.site}`
   )[0].nomesito;

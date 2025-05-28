@@ -18,7 +18,7 @@ import {
   zod$,
 } from "@builder.io/qwik-city";
 import Title from "~/components/layout/Title";
-import sql from "../../../../../db";
+import { sqlForQwik } from "../../../../../db";
 import type {
   CittaModel,
   ClienteModel,
@@ -48,6 +48,7 @@ type Notification = {
 };
 
 export const getSite = server$(async function (idsito: number) {
+  const sql = sqlForQwik(this.env);
   let site: SiteModel = {
     idsito: -1,
     nomesito: "",
@@ -69,6 +70,7 @@ export const getSite = server$(async function (idsito: number) {
 });
 
 export const getClient = server$(async function (idclient: number) {
+  const sql = sqlForQwik(this.env);
   let client: ClienteModel = {
     idcliente: -1,
     nomecliente: "",
@@ -89,6 +91,7 @@ export const getClient = server$(async function (idclient: number) {
 });
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
+  const sql = sqlForQwik(this.env);
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito)) {
@@ -105,7 +108,8 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
   return networks;
 });
 
-export const getAllVRF = server$(async () => {
+export const getAllVRF = server$(async function() {
+  const sql = sqlForQwik(this.env);
   let vrf: VRFModel[] = [];
   try {
     const query = await sql`SELECT * FROM vrf`;
@@ -118,6 +122,7 @@ export const getAllVRF = server$(async () => {
 });
 
 export const getAllVLAN = server$(async function () {
+  const sql = sqlForQwik(this.env);
   let vlans: VLANModel[] = [];
   try {
     const query = await sql`SELECT * FROM vlan`;
@@ -131,6 +136,7 @@ export const getAllVLAN = server$(async function () {
 });
 
 export const deleteNetwork = server$(async function (data) {
+  const sql = sqlForQwik(this.env);
   try {
     if (isNaN(data)) {
       throw new Error("idrete non valido");
@@ -150,7 +156,8 @@ export const deleteNetwork = server$(async function (data) {
 });
 
 export const useInsertNetwork = routeAction$(
-  async function (data, e) {
+  async function (data, { env, params }) {
+    const sql = sqlForQwik(env);
     try {
       if (data.idretesup)
         await sql`INSERT INTO rete (nomerete,descrizione,vrf,iprete,prefissorete,idretesup,vid) VALUES (${data.nomerete},${data.descrizione},${data.vrf},${data.iprete},${data.prefissorete},${data.idretesup},${data.vid})`;
@@ -159,17 +166,17 @@ export const useInsertNetwork = routeAction$(
       const id = (
         await sql`SELECT idrete FROM rete ORDER BY idrete DESC LIMIT 1`
       )[0].idrete;
-      await sql`INSERT INTO siti_rete VALUES (${e.params.site},${id})`;
+      await sql`INSERT INTO siti_rete VALUES (${params.site},${id})`;
 
       const isDatacenter = (
-        await sql`SELECT datacenter FROM siti WHERE idsito = ${e.params.site}`
+        await sql`SELECT datacenter FROM siti WHERE idsito = ${params.site}`
       )[0].datacenter;
       if (isDatacenter) {
         const allDatacenters = (
-          await sql`SELECT idsito FROM siti WHERE datacenter=true AND tipologia!='disaster recovery' AND idcliente = ${e.params.client}`
+          await sql`SELECT idsito FROM siti WHERE datacenter=true AND tipologia!='disaster recovery' AND idcliente = ${params.client}`
         )
           .map((x) => x.idsito)
-          .filter((x) => x != e.params.site);
+          .filter((x) => x != params.site);
         for (const dc of allDatacenters) {
           await sql`INSERT INTO siti_rete VALUES (${dc},${id})`;
         }
@@ -198,7 +205,8 @@ export const useInsertNetwork = routeAction$(
 );
 
 export const useUpdateNetwork = routeAction$(
-  async function (data) {
+  async function (data, { env }) {
+    const sql = sqlForQwik(env);
     try {
       if (data.idretesup)
         await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, vrf = ${data.vrf}, prefissorete = ${data.prefissorete}, idretesup = ${data.idretesup} , iprete = ${data.iprete}, vid = ${data.vid} WHERE idrete = ${data.idrete}`;
@@ -230,17 +238,20 @@ export const useUpdateNetwork = routeAction$(
 );
 
 export const getCity = server$(async function (data) {
+  const sql = sqlForQwik(this.env);
   if (isNaN(data))
     return undefined;
   return (await sql`SELECT citta.* FROM citta INNER JOIN siti ON citta.idcitta=siti.idcitta WHERE siti.idsito=${data}`)[0] as unknown as CittaModel;
 })
 
 export const reloadData = server$(async function () {
+  const sql = sqlForQwik(this.env);
   return (await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site}`) as unknown as ReteModel[];
 });
 
 export const insertNetworkFromCSV = server$(async function (data: string[][]) {
   const lang = getLocale("en")
+  const sql = sqlForQwik(this.env)
   try {
     const expectedHeaders = ["iprete", "nomerete","descrizione","prefissorete"];
 
@@ -321,11 +332,12 @@ export const insertNetworkFromCSV = server$(async function (data: string[][]) {
 })
 
 export const search = server$(async function (data) {
-  console.log(data)
+  const sql = sqlForQwik(this.env);
+  //console.log(data)
   try {
     const pathParts = new URL(this.request!.url).pathname.split('/');
     const sitoId = parseInt(pathParts[3]);
-    console.log(sitoId)
+    //console.log(sitoId)
     const query = await sql`
       SELECT *
       FROM rete
@@ -983,7 +995,7 @@ export default component$(() => {
           <div class="flex w-full justify-end">
             <input
               type="submit"
-              class="w-1/2 cursor-pointer rounded-md bg-black p-2 text-white hover:bg-gray-900 active:bg-gray-800 disabled:cursor-default disabled:bg-gray-600"
+              class="w-1/2 cursor-pointer rounded-md bg-black p-2 text-white hover:bg-gray-900 active:bg-gray-800 disabled:cursor-default disabled:bg-gray-600 dark:bg-gray-200 dark:hover:bg-white dark:text-gray-800"
               value={t("confirm")}
               disabled={
                 formData.descrizione == "" ||

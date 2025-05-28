@@ -17,7 +17,7 @@ import {
   z,
   zod$,
 } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import Title from "~/components/layout/Title";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
 import type {
@@ -43,6 +43,7 @@ type Notification = {
 type fmData = SiteModel & { nomecitta: string; nomepaese: string };
 
 export const getCitiesOfClients = server$(async function (idcliente: number) {
+  const sql = sqlForQwik(this.env);
   try {
     if (isNaN(idcliente))
       return [];
@@ -57,6 +58,7 @@ export const getCitiesOfClients = server$(async function (idcliente: number) {
 });
 
 export const getClient = server$(async function (idclient: number) {
+  const sql = sqlForQwik(this.env);
   let client: ClienteModel = {
     idcliente: -1,
     nomecliente: "",
@@ -76,6 +78,7 @@ export const getClient = server$(async function (idclient: number) {
 });
 
 export const getCitiesHints = server$(async function () {
+  const sql = sqlForQwik(this.env);
   try {
     const data = await sql`SELECT * FROM citta`;
     return data.map((x) => ({ text: x.nomecitta, value: x.idcitta }));
@@ -86,6 +89,7 @@ export const getCitiesHints = server$(async function () {
 });
 
 export const deleteSite = server$(async function (idsito: number) {
+  const sql = sqlForQwik(this.env);
   try {
     if (isNaN(idsito))
       return false;
@@ -97,8 +101,9 @@ export const deleteSite = server$(async function (idsito: number) {
   }
 });
 
-export const getAllCountries = server$(async () => {
-  try {
+export const getAllCountries = server$(async function() {
+  const sql = sqlForQwik(this.env);
+ try {
     const data = await sql`SELECT * FROM paesi ORDER BY nomepaese`;
     return data as unknown as PaeseModel[];
   } catch (e) {
@@ -107,7 +112,8 @@ export const getAllCountries = server$(async () => {
   }
 });
 
-export const getClientCountries = server$(async (idcliente: number) => {
+export const getClientCountries = server$(async function(idcliente: number) {
+  const sql = sqlForQwik(this.env);
   try {
     if (isNaN(idcliente))
       return [];
@@ -121,7 +127,8 @@ export const getClientCountries = server$(async (idcliente: number) => {
 });
 
 export const getSitesByCity = server$(
-  async (idcitta: string, idcliente: number) => {
+  async function(idcitta: string, idcliente: number) {
+    const sql = sqlForQwik(this.env);
     try {
       if (isNaN(parseInt(idcitta)))
         return [];
@@ -138,7 +145,8 @@ export const getSitesByCity = server$(
   },
 );
 
-export const getCityCountry = server$(async (idcitta: number) => {
+export const getCityCountry = server$(async function(idcitta: number) {
+  const sql = sqlForQwik(this.env);
   try {
     if (isNaN(idcitta))
       return [];
@@ -151,7 +159,8 @@ export const getCityCountry = server$(async (idcitta: number) => {
   }
 });
 
-export const cleanCities = server$(async () => {
+export const cleanCities = server$(async function() {
+  const sql = sqlForQwik(this.env);
   try {
     await sql`DELETE FROM citta WHERE citta.idcitta NOT IN (SELECT siti.idcitta FROM siti)`;
   } catch (e) {
@@ -160,7 +169,8 @@ export const cleanCities = server$(async () => {
 });
 
 export const useCreateSite = routeAction$(
-  async (data) => {
+  async (data, { env }) => {
+    const sql = sqlForQwik(env);
     try {
       if (data.idcitta == "") {
         const rows =
@@ -195,7 +205,8 @@ export const useCreateSite = routeAction$(
 );
 
 export const useUpdateSite = routeAction$(
-  async (data) => {
+  async (data, { env }) => {
+    const sql = sqlForQwik(env);
     try {
       if (data.idcitta == "") {
         if (data.nomecitta.toLowerCase() != "" && data.idpaese != "") {
@@ -850,7 +861,8 @@ export default component$(() => {
                 )[0] as HTMLInputElement;
                 input2.value = e.text;
                 if (e.value != "") {
-                  selectedCountry.value = await server$(async () => {
+                  selectedCountry.value = await server$(async function() {
+                    const sql = sqlForQwik(this.env);
                     return (
                       await sql`SELECT idpaese FROM citta WHERE idcitta = ${e.value}`
                     )[0].idpaese.toString();

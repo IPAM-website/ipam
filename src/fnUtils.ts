@@ -1,7 +1,7 @@
 import { getLocale } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 import jwt from "jsonwebtoken";
-import sql from "../db";
+import { sqlForQwik } from "../db";
 /** this function returns a '/lang/' string */
 export const getBaseURL = () => {
   return "/" + getLocale("en") + "/";
@@ -27,6 +27,7 @@ export const getUser = server$(function () {
 });
 
 export const isUserClient = server$(async function () {
+  const sql = sqlForQwik(this.env);
   if (!this.cookie.has("jwt")) {
     console.log("Token not found");
     return false;

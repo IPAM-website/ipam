@@ -5,7 +5,8 @@ export default component$(() => {
     const loading = useSignal(true);
     const copied = useSignal(false);
 
-    useVisibleTask$(async () => {
+    // Funzione per caricare i log
+    const fetchLogs = $(async () => {
         try {
             const response = await fetch("/api/logs");
             logs.value = await response.text();
@@ -13,6 +14,15 @@ export default component$(() => {
             logs.value = "Errore nel caricamento dei log";
         }
         loading.value = false;
+    });
+
+    // Aggiornamento automatico ogni 5 secondi
+    useVisibleTask$(({ cleanup }) => {
+        fetchLogs();
+        const interval = setInterval(() => {
+            fetchLogs();
+        }, 5000);
+        cleanup(() => clearInterval(interval));
     });
 
     // Preview: ultime 30 righe

@@ -9,7 +9,7 @@ import SelectForm from "~/components/form/formComponents/SelectForm";
 import TextBoxForm from "~/components/form/formComponents/TextboxForm";
 import styles from "../dialog.css?inline";
 import Import from "~/components/table/ImportCSV";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import type { ClienteModel } from "~/dbModels";
 import bcrypt from "bcryptjs"
 import PopupModal from "~/components/ui/PopupModal";
@@ -49,6 +49,7 @@ export const extractRow = (row: any) => {
 }
 
 export const deleteRow = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env);
   // console.log(data);
   try {
     await sql`DELETE FROM usercliente WHERE usercliente.iducliente = ${data.iducliente}`;
@@ -59,7 +60,8 @@ export const deleteRow = server$(async function (this, data) {
   }
 })
 
-export const getUserCliente = server$(async () => {
+export const getUserCliente = server$(async function () {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`SELECT usercliente.iducliente, usercliente.nomeucliente, usercliente.cognomeucliente, usercliente.emailucliente, usercliente.pwducliente, clienti.nomecliente, clienti.idcliente FROM usercliente, clienti WHERE usercliente.idcliente = clienti.idcliente`;
     //console.log(query);
@@ -72,7 +74,8 @@ export const getUserCliente = server$(async () => {
   }
 })
 
-export const useModUserCliente = routeAction$(async (data) => {
+export const useModUserCliente = routeAction$(async (data, { env }) => {
+  const sql = sqlForQwik(env);
   try {
     // console.log(data);
     if (data.idcliente && data.idcliente != '' && parseInt(data.idcliente) != 0) {
@@ -100,7 +103,8 @@ export const useModUserCliente = routeAction$(async (data) => {
   email: z.string().email()
 }))
 
-export const useAddUserCliente = routeAction$(async (data) => {
+export const useAddUserCliente = routeAction$(async (data, { env }) => {
+  const sql = sqlForQwik(env);
   try {
     if (data.idcliente && parseInt(data.idcliente) != 0 && data.idcliente != '') {
       await sql`INSERT INTO usercliente (nomeucliente, cognomeucliente, emailucliente, pwducliente, idcliente) VALUES (${data.nome}, ${data.cognome}, ${data.email}, ${bcrypt.hashSync(data.pwd, 12)}, ${data.idcliente})`;
@@ -128,7 +132,8 @@ export const useAddUserCliente = routeAction$(async (data) => {
   pwd: z.string().min(2),
 }))
 
-export const listaClienti = server$(async function (this) {
+export const listaClienti = server$(async function () {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`SELECT * FROM clienti`;
     return query as unknown as ClienteModel[];
@@ -139,7 +144,8 @@ export const listaClienti = server$(async function (this) {
   }
 })
 
-export const listaClientiExcept = server$(async (data) => {
+export const listaClientiExcept = server$(async function(data) {
+  const sql = sqlForQwik(this.env)
   try {
     // console.log(data);
     const query = await sql`SELECT * FROM clienti WHERE idcliente != ${data.idcliente}`;
@@ -151,7 +157,8 @@ export const listaClientiExcept = server$(async (data) => {
   }
 })
 
-export const search = server$(async (data) => {
+export const search = server$(async function(data) {
+  const sql = sqlForQwik(this.env)
   try {
     const query = await sql`
       SELECT 
@@ -177,7 +184,8 @@ export const search = server$(async (data) => {
   }
 })
 
-export const insertRow = server$(async (data: string[][]) => {
+export const insertRow = server$(async function(data: string[][]) {
+  const sql = sqlForQwik(this.env)
   try {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];

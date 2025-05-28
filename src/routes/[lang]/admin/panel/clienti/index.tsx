@@ -9,7 +9,7 @@ import ButtonAdd from "~/components/table/ButtonAdd";
 import styles from "../dialog.css?inline";
 import TextBoxForm from '~/components/form/formComponents/TextboxForm';
 import Import from "~/components/table/ImportCSV";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import PopupModal from "~/components/ui/PopupModal";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
@@ -35,6 +35,7 @@ export const extractRow = (row: any) => {
 }
 
 export const deleteRow = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env);
   try {
     const user = await getUser()
     await sql.begin(async (tx) => {
@@ -48,7 +49,8 @@ export const deleteRow = server$(async function (this, data) {
   }
 })
 
-export const getTecnici = server$(async () => {
+export const getTecnici = server$(async function() {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`SELECT * FROM clienti`;
     // Assicurati di sempre ritornare un array
@@ -61,7 +63,8 @@ export const getTecnici = server$(async () => {
 });
 
 // NTC delete di cosa ?????
-export const deleteClient = server$(async () => {
+export const deleteClient = server$(async function() {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`SELECT * FROM clienti`;
     // Assicurati di sempre ritornare un array
@@ -73,7 +76,8 @@ export const deleteClient = server$(async () => {
   }
 })
 
-export const useModCliente = routeAction$(async (data) => {
+export const useModCliente = routeAction$(async (data, { env }) => {
+  const sql = sqlForQwik(env)
   try {
     // console.log(data);
     await sql`
@@ -98,7 +102,8 @@ export const useModCliente = routeAction$(async (data) => {
   nome: z.string().min(2),
 }))
 
-export const useAddCliente = routeAction$(async (data) => {
+export const useAddCliente = routeAction$(async (data, { env }) => {
+  const sql = sqlForQwik(env)
   try {
     await sql`
       INSERT INTO clienti (nomecliente,telefonocliente)
@@ -121,7 +126,8 @@ export const useAddCliente = routeAction$(async (data) => {
   telefono: z.string().min(10)
 }))
 
-export const search = server$(async (data) => {
+export const search = server$(async function (data) {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`
       SELECT 
@@ -137,7 +143,8 @@ export const search = server$(async (data) => {
   }
 })
 
-export const ImportCSV = server$(async (data: string[][]) => {
+export const ImportCSV = server$(async function(data: string[][]) {
+  const sql = sqlForQwik(this.env);
   const lang = getLocale("en");
   //console.log(data)
   try {

@@ -23,7 +23,7 @@ import {
   z,
   zod$,
 } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import AddressBox from "~/components/form/formComponents/AddressBox";
 import SelectForm from "~/components/form/formComponents/SelectForm";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
@@ -59,6 +59,7 @@ export const getIntervals = server$(async function (
   this,
   filter = { empty: 1 },
 ) {
+  const sql = sqlForQwik(this.env);
   filter.query = filter.query ? filter.query + "%" : (filter.query = "%");
   filter.query = (filter.query as string).trim();
   let intervals: IntervalloModel[] = [];
@@ -97,19 +98,20 @@ export const getIntervals = server$(async function (
   return intervals;
 });
 
-export const useSiteName = routeLoader$(async ({ params }) => {
+export const useSiteName = routeLoader$(async ({ params, env }) => {
+  const sql = sqlForQwik(env);
   if (isNaN(parseInt(params.site)))
     return;
   return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
     .nomesito;
 });
 
-export const useAction = routeAction$(
-  async (data, ev) => {
+export const useAction = routeAction$(async (data, {env , params}) => {
+    const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
     try {
-      if (ev.params.mode == "update") {
+      if (params.mode == "update") {
         await sql`UPDATE intervalli SET nomeintervallo= ${data.nomeintervallo},iniziointervallo = ${data.iniziointervallo}, lunghezzaintervallo = ${data.lunghezzaintervallo}, fineintervallo=${data.fineintervallo},idrete=${data.idrete} WHERE idintervallo=${data.idintervallo}`;
         type_message = 2;
       } else {
@@ -118,7 +120,7 @@ export const useAction = routeAction$(
       }
       success = true;
     } catch (e) {
-      if (ev.params.mode == "update") type_message = 4;
+      if (params.mode == "update") type_message = 4;
       else type_message = 3;
     }
 
@@ -138,6 +140,7 @@ export const useAction = routeAction$(
 );
 
 export const getAllIntervals = server$(async function () {
+  const sql = sqlForQwik(this.env);
   let intervals: IntervalloModel[] = [];
   try {
     const query = await sql`SELECT * FROM intervalli`;
@@ -150,6 +153,7 @@ export const getAllIntervals = server$(async function () {
 });
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
+  const sql = sqlForQwik(this.env);
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito))
@@ -166,6 +170,7 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 });
 
 export const deleteInterval = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env)
   try {
     if (isNaN(data.idintervallo))
       throw new Error("idintervallo non disponibile")
@@ -178,6 +183,7 @@ export const deleteInterval = server$(async function (this, data) {
 });
 
 export const isOccupied = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env)
   try {
     if (this.params.mode == "insert") {
       const result = await sql`

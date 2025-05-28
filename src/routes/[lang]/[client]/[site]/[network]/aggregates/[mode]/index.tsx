@@ -10,6 +10,7 @@ import {
   useStore,
   useTask$,
 } from "@builder.io/qwik";
+import type { RequestEventAction } from "@builder.io/qwik-city";
 import {
   routeAction$,
   routeLoader$,
@@ -18,7 +19,7 @@ import {
   z,
   zod$,
 } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from '~/../db';
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
 import type { ReteModel, AggregatoModel } from "~/dbModels";
 import Table from "~/components/table/Table";
@@ -27,7 +28,8 @@ import { inlineTranslate } from "qwik-speak";
 
 type CustomRow = AggregatoModel & { idretec: number; ipretec?: string };
 
-export const useSiteName = routeLoader$(async ({ params }) => {
+export const useSiteName = routeLoader$(async ({ params, env }) => {
+  const sql = sqlForQwik(env);
   if (isNaN(parseInt(params.site)))
     return;
   return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
@@ -35,7 +37,8 @@ export const useSiteName = routeLoader$(async ({ params }) => {
 });
 
 export const useAction = routeAction$(
-  async (data) => {
+  async (data, { env }: RequestEventAction) => {
+    const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
     try {
@@ -63,6 +66,7 @@ export const useAction = routeAction$(
 );
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
+  const sql = sqlForQwik(this.env);
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito))
@@ -161,6 +165,7 @@ export const getAllAggregatesByNetwork = server$(async function (
 });
 
 export const deleteIP = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env);
   try {
     await sql`DELETE FROM indirizzi WHERE ip=${data.address}`;
     return true;
@@ -180,6 +185,7 @@ interface FilterObject {
 }
 
 export const search = server$(async function (this, filter: FilterObject) {
+  const sql = sqlForQwik(this.env);
   if (filter.value) {
     const queryResult = await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND indirizzi.nome_dispositivo LIKE ${filter.value}`;
     return queryResult as unknown as AggregatoModel[];

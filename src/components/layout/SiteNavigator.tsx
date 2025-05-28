@@ -15,10 +15,11 @@ import { getBaseURL } from "~/fnUtils";
 import SelectForm from "../form/formComponents/SelectForm";
 import type { ReteModel } from "~/dbModels";
 import cssStyle from "./SiteNavigator.css?inline";
-import sql from "../../../db";
+import { sqlForQwik } from "../../../db";
 import { inlineTranslate } from "qwik-speak";
 
 export const getNetworks = server$(async function () {
+  const sql = sqlForQwik(this.env);
   return (await sql`SELECT * FROM rete INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito = ${this.params.site}`) as ReteModel[];
 });
 

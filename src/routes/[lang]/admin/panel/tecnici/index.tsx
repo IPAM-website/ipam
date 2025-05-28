@@ -6,7 +6,7 @@ import Table from "~/components/table/Table";
 import ButtonAdd from "~/components/table/ButtonAdd";
 import TextBoxForm from "~/components/form/formComponents/TextboxForm";
 import styles from "../dialog.css?inline";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import Dati from "~/components/table/Dati_Headers";
 import CHKForms from "~/components/form/formComponents/CHKForms";
 import Import from "~/components/table/ImportCSV";
@@ -41,7 +41,8 @@ export const extractRow = (row: any) => {
   }
 }
 
-export const getTecnici = server$(async () => {
+export const getTecnici = server$(async function () {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`SELECT * FROM tecnici`
     return query;
@@ -53,7 +54,8 @@ export const getTecnici = server$(async () => {
   }
 })
 
-export const searchAdmins = server$(async () => {
+export const searchAdmins = server$(async function () {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`SELECT * FROM tecnici WHERE admin=true`
     return query.length > 0;
@@ -63,7 +65,8 @@ export const searchAdmins = server$(async () => {
   }
 })
 
-export const useModTecnico = routeAction$(async (data) => {
+export const useModTecnico = routeAction$(async function (data, { env }) {
+  const sql = sqlForQwik(env);
   try {
     await sql`
       UPDATE tecnici
@@ -92,7 +95,8 @@ export const useModTecnico = routeAction$(async (data) => {
   telefono: z.string().optional()
 }))
 
-export const useAddTecnico = routeAction$(async (data) => {
+export const useAddTecnico = routeAction$(async function (data, { env }) {
+  const sql = sqlForQwik(env);
   try {
     await sql`
       INSERT INTO tecnici (nometecnico, cognometecnico, ruolo, emailtecnico, pwdtecnico, telefonotecnico, admin)
@@ -120,6 +124,7 @@ export const useAddTecnico = routeAction$(async (data) => {
 }))
 
 export const deleteRow = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env);
   try {
 
     await sql`DELETE FROM tecnici WHERE tecnici.idtecnico = ${data.idtecnico}`;
@@ -130,7 +135,8 @@ export const deleteRow = server$(async function (this, data) {
   }
 })
 
-export const search = server$(async (data) => {
+export const search = server$(async function (data) {
+  const sql = sqlForQwik(this.env);
   try {
     const query = await sql`
       SELECT 
@@ -150,10 +156,11 @@ export const search = server$(async (data) => {
   }
 })
 
-export const insertRow = server$(async (data: string[][]) => {
+export const insertRow = server$(async function (data: string[][]) {
   const lang = getLocale("en");
+  const sql = sqlForQwik(this.env);
   try {
-    const expectedHeaders = ["cometecnico", "cognometecnico","ruolo","emailtecnico","pwdtecnico"];
+    const expectedHeaders = ["cometecnico", "cognometecnico", "ruolo", "emailtecnico", "pwdtecnico"];
 
     if (data.length === 0) {
       throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
@@ -331,15 +338,15 @@ export default component$(() => {
     addNotification(lang === "en" ? "Error during import" : "Errore durante l'importazione", 'error');
   })
 
-  const handleOk = $(async (data:any) => {
+  const handleOk = $(async (data: any) => {
     addNotification("Operazione in corso...", "loading");
     try {
       const result = await insertRow(data);
       notifications.value = notifications.value.filter(n => n.type !== "loading");
-      if(result.success){
+      if (result.success) {
         reloadFN.value?.();
         addNotification(result.message, 'success');
-      }else{
+      } else {
         addNotification(result.message, 'error');
       }
     } catch (error) {
@@ -412,36 +419,38 @@ export default component$(() => {
           ))}
         </div>
 
-        <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{t("admin.panel")}</Title>
-        <Table>
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 px-4 py-3 rounded-t-xl border-b border-gray-200">
-            <div class="flex items-center gap-2">
-              <span class="font-semibold text-lg text-gray-800 dark:text-gray-100 ">{t("admin.tech.list")}</span>
-              <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+        <div class="animateEnter">
+          <Title haveReturn={true} url={"/" + lang + "/admin/panel"}>{t("admin.panel")}</Title>
+          <Table>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4 bg-gray-50 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 px-4 py-3 rounded-t-xl border-b border-gray-200">
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-lg text-gray-800 dark:text-gray-100 ">{t("admin.tech.list")}</span>
+                <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+              </div>
+              <div class="flex items-center gap-2">
+                <TextBoxForm
+                  id="txtfilter"
+                  value={filter.value.value}
+                  ref={txtQuickSearch}
+                  placeholder={t("quicksearch")}
+                  onInput$={(e: InputEvent) => {
+                    filter.value.value = (e.target as HTMLInputElement).value;
+                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                    if (reloadFN) reloadFN.value?.();
+                  }}
+                  search={true}
+                />
+              </div>
             </div>
-            <div class="flex items-center gap-2">
-              <TextBoxForm
-                id="txtfilter"
-                value={filter.value.value}
-                ref={txtQuickSearch}
-                placeholder={t("quicksearch")}
-                onInput$={(e: InputEvent) => {
-                  filter.value.value = (e.target as HTMLInputElement).value;
-                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                  if (reloadFN) reloadFN.value?.();
-                }}
-                search={true}
-              />
+            <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+              <ButtonAdd nomePulsante={t("admin.tech.addtech")} onClick$={openTeniciDialog}></ButtonAdd>
+              <div>
+                <Import OnError={handleError} OnOk={handleOk}></Import>
+              </div>
             </div>
-          </div>
-          <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
-            <ButtonAdd nomePulsante={t("admin.tech.addtech")} onClick$={openTeniciDialog}></ButtonAdd>
-            <div>
-              <Import OnError={handleError} OnOk={handleOk}></Import>
-            </div>
-          </div>
-          <Dati dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
-        </Table>
+            <Dati dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
+          </Table>
+        </div>
       </div>
 
       {showDialog.value && (

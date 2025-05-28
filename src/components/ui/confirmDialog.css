@@ -20,7 +20,6 @@
 }
 
 .dialog-content {
-  background: white;
   border-radius: 8px;
   padding: 24px;
   width: 90%;
@@ -32,11 +31,9 @@
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 12px;
-  color: #1f2937;
 }
 
 .dialog-message {
-  color: #4b5563;
   margin-bottom: 24px;
 }
 

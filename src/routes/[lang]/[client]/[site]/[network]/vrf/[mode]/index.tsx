@@ -21,7 +21,7 @@ import {
   z,
   zod$,
 } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
 import type { ReteModel, VRFModel } from "~/dbModels";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
@@ -68,6 +68,7 @@ export interface FilterObject {
 }
 
 export const getVRFs = server$(async function (this, filter = { empty: 1 }) {
+  const sql = sqlForQwik(this.env);
   filter.query = filter.query ? filter.query + "%" : (filter.query = "%");
   filter.query = (filter.query as string).trim();
   let vrfs: VRFModel[] = [];
@@ -105,7 +106,8 @@ export const getVRFs = server$(async function (this, filter = { empty: 1 }) {
   return vrfs;
 });
 
-export const useSiteName = routeLoader$(async ({ params }) => {
+export const useSiteName = routeLoader$(async ({ params, env }) => {
+  const sql = sqlForQwik(env);
   if (isNaN(parseInt(params.site)))
     return;
   return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
@@ -113,11 +115,12 @@ export const useSiteName = routeLoader$(async ({ params }) => {
 });
 
 export const useAction = routeAction$(
-  async (data, ev) => {
+  async (data, {  env, params }) => {
+    const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
     try {
-      if (ev.params.mode == "update") {
+      if (params.mode == "update") {
         await sql`UPDATE vrf SET nomevrf=${data.nomevrf}, descrizionevrf=${data.descrizionevrf} WHERE idvrf=${data.idvrf}`;
         type_message = 2;
       } else {
@@ -126,7 +129,7 @@ export const useAction = routeAction$(
       }
       success = true;
     } catch (e) {
-      if (ev.params.mode == "update") type_message = 4;
+      if (params.mode == "update") type_message = 4;
       else type_message = 3;
     }
 
@@ -143,6 +146,7 @@ export const useAction = routeAction$(
 );
 
 export const getAllVRFs = server$(async function () {
+  const sql = sqlForQwik(this.env);
   let vrfs: VRFModel[] = [];
   try {
     const query = await sql`SELECT * FROM vrf`;
@@ -155,6 +159,7 @@ export const getAllVRFs = server$(async function () {
 });
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
+  const sql = sqlForQwik(this.env);
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito))
@@ -171,6 +176,7 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 });
 
 export const deleteVRF = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env);
   try {
     if (isNaN(data.idvrf))
       throw new Error("data.idvrf non dispnibile")

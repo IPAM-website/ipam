@@ -13,6 +13,7 @@ import {
   useVisibleTask$
 } from "@builder.io/qwik";
 import type {
+  RequestEventAction,
   RequestHandler
 } from "@builder.io/qwik-city";
 import {
@@ -24,7 +25,7 @@ import {
   z,
   zod$,
 } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from '~/../db';
 import AddressBox, {
   getNetwork,
 } from "~/components/form/formComponents/AddressBox";
@@ -80,6 +81,7 @@ export const getAddresses = server$(async function (
   this,
   filter = { empty: 1 },
 ) {
+  const sql = sqlForQwik(this.env);
   filter.query = filter.query ? filter.query + "%" : (filter.query = "%");
   filter.query = (filter.query as string).trim();
   let addresses: IndirizziModel[] = [];
@@ -124,7 +126,8 @@ export const getAddresses = server$(async function (
   return addresses;
 });
 
-export const useSiteName = routeLoader$(async ({ params }) => {
+export const useSiteName = routeLoader$(async ({ params, env }) => {
+  const sql = sqlForQwik(env);
   if (isNaN(parseInt(params.site)))
     return;
   return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
@@ -132,7 +135,8 @@ export const useSiteName = routeLoader$(async ({ params }) => {
 });
 
 export const useAction = routeAction$(
-  async (data) => {
+  async (data, { env }: RequestEventAction) => {
+    const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
     // console.log(data.data_inserimento);
@@ -170,6 +174,7 @@ export const useAction = routeAction$(
 );
 
 export const getAllVLAN = server$(async function () {
+  const sql = sqlForQwik(this.env);
   let vlans: VLANModel[] = [];
   try {
     const query = await sql`SELECT * FROM vlan`;
@@ -181,7 +186,8 @@ export const getAllVLAN = server$(async function () {
   return vlans;
 });
 
-export const deleteIP = server$(async function (this, data) {
+export const deleteIP = server$(async function (data) {
+  const sql = sqlForQwik(this.env);
   try {
     if (data.address != "")
       await sql`DELETE FROM indirizzi WHERE ip=${data.address}`;
@@ -210,6 +216,7 @@ function isIPInSubnet(ip: string, subnet: string, prefix: number) {
 
 export const insertIPFromCSV = server$(async function (data: string[][]) {
   const lang  = getLocale("en")
+  const sql = sqlForQwik(this.env);
   try {
     const expectedHeaders = ["ip", "nome_dispositivo","tipo_dispositivo","brand_dispositivo","n_prefisso"];
 
@@ -288,6 +295,7 @@ export const insertIPFromCSV = server$(async function (data: string[][]) {
 
 export default component$(() => {
   // const notify = useNotify();
+  const updateNotification = useSignal(false);
   const lang = getLocale("en");
   const addressList = useSignal<IndirizziModel[]>([]);
   const network = useSignal<ReteModel>();
@@ -309,7 +317,12 @@ export default component$(() => {
     const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
     eventSource.onmessage = async (event) => {
       try {
-        reloadFN.value?.();
+        //console.log(event)
+        const data = JSON.parse(event.data);
+        // Se il clientId dell'evento è diverso dal mio, mostra la notifica
+        if (data.clientId !== localStorage.getItem('clientId')) {
+          updateNotification.value = true;
+        }
       } catch (e) {
         console.error('Errore parsing SSE:', event?.data);
       }
@@ -395,6 +408,9 @@ export default component$(() => {
   });
 
   const reloadData = $(async () => {
+    if(updateNotification.value){
+      updateNotification.value = false;
+    }
     if (filter.active) return await getAddresses(filter.params);
     else return await getAddresses();
   });
@@ -411,6 +427,29 @@ export default component$(() => {
 
   return (
     <>
+      {updateNotification.value && (
+        <div
+          class={[
+            "fixed left-1/2 top-8 z-50 flex items-center gap-3 px-5 py-3 rounded-lg shadow-lg border-2 transition-all duration-300",
+            "bg-cyan-100 border-cyan-300 text-cyan-900",
+            "dark:bg-cyan-950 dark:border-cyan-700 dark:text-cyan-100",
+            "transform -translate-x-1/2"
+          ]}
+          style={{
+            filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.12))",
+            opacity: 0.98,
+          }}
+        >
+          <svg class="h-6 w-6 text-cyan-500 dark:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z" />
+          </svg>
+          <span class="font-semibold">
+            {lang === "en"
+              ? "The addresses table has been updated."
+              : "La tabella degli indirizzi è stata aggiornata."}
+          </span>
+        </div>
+      )}
       <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
         {notifications.value.map((notification, index) => (
           <div
@@ -618,12 +657,11 @@ export const FormBox = component$(({ title }: { title?: string }) => {
   );
 });
 
-export const CRUDForm = component$(
-  ({
+export const CRUDForm = component$(({
     data
   }: {
     data?: RowAddress;
-    reloadFN?: Signal<(() => void) | null>;
+    reloadFN: Signal<(() => void) | null>;
   }) => {
     const lang = getLocale("en");
     const loc = useLocation();
@@ -1061,6 +1099,8 @@ export const CRUDForm = component$(
             )} */}
           </div>
         )}
+
+        
 
       </>
     );

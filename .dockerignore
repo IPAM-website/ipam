@@ -4,5 +4,6 @@ dist
 .gitignore
 Dockerfile
 .dockerignore
+.env
 README.md
 .vscode

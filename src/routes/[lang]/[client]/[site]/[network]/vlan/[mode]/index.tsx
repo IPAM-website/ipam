@@ -23,7 +23,7 @@ import {
   z,
   zod$,
 } from "@builder.io/qwik-city";
-import sql from "~/../db";
+import { sqlForQwik } from "~/../db";
 import SelectForm from "~/components/form/formComponents/SelectForm";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
 import type { ReteModel, VLANModel } from "~/dbModels";
@@ -69,6 +69,7 @@ export interface FilterObject {
 }
 
 export const getVLANs = server$(async function (this, filter = { empty: 1 }) {
+  const sql = sqlForQwik(this.env)
   filter.query = filter.query ? filter.query + "%" : (filter.query = "%");
   filter.query = (filter.query as string).trim();
   let vlans: VLANModel[] = [];
@@ -106,7 +107,8 @@ export const getVLANs = server$(async function (this, filter = { empty: 1 }) {
   return vlans;
 });
 
-export const useSiteName = routeLoader$(async ({ params }) => {
+export const useSiteName = routeLoader$(async ({ params, env }) => {
+  const sql = sqlForQwik(env)
   if (isNaN(parseInt(params.site)))
     return;
   return (await sql`SELECT nomesito FROM siti WHERE idsito = ${params.site}`)[0]
@@ -114,11 +116,12 @@ export const useSiteName = routeLoader$(async ({ params }) => {
 });
 
 export const useAction = routeAction$(
-  async (data, ev) => {
+  async (data, { env, params}) => {
     let success = false;
     let type_message = 0;
     try {
-      if (ev.params.mode == "update") {
+      const sql = sqlForQwik(env)
+      if (params.mode == "update") {
         await sql`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan} WHERE vid=${data.vid}`;
         type_message = 2;
       } else {
@@ -127,7 +130,7 @@ export const useAction = routeAction$(
       }
       success = true;
     } catch (e) {
-      if (ev.params.mode == "update") type_message = 4;
+      if (params.mode == "update") type_message = 4;
       else type_message = 3;
     }
 
@@ -144,6 +147,7 @@ export const useAction = routeAction$(
 );
 
 export const getAllVLAN = server$(async function () {
+  const sql = sqlForQwik(this.env)
   let vlans: VLANModel[] = [];
   try {
     const query = await sql`SELECT * FROM vlan`;
@@ -156,6 +160,7 @@ export const getAllVLAN = server$(async function () {
 });
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
+  const sql = sqlForQwik(this.env);
   let networks: ReteModel[] = [];
   try {
     if (isNaN(idsito))
@@ -172,6 +177,7 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 });
 
 export const deleteVLAN = server$(async function (this, data) {
+  const sql = sqlForQwik(this.env)
   try {
     if (isNaN(data.vid))
       throw new Error("vid non disponibile")
