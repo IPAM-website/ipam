@@ -27,6 +27,7 @@ import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 import { inlineTranslate } from "qwik-speak";
 import { getLocale } from "@builder.io/qwik";
+import ButtonAddLink from "~/components/table/ButtonAddLink";
 
 type CustomRow = AggregatoModel & { idretec: number; ipretec?: string };
 
@@ -213,23 +214,23 @@ export default component$(() => {
   // const notifications = useSignal<Notification[]>([]);
 
   useVisibleTask$(() => {
-        const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
-        eventSource.onmessage = async (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            //console.log(data)
-            // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-            if (data.table == "aggregati"){
-              if (data.clientId !== localStorage.getItem('clientId')) {
-                updateNotification.value = true;
-              }
-            }
-          } catch (e) {
-            console.error('Errore parsing SSE:', event?.data);
+    const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
+    eventSource.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        //console.log(data)
+        // Se il clientId dell'evento è diverso dal mio, mostra la notifica
+        if (data.table == "aggregati") {
+          if (data.clientId !== localStorage.getItem('clientId')) {
+            updateNotification.value = true;
           }
-        };
-        return () => eventSource.close();
-      });
+        }
+      } catch (e) {
+        console.error('Errore parsing SSE:', event?.data);
+      }
+    };
+    return () => eventSource.close();
+  });
 
   useTask$(async () => {
     networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
@@ -352,7 +353,16 @@ export default component$(() => {
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.aggregates.aggregatelist")}</span>
               </div>
-              
+
+            </div>
+            <div class="flex flex-row items-center collapse gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+              <ButtonAddLink
+                nomePulsante=""
+                href=""
+              ></ButtonAddLink>
+              <div>
+                
+              </div>
             </div>
             <Dati
               DBTabella="aggregati"

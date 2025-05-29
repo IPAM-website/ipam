@@ -117,7 +117,7 @@ export const useSiteName = routeLoader$(async ({ params, env }) => {
 });
 
 export const useAction = routeAction$(
-  async (data, { env, params}) => {
+  async (data, { env, params }) => {
     let success = false;
     let type_message = 0;
     try {
@@ -219,23 +219,23 @@ export default component$(() => {
   const notifications = useSignal<Notification[]>([]);
 
   useVisibleTask$(() => {
-          const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
-          eventSource.onmessage = async (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              //console.log(data)
-              // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-              if (data.table == "vlan"){
-                if (data.clientId !== localStorage.getItem('clientId')) {
-                  updateNotification.value = true;
-                }
-              }
-            } catch (e) {
-              console.error('Errore parsing SSE:', event?.data);
-            }
-          };
-          return () => eventSource.close();
-        });
+    const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
+    eventSource.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        //console.log(data)
+        // Se il clientId dell'evento è diverso dal mio, mostra la notifica
+        if (data.table == "vlan") {
+          if (data.clientId !== localStorage.getItem('clientId')) {
+            updateNotification.value = true;
+          }
+        }
+      } catch (e) {
+        console.error('Errore parsing SSE:', event?.data);
+      }
+    };
+    return () => eventSource.close();
+  });
 
   useTask$(async () => {
     vlanList.value = await getVLANs();
@@ -442,61 +442,31 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
-            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-3 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.vlan.vlanlist")}</span>
               </div>
-            </div>
-            <Dati
-              DBTabella="vlan"
-              title={t("network.vlan.vlanlist")}
-              dati={vlanList.value}
-              nomeTabella={"vlan"}
-              OnModify={handleModify}
-              OnDelete={handleDelete}
-              funcReloadData={reloadData}
-              onReloadRef={getREF}
-            >
-              <TextboxForm
-                id="txtfilter"
-                value={filter.params.query}
-                ref={txtQuickSearch}
-                placeholder={t("quicksearch")}
-                onInput$={(e) => {
-                  filter.params.query = (e.target as HTMLInputElement).value;
-                  filter.active = false;
-                  for (const item in filter.params) {
-                    if (filter.params[item] && filter.params[item] != "") {
-                      filter.active = true;
-                      break;
+              <div class="flex items-center gap-2">
+                <TextboxForm
+                  id="txtfilter"
+                  search={true}
+                  value={filter.params.query}
+                  ref={txtQuickSearch}
+                  placeholder={t("quicksearch")}
+                  onInput$={(e) => {
+                    filter.params.query = (e.target as HTMLInputElement).value;
+                    filter.active = false;
+                    for (const item in filter.params) {
+                      if (filter.params[item] && filter.params[item] != "") {
+                        filter.active = true;
+                        break;
+                      }
                     }
-                  }
-                  if (reloadFN) reloadFN.value?.();
-                }}
-              />
-              <div class="has-tooltip">
-                <button
-                  class="flex size-[32px] cursor-pointer items-center justify-center rounded-md bg-black p-1 text-white hover:bg-gray-700"
-                  onClick$={() => (filter.visible = true)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-5"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
-                    />
-                  </svg>
-                </button>
-                <span class="tooltip">{t("filters")}</span>
-              </div>
-              {filter.active && (
+                    if (reloadFN) reloadFN.value?.();
+                  }}
+                />
+
+                {filter.active && (
                 <div class="has-tooltip">
                   <button
                     class="ms-2 flex size-[24px] cursor-pointer items-center justify-center rounded bg-red-500 text-white hover:bg-red-400"
@@ -526,6 +496,50 @@ export default component$(() => {
                   </button>
                 </div>
               )}
+              </div>
+            </div>
+            <div class="flex flex-row items-center collapse gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+                          <ButtonAddLink
+                            nomePulsante=""
+                            href=""
+                          ></ButtonAddLink>
+                          <div>
+                            
+                          </div>
+                        </div>
+            <Dati
+              DBTabella="vlan"
+              title={t("network.vlan.vlanlist")}
+              dati={vlanList.value}
+              nomeTabella={"vlan"}
+              OnModify={handleModify}
+              OnDelete={handleDelete}
+              funcReloadData={reloadData}
+              onReloadRef={getREF}
+            >
+              {/* <div class="has-tooltip">
+                <button
+                  class="flex size-[32px] cursor-pointer items-center justify-center rounded-md bg-black p-1 text-white hover:bg-gray-700"
+                  onClick$={() => (filter.visible = true)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="size-5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
+                    />
+                  </svg>
+                </button>
+                <span class="tooltip">{t("filters")}</span>
+              </div> */}
+              
             </Dati>
             <div class="flex">
               <ButtonAddLink
