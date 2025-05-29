@@ -681,7 +681,7 @@ export default component$(() => {
           </div>
         )}
         {page.value == "info" && (
-          <div class="mt-8 flex flex-col gap-8 md:flex-row mx-8 md:mx-0">
+          <div class="mt-8 flex flex-col gap-8 md:flex-row mx-8 md:mx-0 animateEnter">
             <div class="inline-flex flex-1 flex-col items-start dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100 dark:**:border-gray-600 justify-start gap-1 rounded-md border-1 border-gray-300 px-5 py-3">
               <div class="flex h-[50px] w-full items-center overflow-hidden">
                 <div class="text-lg font-semibold text-black">{t("site.siteinformation")}</div>
@@ -738,13 +738,6 @@ export default component$(() => {
                   onClick$={() => nav("0/aggregates/view")}
                 >
                   {t("network.aggregates.aggregate")}
-                </button>
-                <button
-                  type="button"
-                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
-                  onClick$={() => nav("0/vfr/view")}
-                >
-                  VFR
                 </button>
                 <button
                   type="button"

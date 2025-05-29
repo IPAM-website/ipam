@@ -432,7 +432,7 @@ export default component$(() => {
       </Title>
       <br />
       {/* VISUALIZZAZIONE DELLE CITTA E PAESI */}
-      <div class="flex flex-col gap-2 md:flex-row">
+      <div class="flex flex-col gap-2 md:flex-row animateEnter">
         <div class="mx-5 flex flex-col rounded-md border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-2 shadow md:h-[60vh] md:w-1/4 md:p-3">
           <div
             class="ms-1 flex items-center gap-2"
@@ -600,7 +600,7 @@ export default component$(() => {
                     <div class="mx-2 flex items-center justify-between" key={x.idsito}>
                       <button
                         onClick$={() => nav(`${x.idsito}/`)}
-                        class="flex items-center gap-3 text-sm text-blue-600 dark:text-blue-500 cursor-pointer hover:underline"
+                        class="flex items-center gap-3 text-sm text-gray-900 dark:text-gray-200 cursor-pointer hover:bg-gray-800 hover:text-gray-200 transition-all p-2 duration-400 rounded-md dark:hover:bg-gray-700"
                       >
                         {x.datacenter && x.tipologia == "active" && (
                           <svg
@@ -941,7 +941,7 @@ export default component$(() => {
             name="idcliente"
             value={loc.params.client}
           />
-          <button class="me-4 cursor-pointer rounded-sm bg-black p-2 px-4 text-white hover:bg-gray-900 active:bg-gray-800 disabled:bg-gray-700 disabled:text-gray-100">
+          <button class="me-4 cursor-pointer rounded-sm bg-black p-2 px-4 text-white hover:bg-gray-900 active:bg-gray-800 disabled:bg-gray-700 disabled:text-gray-100 dark:bg-gray-200 dark:hover:bg-white dark:text-gray-800">
             {siteAddMode.value == 1 ? "Aggiungi" : "Modifica"}
           </button>
         </Form>

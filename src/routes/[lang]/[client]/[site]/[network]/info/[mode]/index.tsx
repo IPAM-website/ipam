@@ -143,6 +143,7 @@ export default component$(() => {
             <div class="mt-4 inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 border-gray-300 dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 px-5 py-3 shadow-md">
               <div class="flex h-[50px] w-full items-center overflow-hidden">
                 <div class="text-lg font-semibold text-black">{t("network.info.networkinformation")}</div>
+                <div class="text-lg font-semibold text-black">{t("network.info.networkinformation")}</div>
               </div>
               <div class="inline-flex w-full items-center justify-between overflow-hidden border-t border-gray-300 px-2 py-2.5">
                 <div class="justify-start text-lg font-normal text-black">IP</div>

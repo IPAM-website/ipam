@@ -24,7 +24,6 @@ import type { ReteModel, AggregatoModel } from "~/dbModels";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 import { inlineTranslate } from "qwik-speak";
-import ButtonAddLink from "~/components/table/ButtonAddLink";
 
 type CustomRow = AggregatoModel & { idretec: number; ipretec?: string };
 
@@ -119,11 +118,11 @@ export const getAllAggregatesByNetwork = server$(async function (
       const flt = networks.filter((j) => j.prefissorete == x);
       flt.sort((a, b) => {
         if (a.iprete > b.iprete) return 1;
+        if (a.iprete < b.iprete) return -1;
         return 0;
       });
 
-      // console.log("network filtrate",networks);
-      if (flt.length > 1)
+      if (flt.length > 1) {
         for (let i = 0; i < flt.length - 1; i++) {
           let space = 1;
           let baseIP = "";
@@ -140,9 +139,19 @@ export const getAllAggregatesByNetwork = server$(async function (
               iprete: baseIP,
               prefisso: x - Math.trunc(Math.sqrt(space)),
             });
+            console.log(`Aggregato creato da ${baseIP} con prefisso ${x}`);
           }
         }
+      } else if (flt.length === 1) {
+        // opzionale: crea aggregato anche per reti singole
+        test.push({
+          iprete: flt[0].iprete,
+          prefisso: flt[0].prefissorete,
+        });
+        console.log(`Aggregato singolo creato per ${flt[0].iprete}`);
+      }
     });
+
 
     return test;
   } catch (e) {
@@ -312,11 +321,10 @@ export default component$(() => {
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.aggregates.aggregatelist")}</span>
               </div>
             </div>
-            <div class="flex flex-row items-center gap-2 collapse mb-4 [&>*]:my-0 [&>*]:py-0">
-              <ButtonAddLink
-                nomePulsante={""}
-                href={""}
-              ></ButtonAddLink>
+            <div class="mb-10 opacity-0" aria-disabled="true">
+              <div>
+                *
+              </div>
             </div>
             <Dati
               DBTabella="aggregati"

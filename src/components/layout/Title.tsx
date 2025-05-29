@@ -26,14 +26,14 @@ export default component$<TitleProps>(({ haveReturn = false, url }) => {
           {haveReturn && (
             <div class="flex w-full justify-center md:block">
               {/* <a href={url} class="mt-1 flex h-[32px] w-[160px]"> */}
-                <button onClick$={()=>nav(url)} class="flex  h-[32px] w-[160px] cursor-pointer items-center justify-center rounded bg-[#1b1b1b] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)]">
+                <button onClick$={()=>nav(url)} class="flex  h-[32px] w-[160px] cursor-pointer items-center justify-center rounded bg-[#1b1b1b] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] dark:bg-gray-200 dark:hover:bg-white transition-all">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke-width="2"
                     stroke="currentColor"
-                    class="size-4 text-white"
+                    class="size-4 text-white dark:text-black"
                   >
                     <path
                       stroke-linecap="round"

@@ -162,7 +162,7 @@ export default component$((props: ClientListProps) => {
           );
         })
       ) : (
-        <div class="max-w-[400px] min-w-[300px] rounded-2xl bg-white border border-gray-200 p-10 text-center shadow-md flex flex-col items-center justify-center">
+        <div class="max-w-[400px] min-w-[300px] rounded-2xl bg-white border border-gray-200 p-10 text-center shadow-md flex flex-col items-center justify-center dark:bg-gray-800 dark:border-gray-700">
           <span class="text-2xl font-bold text-gray-400 mb-2">{t("noclients")}</span>
         </div>
       )}
