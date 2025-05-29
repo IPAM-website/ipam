@@ -24,6 +24,7 @@ import type { ReteModel, AggregatoModel } from "~/dbModels";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 import { inlineTranslate } from "qwik-speak";
+import ButtonAddLink from "~/components/table/ButtonAddLink";
 
 type CustomRow = AggregatoModel & { idretec: number; ipretec?: string };
 
@@ -311,6 +312,12 @@ export default component$(() => {
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.aggregates.aggregatelist")}</span>
               </div>
             </div>
+            <div class="flex flex-row items-center gap-2 collapse mb-4 [&>*]:my-0 [&>*]:py-0">
+              <ButtonAddLink
+                nomePulsante={""}
+                href={""}
+              ></ButtonAddLink>
+            </div>
             <Dati
               DBTabella="aggregati"
               title={t("network.aggregates.aggregatelist")}
@@ -352,6 +359,7 @@ export default component$(() => {
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
                                     </button></div>} */}
             </Dati>
+
 
             {/* <ButtonAddLink nomePulsante={$localize`Aggiungi aggregato`} href={loc.url.href.replace("view", "insert")}></ButtonAddLink> */}
             {/* <ImportCSV OnError={handleError} OnOk={handleOkay} nomeImport="aggregati" /> */}

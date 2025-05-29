@@ -775,8 +775,8 @@ export const CRUDForm = component$(
                 <span class="text-red-600">{t("network.addesses.invalidipaddress")}</span>
               )}
 
-            {ipErrors.value && action.value && !action.value.success && (
-              <span class="text-red-600">
+            {ipErrors.value && ipErrors.value.length>0 && !action.submitted && (
+              <span class="text-red-600 w-full justify-end">
                 {ipErrors.value.map((x: string) => (
                   <>
                     {x}

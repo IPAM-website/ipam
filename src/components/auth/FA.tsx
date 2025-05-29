@@ -218,7 +218,7 @@ export default component$<LoginData>((props) => {
             </p>
             <input
               type="text"
-              class="mb-4 w-full rounded-md border border-neutral-300 p-2 transition-all duration-500 focus:border-gray-800 focus:outline-none"
+              class="mb-4 w-full rounded-md border text-black border-neutral-300 p-2 transition-all duration-500 focus:border-gray-800 focus:outline-none"
               placeholder="Inserisci codice OTP"
               bind:value={otpCode}
             />
