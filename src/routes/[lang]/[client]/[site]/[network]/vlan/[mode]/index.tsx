@@ -10,6 +10,7 @@ import {
   useSignal,
   useStore,
   useTask$,
+  useVisibleTask$,
 } from "@builder.io/qwik";
 import type {
   RequestHandler
@@ -196,6 +197,7 @@ type Notification = {
 
 export default component$(() => {
   // const notify = useNotify();
+  const updateNotification = useSignal(false);
   const lang = getLocale("en");
   const vlanList = useSignal<VLANModel[]>([]);
   const networks = useSignal<ReteModel[]>([]);
@@ -215,6 +217,25 @@ export default component$(() => {
   const txtQuickSearch = useSignal<HTMLInputElement>();
   const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
+
+  useVisibleTask$(() => {
+          const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
+          eventSource.onmessage = async (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              //console.log(data)
+              // Se il clientId dell'evento è diverso dal mio, mostra la notifica
+              if (data.table == "vlan"){
+                if (data.clientId !== localStorage.getItem('clientId')) {
+                  updateNotification.value = true;
+                }
+              }
+            } catch (e) {
+              console.error('Errore parsing SSE:', event?.data);
+            }
+          };
+          return () => eventSource.close();
+        });
 
   useTask$(async () => {
     vlanList.value = await getVLANs();
@@ -289,6 +310,29 @@ export default component$(() => {
 
   return (
     <>
+      {updateNotification.value && (
+        <div
+          class={[
+            "fixed left-1/2 top-8 z-50 flex items-center gap-3 px-5 py-3 rounded-lg shadow-lg border-2 transition-all duration-300",
+            "bg-cyan-100 border-cyan-300 text-cyan-900",
+            "dark:bg-cyan-950 dark:border-cyan-700 dark:text-cyan-100",
+            "transform -translate-x-1/2"
+          ]}
+          style={{
+            filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.12))",
+            opacity: 0.98,
+          }}
+        >
+          <svg class="h-6 w-6 text-cyan-500 dark:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z" />
+          </svg>
+          <span class="font-semibold">
+            {lang === "en"
+              ? "The aggregates table has been updated. Click the 'Reload' button to refresh the table."
+              : "La tabella degli aggregati è stata aggiornata. Clicca il pulsante 'Ricarica' per aggiornare la tabella."}
+          </span>
+        </div>
+      )}
       {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("vlan")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
       {mode == "view" ? (
         <div>

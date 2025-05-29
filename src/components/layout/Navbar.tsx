@@ -51,6 +51,9 @@ export default component$(() => {
               onClick$={async () => {
               await fetch("/api/cookie", { method: "DELETE" });
               nav("/" + lang + "/login");
+              if(localStorage.getItem("clientId")){
+                localStorage.removeItem("clientId");
+              }
               }}
             >
               <span class="flex items-center dark:text-gray-800 dark:hover:text-gray-800 dark:hover:bg-gray-100 dark:group-hover:text-gray-800 dark:group-hover:bg-gray-100 dark:group-hover:border-gray-100">

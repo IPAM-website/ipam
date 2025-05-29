@@ -317,11 +317,13 @@ export default component$(() => {
     const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
     eventSource.onmessage = async (event) => {
       try {
-        //console.log(event)
         const data = JSON.parse(event.data);
+        //console.log(data)
         // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-        if (data.clientId !== localStorage.getItem('clientId')) {
-          updateNotification.value = true;
+        if(data.table == "indirizzi"){
+          if (data.clientId !== localStorage.getItem('clientId')) {
+            updateNotification.value = true;
+          }
         }
       } catch (e) {
         console.error('Errore parsing SSE:', event?.data);
@@ -445,8 +447,8 @@ export default component$(() => {
           </svg>
           <span class="font-semibold">
             {lang === "en"
-              ? "The addresses table has been updated."
-              : "La tabella degli indirizzi è stata aggiornata."}
+              ? "The addresses table has been updated. Click the 'Reload' button to refresh the table."
+              : "La tabella degli indirizzi è stata aggiornata. Clicca il pulsante 'Ricarica' per aggiornare la tabella."}
           </span>
         </div>
       )}
