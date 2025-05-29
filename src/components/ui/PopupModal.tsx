@@ -42,7 +42,7 @@ export default component$(
       >
         <div
           ref={popup}
-          class="mx-auto w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-2xl filter transition-all md:w-1/2"
+          class="mx-auto w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-2xl filter transition-all lg:w-1/2"
         >
           <div class="flex flex-row">
             <h1 class="mb-2 w-full font-semibold text-gray-900 dark:text-white">{title}</h1>

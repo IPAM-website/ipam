@@ -10,7 +10,9 @@
       "titlePt1": "Il",
       "titlePt2": "deve avere le seguenti colonne (intestazioni nella prima riga):",
       "warning": "Assicurati che le intestazioni siano esattamente come mostrato sopra e che ogni riga contenga i dati corrispondenti."
-    }
+    },
+    "passwordError": "La password non è valida",
+    "userError": "Il nome utente non è valido"
   },
   "full": {
     "it": "Italiano",
