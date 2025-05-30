@@ -67,8 +67,8 @@
       "vrfname": "Nome VRF"
     },
     "aggregates": {
-      "aggregatelist": "Elenco aggregati",
-      "aggregates": "Aggregati"
+      "aggregatelist": "Lista aggregati",
+      "aggregate": "Aggregati"
     }
   }
 }

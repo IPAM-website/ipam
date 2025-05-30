@@ -144,7 +144,7 @@ export default component$(
                       : " dark:text-gray-100 text-gray-700")
                   }
                 >
-                  {t("aggregates")}
+                  {t("network.aggregates.aggregate")}
                 </button>
               </li>
               <li>

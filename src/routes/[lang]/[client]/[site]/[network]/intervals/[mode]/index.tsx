@@ -37,6 +37,7 @@ import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 //import ImportCSV from "~/components/table/ImportCSV";
 import { inlineTranslate } from "qwik-speak";
+import { getUser } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -111,12 +112,26 @@ export const useAction = routeAction$(async (data, {env , params}) => {
     const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
+    const user = await getUser()
+    const clientId = data.clientId;
     try {
       if (params.mode == "update") {
-        await sql`UPDATE intervalli SET nomeintervallo= ${data.nomeintervallo},iniziointervallo = ${data.iniziointervallo}, lunghezzaintervallo = ${data.lunghezzaintervallo}, fineintervallo=${data.fineintervallo},idrete=${data.idrete} WHERE idintervallo=${data.idintervallo}`;
+        await sql.begin(async (tx) => {
+          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+          if (clientId) {
+            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+          }
+          await tx`UPDATE intervalli SET nomeintervallo= ${data.nomeintervallo},iniziointervallo = ${data.iniziointervallo}, lunghezzaintervallo = ${data.lunghezzaintervallo}, fineintervallo=${data.fineintervallo},idrete=${data.idrete} WHERE idintervallo=${data.idintervallo}`;
+        });
         type_message = 2;
       } else {
-        await sql`INSERT INTO intervalli(nomeintervallo,iniziointervallo,lunghezzaintervallo,fineintervallo,idrete) VALUES (${data.nomeintervallo},${data.iniziointervallo},${data.lunghezzaintervallo},${data.fineintervallo},${data.idrete})`;
+        await sql.begin(async (tx) => {
+          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+          if (clientId) {
+            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+          }
+          await tx`INSERT INTO intervalli(nomeintervallo,iniziointervallo,lunghezzaintervallo,fineintervallo,idrete) VALUES (${data.nomeintervallo},${data.iniziointervallo},${data.lunghezzaintervallo},${data.fineintervallo},${data.idrete})`;
+        });
         type_message = 1;
       }
       success = true;
@@ -137,6 +152,7 @@ export const useAction = routeAction$(async (data, {env , params}) => {
     lunghezzaintervallo: z.number(),
     fineintervallo: z.string(),
     idrete: z.number(),
+    clientId: z.string().optional(),
   }),
 );
 
@@ -172,10 +188,18 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 
 export const deleteInterval = server$(async function (this, data) {
   const sql = sqlForQwik(this.env)
+  const user = await getUser()
+  const clientId = data.clientId;
   try {
     if (isNaN(data.idintervallo))
       throw new Error("idintervallo non disponibile")
-    await sql`DELETE FROM intervalli WHERE idintervallo=${data.idintervallo}`;
+    await sql.begin(async (tx) => {
+      await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+      if (clientId) {
+        await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+      }
+      await tx`DELETE FROM intervalli WHERE idintervallo=${data.idintervallo}`;
+    });
     return true;
   } catch (e) {
     console.log(e);
@@ -237,9 +261,10 @@ export const isOccupied = server$(async function (this, data) {
   }
 });
 
+
 type Notification = {
   message: string;
-  type: "success" | "error";
+  type: "success" | "error" | "loading";
 };
 
 export default component$(() => {
@@ -278,14 +303,13 @@ export default component$(() => {
     }
   });
 
-  const addNotification = $((message: string, type: "success" | "error") => {
+  const addNotification = $((message: string, type: "success" | "error" | "loading") => {
     notifications.value = [...notifications.value, { message, type }];
-    // Rimuovi la notifica dopo 3 secondi
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(
-        (n) => n.message !== message,
-      );
-    }, 3000);
+    if (type !== "loading") {
+      setTimeout(() => {
+        notifications.value = notifications.value.filter((n) => n.message !== message);
+      }, 4000);
+    }
   });
 
   useVisibleTask$(() => {
@@ -331,18 +355,24 @@ export default component$(() => {
   });
 
   const handleDelete = $(async (row: any) => {
-    if (await deleteInterval({ idintervallo: row.idintervallo }))
+    addNotification(lang === "en" ? "Operation in progress..." : "Operazione in corso...", "loading");
+    const clientId = localStorage.getItem('clientId')
+    if (await deleteInterval({ idintervallo: row.idintervallo, clientId })) {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(
         lang === "en" ? "Deleted successfully" : "Eliminato con successo",
         "success",
       );
-    else
+    }
+    else {
+      notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(
         lang === "en"
           ? "Error during deletion"
           : "Errore durante l'eliminazione",
         "error",
       );
+    }
   });
 
   const reloadData = $(async () => {
@@ -383,6 +413,46 @@ export default component$(() => {
           </span>
         </div>
       )}
+      <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
+        {notifications.value.map((notification, index) => (
+          <div
+            key={index}
+            class={[
+              "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+              notification.type === "success"
+                ? "bg-green-500/90 border-green-700 text-white"
+                : notification.type === "error"
+                  ? "bg-red-500/90 border-red-700 text-white"
+                  : "bg-white border-blue-400 text-blue-800"
+            ]}
+            style={{
+              filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+              opacity: 0.98,
+            }}
+          >
+            {/* Icona */}
+            {notification.type === "success" && (
+              <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {notification.type === "error" && (
+              <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            {notification.type === "loading" && (
+              <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            )}
+
+            {/* Messaggio */}
+            <span class="flex-1">{notification.message}</span>
+          </div>
+        ))}
+      </div>
       {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("intervals")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} Intervals</Title> */}
       {mode == "view" ? (
         <div>
@@ -520,6 +590,7 @@ export const CRUDForm = component$(
   }) => {
     const loc = useLocation();
     const action = useAction();
+    const clientId = localStorage.getItem('clientId') ?? undefined;
 
     const network = useSignal<ReteModel>();
 
@@ -530,7 +601,7 @@ export const CRUDForm = component$(
       iniziointervallo: "",
       lunghezzaintervallo: 0,
       nomeintervallo: "",
-      descrizioneintervallo: "",
+      descrizioneintervallo: ""
     });
 
     const attempted = useSignal<boolean>(false);
@@ -785,7 +856,7 @@ export const CRUDForm = component$(
                   formData.lunghezzaintervallo = 0;
                 return;
               }
-              await action.submit(formData);
+              await action.submit({ ...formData, clientId});
               if (action.value && action.value.success) {
                 await new Promise((resolve) => {
                   setTimeout(resolve, 2000);
