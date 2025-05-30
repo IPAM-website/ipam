@@ -270,6 +270,8 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
       "brand_dispositivo",
       "tipo_dispositivo",
       "n_prefisso",
+      "vlan (opzionale)",
+      "nome_vlan (opzionale)"
     ],
     example: [
       "192.1678.1.1",
@@ -277,6 +279,8 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
       "DELL",
       "Server",
       "24",
+      "200",
+      "VLAN 200"
     ],
   },
   rete: {

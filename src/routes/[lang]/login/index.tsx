@@ -23,6 +23,7 @@ export const onGet: RequestHandler = async ({ cookie, redirect, env, locale }) =
     } catch {
       return;
     }
+    
     throw redirect(302, "/" + locale() + "/dashboard");
   }
 }

@@ -20,6 +20,8 @@
 }
 
 .dialog-content {
+  background: #fff;
+  color: #1f2937;
   border-radius: 8px;
   padding: 24px;
   width: 90%;
@@ -67,4 +69,30 @@
 
 .dialog-button.confirm:hover {
   background-color: #dc2626;
+}
+
+/* DARK MODE */
+@media (prefers-color-scheme: dark) {
+  .dialog-content {
+    background: #18181b;
+    color: #f3f4f6;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  .dialog-title {
+    color: #f3f4f6;
+  }
+  .dialog-button.cancel {
+    background-color: #27272a;
+    color: #d1d5db;
+  }
+  .dialog-button.cancel:hover {
+    background-color: #3f3f46;
+  }
+  .dialog-button.confirm {
+    background-color: #dc2626;
+    color: #fff;
+  }
+  .dialog-button.confirm:hover {
+    background-color: #b91c1c;
+  }
 }
