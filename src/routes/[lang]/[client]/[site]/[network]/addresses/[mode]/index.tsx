@@ -87,12 +87,12 @@ export const getAddresses = server$(async function (
   let addresses: IndirizziModel[] = [];
 
 
-  if(isNaN(parseInt(this.params.site)) || isNaN(parseInt(this.params.network)))
+  if (isNaN(parseInt(this.params.site)) || isNaN(parseInt(this.params.network)))
     return [];
-  
+
   if (filter.empty == 1) {
     const queryResult =
-      await sql`SELECT * FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete 
+      await sql`SELECT indirizzi.*, rete.vid AS rete_vid, indirizzi.vid AS indirizzi_vid FROM indirizzi INNER JOIN rete ON indirizzi.idrete=rete.idrete 
         INNER JOIN siti_rete ON rete.idrete = siti_rete.idrete WHERE siti_rete.idsito=${this.params.site} AND siti_rete.idrete=${this.params.network}`;
     addresses = queryResult as unknown as IndirizziModel[];
     return addresses;
@@ -139,13 +139,27 @@ export const useAction = routeAction$(
     const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
+    const clientId = data.clientId;
+    const user = await getUser();
     // console.log(data.data_inserimento);
     try {
       if (data.mode == "update") {
-        await sql`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, vid=${data.vid}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
+        await sql.begin(async (tx) => {
+          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+          if (clientId) {
+            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+          }
+          await tx`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, vid=${data.vid}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
+        });
         type_message = 2;
       } else {
-        await sql`INSERT INTO indirizzi(ip,idrete,vid,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.vid},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
+        await sql.begin(async (tx) => {
+          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+          if (clientId) {
+            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+          }
+          await tx`INSERT INTO indirizzi(ip,idrete,vid,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.vid},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
+        });
         type_message = 1;
       }
       success = true;
@@ -170,6 +184,7 @@ export const useAction = routeAction$(
     brand_dispositivo: z.string(),
     nome_dispositivo: z.string(),
     data_inserimento: z.any(),
+    clientId: z.string()
   }),
 );
 
@@ -179,6 +194,7 @@ export const getAllVLAN = server$(async function () {
   try {
     const query = await sql`SELECT * FROM vlan`;
     vlans = query as unknown as VLANModel[];
+    //console.log(vlans)
   } catch (e) {
     console.log(e);
   }
@@ -188,15 +204,25 @@ export const getAllVLAN = server$(async function () {
 
 export const deleteIP = server$(async function (data) {
   const sql = sqlForQwik(this.env);
+  const clientId = data.clientId;
+  const user = await getUser()
   try {
-    if (data.address != "")
-      await sql`DELETE FROM indirizzi WHERE ip=${data.address}`;
+    if (data.address != "") {
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        if (clientId) {
+          await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+        }
+        await tx`DELETE FROM indirizzi WHERE ip=${data.address}`;
+      });
+    }
     return true;
   } catch (e) {
     console.log(e);
     return false;
   }
 });
+
 
 type Notification = {
   message: string;
@@ -214,42 +240,80 @@ function isIPInSubnet(ip: string, subnet: string, prefix: number) {
   return (ipLong & mask) === (subnetLong & mask);
 }
 
-export const insertIPFromCSV = server$(async function (data: string[][]) {
-  const lang  = getLocale("en")
+export const insertIPFromCSV = server$(async function (data) {
+  const lang = getLocale("en")
   const sql = sqlForQwik(this.env);
+  const clientId = data.clientId;
+  const address = data.address as string[][];
   try {
-    const expectedHeaders = ["ip", "nome_dispositivo","tipo_dispositivo","brand_dispositivo","n_prefisso"];
+    const expectedHeaders = ["ip", "nome_dispositivo", "tipo_dispositivo", "brand_dispositivo", "n_prefisso"];
 
-    if (data.length === 0) {
+    if (address.length === 0) {
       throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
     }
 
-    const headerRow = data[0];
+    const headerRow = address[0];
     const receivedHeaders = headerRow.map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+    const requiredHeaders = expectedHeaders.slice(0, 4)
 
-    if (receivedHeaders.length !== expectedHeaders.length) {
-      throw new Error(lang == "it" ? `Numero di colonne errato. Attese ${expectedHeaders.length}, ricevute ${receivedHeaders.length}` : `Number of columns incorrect. Expected ${expectedHeaders.length}, received ${receivedHeaders.length}`);
+    if (!requiredHeaders.every(h => receivedHeaders.includes(h.toLowerCase()))) {
+      throw new Error(lang === "it"
+        ? `Intestazioni mancanti. Richieste: ${requiredHeaders.join(", ")}`
+        : `Missing headers. Required: ${requiredHeaders.join(", ")}`);
     }
 
-    if (!receivedHeaders.every((h, index) => h === expectedHeaders[index].toLowerCase())) {
-      throw new Error(lang == "it" ? `Intestazioni non valide. Atteso: ${expectedHeaders.join(", ")}` : `Invalid headers. Expected: ${expectedHeaders.join(", ")}`);
-    }
     //console.log(data)
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
-      const [ipRow, nome_dispositivoRow, brand_dispositivoRow, tipo_dispositivoRow, n_prefissoRow] = row;
-      const ip = ipRow.replace(/^"|"$/g, '').trim();
-      const nome_dispositivo = nome_dispositivoRow.replace(/^"|"$/g, '').trim();
-      const brand_dispositivo = brand_dispositivoRow.replace(/^"|"$/g, '').trim();
-      const tipo_dispositivo = tipo_dispositivoRow.replace(/^"|"$/g, '').trim();
-      const n_prefisso = parseInt(n_prefissoRow.replace(/^"|"$/g, '').trim());
-      if (isNaN(n_prefisso))
-        throw new Error("Prefisso non valido");
+    for (let i = 1; i < address.length; i++) {
+      let vid: number | null = 1;
+      const row = address[i];
+      const rowData: { [key: string]: string } = {};
+
+      // Mappa i valori in base alle intestazioni
+      headerRow.forEach((header: any, index: any) => {
+        const key = header.replace(/^"|"$/g, '').trim().toLowerCase();
+        rowData[key] = row[index]?.replace(/^"|"$/g, '').trim() || '';
+      });
+
+      // Estrazione dati con validazione
+      const ip = rowData.ip;
+      const nome_dispositivo = rowData.nome_dispositivo;
+      const tipo_dispositivo = rowData.tipo_dispositivo;
+      const brand_dispositivo = rowData.brand_dispositivo;
+      const n_prefisso = parseInt(rowData.n_prefisso);
+      const vlanId = rowData.vlan;
+      const vlanName = rowData.nome_vlan;
+      if (isNaN(n_prefisso) || n_prefisso < 0 || n_prefisso > 32) {
+        throw new Error(lang === "it"
+          ? "Prefisso non valido"
+          : "Invalid prefix");
+      }
       //console.log(ip,nome_dispositivo,brand_dispositivo,tipo_dispositivo,n_prefisso)
 
       const pathParts = new URL(this.request.url).pathname.split('/');
       const reteId = parseInt(pathParts[4]);
       //console.log(reteId)
+
+      // 4. Gestione VLAN
+      if (vlanId) {
+        // Cerca/crea VLAN solo se specificata
+        const existingVlan = await sql`
+          SELECT vid FROM vlan 
+          WHERE vid = ${vlanId}`;
+
+        vid = existingVlan[0]?.vid;
+        if (!vid) {
+          await sql.begin(async (tx) => {
+            if (clientId) {
+              await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+            }
+            const newVlan = await tx`
+            INSERT INTO vlan (vid,nomevlan) 
+            VALUES (${vlanId},${vlanName})
+            RETURNING vid`;
+            vid = newVlan[0].vid;
+          })
+        }
+      }
 
       const rete = await sql`
       SELECT iprete, prefissorete
@@ -272,17 +336,31 @@ export const insertIPFromCSV = server$(async function (data: string[][]) {
       `;
       if (existingAddress.length > 0) {
         throw new Error("Indirizzo esistente");
-      } 
+      }
 
-      const user = await getUser()
+      // 6. Inserimento con transazione
+      const user = await getUser();
       await sql.begin(async (tx) => {
         await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-        await tx`INSERT INTO indirizzi(ip, idrete, n_prefisso, tipo_dispositivo, nome_dispositivo, brand_dispositivo, data_inserimento) VALUES (${ip},${reteId},${n_prefisso},${tipo_dispositivo},${nome_dispositivo},${brand_dispositivo},${new Date()})`;
-      })
+        if (clientId) {
+          await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+        }
+
+        await tx`
+            INSERT INTO indirizzi (
+              ip, idrete, n_prefisso, 
+              tipo_dispositivo, nome_dispositivo, 
+              brand_dispositivo, data_inserimento, vid
+            ) VALUES (
+              ${ip}, ${reteId}, ${n_prefisso}, 
+              ${tipo_dispositivo}, ${nome_dispositivo}, 
+              ${brand_dispositivo}, ${new Date()}, ${vid}
+            )`;
+      });
     }
     return {
       success: true,
-      message:  lang === 'it' ? "Indirizzo inserito con successo" : "Address inserted successfully"
+      message: lang === 'it' ? "Indirizzo inserito con successo" : "Address inserted successfully"
     }
   } catch (e) {
     console.log(e);
@@ -320,8 +398,8 @@ export default component$(() => {
         const data = JSON.parse(event.data);
         //console.log(data)
         // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-        if(data.table == "indirizzi"){
-          if (data.clientId !== localStorage.getItem('clientId')) {
+        if (data.table == "indirizzi") {
+          if (data.clientId !== localStorage.getItem("clientId")) {
             updateNotification.value = true;
           }
         }
@@ -369,8 +447,9 @@ export default component$(() => {
   const handleOkay = $(async (data: any) => {
     addNotification(lang === "en" ? "Operation in progress..." : "Operazione in corso...", "loading");
     // console.log("ok");
+    const clientId = localStorage.getItem("clientId")
     try {
-      const result = await insertIPFromCSV(data)
+      const result = await insertIPFromCSV({ address: data, clientId })
       notifications.value = notifications.value.filter(n => n.type !== "loading");
       if (result.success) {
         reloadFN.value?.()
@@ -392,8 +471,9 @@ export default component$(() => {
   });
 
   const handleDelete = $(async (row: any) => {
+    const clientId = localStorage.getItem("clientId")
     addNotification(lang === "en" ? "Deleting..." : "Eliminazione in corso...", "loading");
-    if (await deleteIP({ address: row.ip })) {
+    if (await deleteIP({ address: row.ip, clientId })) {
       notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", "success");
       reloadFN.value?.()
@@ -410,14 +490,13 @@ export default component$(() => {
   });
 
   const reloadData = $(async () => {
-    if(updateNotification.value){
-      updateNotification.value = false;
-    }
+    updateNotification.value = false;
     if (filter.active) return await getAddresses(filter.params);
     else return await getAddresses();
   });
 
   const getREF = $((reloadFunc: () => void) => {
+    updateNotification.value = false;
     reloadFN.value = reloadFunc;
   });
 
@@ -543,6 +622,12 @@ export default component$(() => {
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.addresses.addresslist")}</span>
                 <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
               </div>
+              <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 collapse">
+                <ButtonAddLink
+                  nomePulsante=""
+                  href=""
+                ></ButtonAddLink>
+              </div>
               <div class="flex items-center gap-2">
                 <TextboxForm
                   id="txtfilter"
@@ -660,271 +745,271 @@ export const FormBox = component$(({ title }: { title?: string }) => {
 });
 
 export const CRUDForm = component$(({
-    data
-  }: {
-    data?: RowAddress;
-    reloadFN: Signal<(() => void) | null>;
-  }) => {
-    const lang = getLocale("en");
-    const loc = useLocation();
-    const action = useAction();
+  data
+}: {
+  data?: RowAddress;
+  reloadFN: Signal<(() => void) | null>;
+}) => {
+  const lang = getLocale("en");
+  const loc = useLocation();
+  const action = useAction();
 
-    const formData = useStore<RowAddress & { ipDest: string; prefix: string }>({
-      tipo_dispositivo: "Other",
-      prefix: "",
-      ip: "",
-      ipDest: "",
-      vid: undefined,
-      idrete: undefined,
-      nome_dispositivo: "",
-      brand_dispositivo: "",
-      data_inserimento: "",
-    });
+  const formData = useStore<RowAddress & { ipDest: string; prefix: string }>({
+    tipo_dispositivo: "Other",
+    prefix: "",
+    ip: "",
+    ipDest: "",
+    vid: undefined,
+    idrete: undefined,
+    nome_dispositivo: "",
+    brand_dispositivo: "",
+    data_inserimento: "",
+  });
 
-    const ipErrors = useSignal<string[]>([]);
-    const ipDestErrors = useSignal<string[]>([]);
+  const ipErrors = useSignal<string[]>([]);
+  const ipDestErrors = useSignal<string[]>([]);
 
-    const attempted = useSignal<boolean>(false);
-    const changeIP = useSignal<boolean>(false);
+  const attempted = useSignal<boolean>(false);
+  const changeIP = useSignal<boolean>(false);
 
-    const network = useSignal<ReteModel>();
-    const vlans = useSignal<VLANModel[]>([]);
+  const network = useSignal<ReteModel>();
+  const vlans = useSignal<VLANModel[]>([]);
 
-    const updateIP = useSignal<() => void>(() => { });
+  const updateIP = useSignal<() => void>(() => { });
 
-    const handleFUpdate = $((e: () => void) => (updateIP.value = e));
+  const handleFUpdate = $((e: () => void) => (updateIP.value = e));
 
-    useTask$(async ({ track }) => {
-      track(() => loc.params.network);
-      formData.idrete = parseInt(loc.params.network);
+  useTask$(async ({ track }) => {
+    track(() => loc.params.network);
+    formData.idrete = parseInt(loc.params.network);
 
-      network.value = (await getNetwork(
-        parseInt(loc.params.network),
-      )) as ReteModel;
-      vlans.value = await getAllVLAN();
+    network.value = (await getNetwork(
+      parseInt(loc.params.network),
+    )) as ReteModel;
+    vlans.value = await getAllVLAN();
 
-      if (loc.params.mode == "update") {
-        Object.assign(formData, data);
-        if (formData.n_prefisso)
-          formData.prefix = formData.n_prefisso.toString();
-        if (data?.tipo_dispositivo == undefined)
-          formData.tipo_dispositivo = "Other";
-        // console.log(formData);
-      }
-    });
+    if (loc.params.mode == "update") {
+      Object.assign(formData, data);
+      if (formData.n_prefisso)
+        formData.prefix = formData.n_prefisso.toString();
+      if (data?.tipo_dispositivo == undefined)
+        formData.tipo_dispositivo = "Other";
+      // console.log(formData);
+    }
+  });
 
-    const t = inlineTranslate();
+  const t = inlineTranslate();
 
-    return (
-      <>
-        <div
-          class={
-            "relative m-2 gap-4 max-sm:*:my-2 sm:grid sm:grid-cols-2 " +
-            (action.value?.success ? "pointer-events-none opacity-50" : "")
-          }
-        >
-          <FormBox title="Informazioni">
-            <SelectForm
-              id="cmbType"
-              title="Tipologia: "
-              name="Tipo Dispositivo"
-              value={formData.tipo_dispositivo}
-              OnClick$={(e) => {
-                formData.tipo_dispositivo = (
-                  e.target as HTMLOptionElement
-                ).value;
-              }}
-              listName=""
-            >
-              <option value="Server" key="Server">
-                Server
-              </option>
-              <option value="Controller" key="Controller">
-                Controller
-              </option>
-              <option value="Router" key="Router">
-                Router
-              </option>
-              <option value="Firewall" key="Firewall">
-                Firewall
-              </option>
-              <option value="Other" key="Other">
-                {t("other")}
-              </option>
-            </SelectForm>
-            <TextboxForm
-              id="txtName"
-              title={t("network.addesses.devicename")}
-              value={formData.nome_dispositivo}
-              placeholder="Es. Server1"
-              onInput$={(e) =>
-              (formData.nome_dispositivo = (
-                e.target as HTMLInputElement
-              ).value)
-              }
-            />
-            <TextboxForm
-              id="txtModel"
-              title={t("network.addesses.devicebrand")}
-              value={formData.brand_dispositivo}
-              placeholder="Es. Dell"
-              onInput$={(e) =>
-              (formData.brand_dispositivo = (
-                e.target as HTMLInputElement
-              ).value)
-              }
-            />
-            <DatePicker
-              id="dpData"
-              name={t("network.addesses.insertdate")}
-              value={formData.data_inserimento}
-              OnInput$={(e) =>
-              (formData.data_inserimento = (
-                e.target as HTMLInputElement
-              ).value)
-              }
-            />
-          </FormBox>
-          {/* <div> */}
-          <FormBox title="Dettagli">
-            <AddressBox
-              title={
-                loc.params.mode === "update"
-                  ? lang == "it"
-                    ? "IP Origine"
-                    : "IP Origin"
-                  : "IPv4"
-              }
-              addressType="host"
-              forceUpdate$={handleFUpdate}
-              currentIPNetwork={network.value?.idrete ?? -1}
-              value={data?.ip}
-              prefix={network.value?.prefissorete.toString() || ""}
-              OnInput$={(e) => {
-                if (e.complete) {
-                  if (loc.params.mode == "update" && !e.exists)
-                    e.errors.push(
-                      lang == "en"
-                        ? "The IP does not exists in current network."
-                        : "L'indirizzo IP non esiste in questa rete.",
-                    );
-                  else if (loc.params.mode == "insert" && e.exists)
-                    e.errors.push(
-                      lang == "en"
-                        ? "This IP already exists."
-                        : "Questo IP esiste già",
-                    );
-                  else formData.ip = e.ip;
-                }
-                if (formData.prefix == "") formData.prefix = e.prefix;
-
-                ipErrors.value = e.errors;
-              }}
-            />
-            {attempted.value &&
-              action.value &&
-              !action.value.success &&
-              !formData.ip && (
-                <span class="text-red-600">{t("network.addesses.invalidipaddress")}</span>
-              )}
-
-            {ipErrors.value && ipErrors.value.length>0 && !action.submitted && (
-              <span class="text-red-600 w-full justify-end">
-                {ipErrors.value.map((x: string) => (
-                  <>
-                    {x}
-                    <br />
-                  </>
-                ))}
-              </span>
-            )}
-
-            {
-              //#region ChangeIP
-              loc.params.mode === "update" && changeIP.value && (
-                <div class="flex flex-col">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-6 sm:ms-4 md:ms-6 lg:ms-8"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3"
-                    />
-                  </svg>
-                  <AddressBox
-                    title="IP Dest"
-                    value={formData.ip}
-                    prefix={formData.prefix}
-                    currentIPNetwork={formData.idrete ?? -1}
-                    OnInput$={(e) => {
-                      if (e.complete && e.errors.length == 0)
-                        formData.ipDest = e.ip;
-                      if (formData.prefix == "") formData.prefix = e.prefix;
-
-                      ipDestErrors.value = e.errors;
-                    }}
-                  />
-                </div>
-              )
-              //#endregion
+  return (
+    <>
+      <div
+        class={
+          "relative m-2 gap-4 max-sm:*:my-2 sm:grid sm:grid-cols-2 " +
+          (action.value?.success ? "pointer-events-none opacity-50" : "")
+        }
+      >
+        <FormBox title="Informazioni">
+          <SelectForm
+            id="cmbType"
+            title="Tipologia: "
+            name="Tipo Dispositivo"
+            value={formData.tipo_dispositivo}
+            OnClick$={(e) => {
+              formData.tipo_dispositivo = (
+                e.target as HTMLOptionElement
+              ).value;
+            }}
+            listName=""
+          >
+            <option value="Server" key="Server">
+              Server
+            </option>
+            <option value="Controller" key="Controller">
+              Controller
+            </option>
+            <option value="Router" key="Router">
+              Router
+            </option>
+            <option value="Firewall" key="Firewall">
+              Firewall
+            </option>
+            <option value="Other" key="Other">
+              {t("other")}
+            </option>
+          </SelectForm>
+          <TextboxForm
+            id="txtName"
+            title={t("network.addesses.devicename")}
+            value={formData.nome_dispositivo}
+            placeholder="Es. Server1"
+            onInput$={(e) =>
+            (formData.nome_dispositivo = (
+              e.target as HTMLInputElement
+            ).value)
             }
+          />
+          <TextboxForm
+            id="txtModel"
+            title={t("network.addesses.devicebrand")}
+            value={formData.brand_dispositivo}
+            placeholder="Es. Dell"
+            onInput$={(e) =>
+            (formData.brand_dispositivo = (
+              e.target as HTMLInputElement
+            ).value)
+            }
+          />
+          <DatePicker
+            id="dpData"
+            name={t("network.addesses.insertdate")}
+            value={formData.data_inserimento}
+            OnInput$={(e) =>
+            (formData.data_inserimento = (
+              e.target as HTMLInputElement
+            ).value)
+            }
+          />
+        </FormBox>
+        {/* <div> */}
+        <FormBox title="Dettagli">
+          <AddressBox
+            title={
+              loc.params.mode === "update"
+                ? lang == "it"
+                  ? "IP Origine"
+                  : "IP Origin"
+                : "IPv4"
+            }
+            addressType="host"
+            forceUpdate$={handleFUpdate}
+            currentIPNetwork={network.value?.idrete ?? -1}
+            value={data?.ip}
+            prefix={network.value?.prefissorete.toString() || ""}
+            OnInput$={(e) => {
+              if (e.complete) {
+                if (loc.params.mode == "update" && !e.exists)
+                  e.errors.push(
+                    lang == "en"
+                      ? "The IP does not exists in current network."
+                      : "L'indirizzo IP non esiste in questa rete.",
+                  );
+                else if (loc.params.mode == "insert" && e.exists)
+                  e.errors.push(
+                    lang == "en"
+                      ? "This IP already exists."
+                      : "Questo IP esiste già",
+                  );
+                else formData.ip = e.ip;
+              }
+              if (formData.prefix == "") formData.prefix = e.prefix;
 
-            <TextboxForm
-              id="txtPrefix"
-              value={formData.prefix}
-              disabled="disabled"
-              title={t("network.addesses.prefix")}
-              placeholder="Network Prefix"
-              onInput$={(e) => {
-                formData.prefix = (e.target as any).value;
-              }}
-            />
-            {attempted.value && !formData.prefix && (
-              <span class="text-red-600">{t("network.addesses.invalidprefix")}</span>
+              ipErrors.value = e.errors;
+            }}
+          />
+          {attempted.value &&
+            action.value &&
+            !action.value.success &&
+            !formData.ip && (
+              <span class="text-red-600">{t("network.addesses.invalidipaddress")}</span>
             )}
 
-            {/* <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete)) as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
+          {ipErrors.value && ipErrors.value.length > 0 && !action.submitted && (
+            <span class="text-red-600 w-full justify-end">
+              {ipErrors.value.map((x: string) => (
+                <>
+                  {x}
+                  <br />
+                </>
+              ))}
+            </span>
+          )}
+
+          {
+            //#region ChangeIP
+            loc.params.mode === "update" && changeIP.value && (
+              <div class="flex flex-col">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-6 sm:ms-4 md:ms-6 lg:ms-8"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3"
+                  />
+                </svg>
+                <AddressBox
+                  title="IP Dest"
+                  value={formData.ip}
+                  prefix={formData.prefix}
+                  currentIPNetwork={formData.idrete ?? -1}
+                  OnInput$={(e) => {
+                    if (e.complete && e.errors.length == 0)
+                      formData.ipDest = e.ip;
+                    if (formData.prefix == "") formData.prefix = e.prefix;
+
+                    ipDestErrors.value = e.errors;
+                  }}
+                />
+              </div>
+            )
+            //#endregion
+          }
+
+          <TextboxForm
+            id="txtPrefix"
+            value={formData.prefix}
+            disabled="disabled"
+            title={t("network.addesses.prefix")}
+            placeholder="Network Prefix"
+            onInput$={(e) => {
+              formData.prefix = (e.target as any).value;
+            }}
+          />
+          {attempted.value && !formData.prefix && (
+            <span class="text-red-600">{t("network.addesses.invalidprefix")}</span>
+          )}
+
+          {/* <SelectForm id="cmbRete" title="Rete" name={$localize`Rete Associata`} value={formData.idrete?.toString() || ""} OnClick$={async (e) => { formData.idrete = parseInt((e.target as any).value); formData.prefix = ((await getNetwork(formData.idrete)) as ReteModel).prefissorete.toString(); updateIP.value() }} listName="">
                             {networks.value.map((x: ReteModel) => <option key={x.idrete} value={x.idrete}>{x.nomerete}</option>)}
                         </SelectForm> */}
-            <TextboxForm
-              id="txtNetwork"
-              value={network.value?.iprete}
-              disabled="disabled"
-              title={t("network.addesses.associatednetwork")}
-              placeholder="Network"
-              onInput$={(e) => {
-                formData.idrete = parseInt((e.target as any).value);
-              }}
-            />
-            {/* {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>} */}
+          <TextboxForm
+            id="txtNetwork"
+            value={network.value?.iprete}
+            disabled="disabled"
+            title={t("network.addesses.associatednetwork")}
+            placeholder="Network"
+            onInput$={(e) => {
+              formData.idrete = parseInt((e.target as any).value);
+            }}
+          />
+          {/* {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>} */}
 
-            <SelectForm
-              id="cmbVLAN"
-              title="VLAN"
-              name="VLAN"
-              value={formData.vid?.toString() || "1"}
-              OnClick$={(e) => {
-                formData.vid = parseInt((e.target as any).value);
-              }}
-              listName=""
-            >
-              {vlans.value.map((x: VLANModel) => (
-                <option key={x.vid} value={x.vid}>
-                  {x.nomevlan}
-                </option>
-              ))}
-            </SelectForm>
-            {attempted.value && !formData.vid && (
-              <span class="text-red-600">{t("network.addesses.selectvlan")}</span>
-            )}
-          </FormBox>
-          {/* <FormBox title="Selettore">
+          <SelectForm
+            id="cmbVLAN"
+            title="VLAN"
+            name="VLAN"
+            value={formData.vid?.toString() || "1"}
+            OnClick$={(e) => {
+              formData.vid = parseInt((e.target as any).value);
+            }}
+            listName=""
+          >
+            {vlans.value.map((x: VLANModel) => (
+              <option key={x.vid} value={x.vid}>
+                {x.nomevlan}
+              </option>
+            ))}
+          </SelectForm>
+          {attempted.value && !formData.vid && (
+            <span class="text-red-600">{t("network.addesses.selectvlan")}</span>
+          )}
+        </FormBox>
+        {/* <FormBox title="Selettore">
                         <div class="p-2">
                             { Array(Math.pow(2,32-network.value!.prefissorete)).fill(0).map((x,i)=> 
                             <button key={i} class="p-2 w-[16px] h-[16px] border border-black" onClick$={() => { 
@@ -942,152 +1027,153 @@ export const CRUDForm = component$(({
                             ) }
                         </div>
                     </FormBox> */}
-          {/* </div> */}
-          {loc.params.mode === "update" && (
-            <button
-              class="absolute top-16 -right-8"
-              onClick$={() => {
-                changeIP.value = !changeIP.value;
-              }}
-            >
-              {changeIP.value ? (
-                <div class="has-tooltip relative">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-6"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M6 18 18 6M6 6l12 12"
-                    />
-                  </svg>{" "}
-                  <span class="tooltip">{t("network.addesses.remove")}</span>{" "}
-                </div>
-              ) : (
-                <div class="has-tooltip relative">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="size-6"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"
-                    />
-                  </svg>{" "}
-                  <span class="tooltip">{t("network.addesses.changeip")}</span>{" "}
-                </div>
-              )}
-            </button>
-          )}
-        </div>
-
-        <div class="mt-6 flex w-full justify-center gap-2">
+        {/* </div> */}
+        {loc.params.mode === "update" && (
           <button
-            onClick$={async (e) => {
-              e.preventDefault();
-              if (
-                !formData.prefix ||
-                !formData.ip ||
-                !formData.idrete ||
-                !formData.vid
-              ) {
-                attempted.value = true;
-                if (isNaN(parseInt(formData.prefix))) formData.prefix = "";
-                return;
-              }
-              await action.submit({
-                n_prefisso: parseInt(formData.prefix),
-                ip: formData.ip,
-                idrete: formData.idrete,
-                vid: formData.vid,
-                to_ip: changeIP.value ? formData.ipDest : formData.ip,
-                mode: loc.params.mode,
-                nome_dispositivo: formData.nome_dispositivo ?? "",
-                tipo_dispositivo: formData.tipo_dispositivo ?? "",
-                brand_dispositivo: formData.brand_dispositivo ?? "",
-                data_inserimento:
-                  new Date(formData.data_inserimento ?? "").toString() ==
-                    "Invalid Date"
-                    ? null
-                    : new Date(formData.data_inserimento!).toString(),
-              });
-              if (action.value && action.value.success) {
-                await new Promise((resolve) => {
-                  setTimeout(resolve, 2000);
-                });
-                window.location.href = loc.url.href
-                  .replace("insert", "view")
-                  .replace("update", "view");
-              }
+            class="absolute top-16 -right-8"
+            onClick$={() => {
+              changeIP.value = !changeIP.value;
             }}
-            class="flex items-center gap-2 rounded-xl bg-green-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-green-600 disabled:bg-green-300"
-            disabled={
-              ipErrors.value.length > 0 ||
-              ipDestErrors.value.length > 0 ||
-              formData.ip == "" ||
-              !formData.idrete ||
-              !formData.vid ||
-              formData.prefix == ""
-            }
           >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            {t("confirm")}
+            {changeIP.value ? (
+              <div class="has-tooltip relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-6"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6 18 18 6M6 6l12 12"
+                  />
+                </svg>{" "}
+                <span class="tooltip">{t("network.addesses.remove")}</span>{" "}
+              </div>
+            ) : (
+              <div class="has-tooltip relative">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="size-6"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"
+                  />
+                </svg>{" "}
+                <span class="tooltip">{t("network.addesses.changeip")}</span>{" "}
+              </div>
+            )}
           </button>
-          <a
-            class="flex items-center gap-2 rounded-xl bg-red-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-red-600"
-            href={loc.url.href
-              .replace("insert", "view")
-              .replace("update", "view")}
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-            {t("cancel")}
-          </a>
-        </div>
+        )}
+      </div>
 
-        {action.submitted && action.value && (
-          <div
-            class={
-              action.value.success
-                ? "mt-2 rounded-md bg-green-400 p-2 text-white"
-                : "mt-2 rounded-md bg-red-400 p-2 text-white"
+      <div class="mt-6 flex w-full justify-center gap-2">
+        <button
+          onClick$={async (e) => {
+            e.preventDefault();
+            if (
+              !formData.prefix ||
+              !formData.ip ||
+              !formData.idrete ||
+              !formData.vid
+            ) {
+              attempted.value = true;
+              if (isNaN(parseInt(formData.prefix))) formData.prefix = "";
+              return;
             }
+            await action.submit({
+              n_prefisso: parseInt(formData.prefix),
+              clientId: localStorage.getItem('clientId') || '',
+              ip: formData.ip,
+              idrete: formData.idrete,
+              vid: formData.vid,
+              to_ip: changeIP.value ? formData.ipDest : formData.ip,
+              mode: loc.params.mode,
+              nome_dispositivo: formData.nome_dispositivo ?? "",
+              tipo_dispositivo: formData.tipo_dispositivo ?? "",
+              brand_dispositivo: formData.brand_dispositivo ?? "",
+              data_inserimento:
+                new Date(formData.data_inserimento ?? "").toString() ==
+                  "Invalid Date"
+                  ? null
+                  : new Date(formData.data_inserimento!).toString()
+            });
+            if (action.value && action.value.success) {
+              await new Promise((resolve) => {
+                setTimeout(resolve, 2000);
+              });
+              window.location.href = loc.url.href
+                .replace("insert", "view")
+                .replace("update", "view");
+            }
+          }}
+          class="flex items-center gap-2 rounded-xl bg-green-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-green-600 disabled:bg-green-300"
+          disabled={
+            ipErrors.value.length > 0 ||
+            ipDestErrors.value.length > 0 ||
+            formData.ip == "" ||
+            !formData.idrete ||
+            !formData.vid ||
+            formData.prefix == ""
+          }
+        >
+          <svg
+            class="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
           >
-            <span>{t(`action.result${action.value.type_message}`)}</span>
-            {/* {action.value.type_message == 1 && (
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          {t("confirm")}
+        </button>
+        <a
+          class="flex items-center gap-2 rounded-xl bg-red-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-red-600"
+          href={loc.url.href
+            .replace("insert", "view")
+            .replace("update", "view")}
+        >
+          <svg
+            class="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+          {t("cancel")}
+        </a>
+      </div>
+
+      {action.submitted && action.value && (
+        <div
+          class={
+            action.value.success
+              ? "mt-2 rounded-md bg-green-400 p-2 text-white"
+              : "mt-2 rounded-md bg-red-400 p-2 text-white"
+          }
+        >
+          <span>{t(`action.result${action.value.type_message}`)}</span>
+          {/* {action.value.type_message == 1 && (
               <span>{$localize`Inserimento avvenuto correttamente`}</span>
             )}
             {action.value.type_message == 2 && (
@@ -1099,12 +1185,12 @@ export const CRUDForm = component$(({
             {action.value.type_message == 4 && (
               <span>{$localize`Errore durante la modifica`}</span>
             )} */}
-          </div>
-        )}
+        </div>
+      )}
 
-        
 
-      </>
-    );
-  },
+
+    </>
+  );
+},
 );

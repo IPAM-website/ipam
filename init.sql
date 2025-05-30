@@ -7,12 +7,14 @@ BEGIN
         payload := json_build_object(
             'operation', 'DELETE',
             'table', TG_TABLE_NAME,
+            'clientId', current_setting('app.client_id', true),
             'data', row_to_json(OLD)
         );
     ELSIF (TG_OP = 'UPDATE') THEN
         payload := json_build_object(
             'operation', 'UPDATE',
             'table', TG_TABLE_NAME,
+            'clientId', current_setting('app.client_id', true),
             'old', row_to_json(OLD),
             'new', row_to_json(NEW)
         );
@@ -20,6 +22,7 @@ BEGIN
         payload := json_build_object(
             'operation', 'INSERT',
             'table', TG_TABLE_NAME,
+            'clientId', current_setting('app.client_id', true),
             'data', row_to_json(NEW)
         );
     END IF;
@@ -106,8 +109,6 @@ CREATE TABLE UserCliente (
         FOREIGN KEY (IDCliente) REFERENCES Clienti(IDCliente)
         ON DELETE CASCADE
  );
-
-
 
 CREATE TABLE Siti(
     IDSito SERIAL,
@@ -204,6 +205,8 @@ CREATE TABLE Intervalli (
     PRIMARY KEY(IDIntervallo),
     CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
+
+
 
 -- Applica trigger a tutte le tabelle
 CREATE TRIGGER tecnici_updated BEFORE UPDATE ON Tecnici FOR EACH ROW EXECUTE FUNCTION update_modified_column();
