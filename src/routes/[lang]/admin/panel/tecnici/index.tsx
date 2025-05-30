@@ -160,7 +160,7 @@ export const insertRow = server$(async function (data: string[][]) {
   const lang = getLocale("en");
   const sql = sqlForQwik(this.env);
   try {
-    const expectedHeaders = ["cometecnico", "cognometecnico", "ruolo", "emailtecnico", "pwdtecnico"];
+    const expectedHeaders = ["nometecnico", "cognometecnico", "ruolo", "emailtecnico", "telefonotecnico", "pwdtecnico"];
 
     if (data.length === 0) {
       throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
@@ -179,7 +179,7 @@ export const insertRow = server$(async function (data: string[][]) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       const [nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow] = row;
-      console.log(nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow)
+      //console.log(nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow)
       const nomeTecnico = nomeTecnicoRow.replace(/^"|"$/g, '').trim();
       const cognomeTecnico = cognomeTecnicoRow.replace(/^"|"$/g, '').trim();
       const ruolo = ruoloRow.replace(/^"|"$/g, '').trim();

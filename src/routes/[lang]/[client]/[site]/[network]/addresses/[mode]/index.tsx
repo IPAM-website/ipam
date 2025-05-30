@@ -910,18 +910,32 @@ export const CRUDForm = component$(({
             action.value &&
             !action.value.success &&
             !formData.ip && (
-              <span class="text-red-600">{t("network.addesses.invalidipaddress")}</span>
+              <div class="my-2 flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700 shadow dark:border-red-800 dark:bg-red-900 dark:text-red-200">
+                <svg
+                  class="h-5 w-5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                <span>{t("network.addesses.invalidipaddress")}</span>
+              </div>
             )}
 
           {ipErrors.value && ipErrors.value.length > 0 && !action.submitted && (
-            <span class="text-red-600 w-full justify-end">
-              {ipErrors.value.map((x: string) => (
-                <>
-                  {x}
-                  <br />
-                </>
-              ))}
-            </span>
+            <div class="my-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700 shadow dark:border-red-800 dark:bg-red-900 dark:text-red-200">
+              <ul class="list-disc pl-5 space-y-1">
+                {ipErrors.value.map((x: string, idx: number) => (
+                  <li key={idx}>{x}</li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {
@@ -1112,8 +1126,8 @@ export const CRUDForm = component$(({
                 setTimeout(resolve, 2000);
               });
               window.location.href = loc.url.href
-                .replace("insert", "view")
-                .replace("update", "view");
+                .replace("insert", "")
+                .replace("update", "");
             }
           }}
           class="flex items-center gap-2 rounded-xl bg-green-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-green-600 disabled:bg-green-300"
@@ -1144,8 +1158,8 @@ export const CRUDForm = component$(({
         <a
           class="flex items-center gap-2 rounded-xl bg-red-500 px-6 py-2 text-base font-semibold text-white shadow transition-all duration-200 hover:bg-red-600"
           href={loc.url.href
-            .replace("insert", "view")
-            .replace("update", "view")}
+            .replace("insert", "")
+            .replace("update", "")}
         >
           <svg
             class="h-5 w-5"

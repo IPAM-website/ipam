@@ -57,8 +57,10 @@
     "vlan": {
       "addvlan": "Aggiungi VLAN",
       "vlandescription": "Descrizione VLAN",
+      "vlaninfo": "Informazioni VLAN",
       "vlanlist": "Elenco VLAN",
-      "vlanname": "Nome VLAN"
+      "vlanname": "Nome VLAN",
+      "vid": "ID VLAN"
     },
     "vrf": {
       "addvrf": "Aggiungi VRF",

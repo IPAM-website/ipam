@@ -201,7 +201,7 @@ export const insertRow = server$(async function(data: string[][]) {
       const idcliente = await sql`SELECT idcliente FROM clienti WHERE nomecliente = ${nomecliente}`;
       if (idcliente.length == 0)
         throw new Error("Cliente non trovato");
-      console.log(idcliente[0].idcliente)
+      //console.log(idcliente[0].idcliente)
 
       const user = await getUser()
       await sql.begin(async (tx) => {

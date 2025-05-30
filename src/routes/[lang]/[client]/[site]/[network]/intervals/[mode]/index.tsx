@@ -590,7 +590,12 @@ export const CRUDForm = component$(
   }) => {
     const loc = useLocation();
     const action = useAction();
-    const clientId = localStorage.getItem('clientId') ?? undefined;
+    const clientIdSig = useSignal<string | undefined>(undefined);
+
+    useVisibleTask$(() => {
+      clientIdSig.value = localStorage.getItem('clientId') ?? undefined;
+    })
+    
 
     const network = useSignal<ReteModel>();
 
@@ -856,7 +861,7 @@ export const CRUDForm = component$(
                   formData.lunghezzaintervallo = 0;
                 return;
               }
-              await action.submit({ ...formData, clientId});
+              await action.submit({ ...formData, clientId: clientIdSig.value });
               if (action.value && action.value.success) {
                 await new Promise((resolve) => {
                   setTimeout(resolve, 2000);

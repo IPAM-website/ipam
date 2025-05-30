@@ -34,6 +34,7 @@ import Dati from "~/components/table/Dati_Headers";
 //import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
 import { inlineTranslate } from "qwik-speak";
+import { getUser } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -122,11 +123,25 @@ export const useAction = routeAction$(
     let type_message = 0;
     try {
       const sql = sqlForQwik(env)
+      const user = await getUser()
+      const clientId = data.clientId;
       if (params.mode == "update") {
-        await sql`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan} WHERE vid=${data.vid}`;
+        await sql.begin(async (tx) => {
+          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+          if (clientId) {
+            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+          }
+          await tx`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan} WHERE vid=${data.vid}`;
+        });
         type_message = 2;
       } else {
-        await sql`INSERT INTO vlan(vid,nomevlan,descrizionevlan) VALUES (${data.vid},${data.nomevlan},${data.descrizionevlan})`;
+        await sql.begin(async (tx) => {
+          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+          if (clientId) {
+            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+          }
+          await tx`INSERT INTO vlan(vid,nomevlan,descrizionevlan) VALUES (${data.vid},${data.nomevlan},${data.descrizionevlan})`;
+        });
         type_message = 1;
       }
       success = true;
@@ -144,6 +159,7 @@ export const useAction = routeAction$(
     vid: z.number(),
     descrizionevlan: z.string(),
     nomevlan: z.string(),
+    clientId: z.string().optional(),
   }),
 );
 
@@ -179,10 +195,20 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 
 export const deleteVLAN = server$(async function (this, data) {
   const sql = sqlForQwik(this.env)
+  const user = await getUser()
+  const clientId = data.clientId;
   try {
     if (isNaN(data.vid))
       throw new Error("vid non disponibile")
-    await sql`DELETE FROM vlan WHERE vid=${data.vid}`;
+    if (data.address != "") {
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        if (clientId) {
+          await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
+        }
+        await tx`DELETE FROM vlan WHERE vid=${data.vid}`;
+      });
+    }
     return true;
   } catch (e) {
     console.log(e);
@@ -192,7 +218,7 @@ export const deleteVLAN = server$(async function (this, data) {
 
 type Notification = {
   message: string;
-  type: "success" | "error";
+  type: "success" | "error" | "loading";
 };
 
 export default component$(() => {
@@ -247,14 +273,13 @@ export default component$(() => {
     }
   });
 
-  const addNotification = $((message: string, type: "success" | "error") => {
+  const addNotification = $((message: string, type: "success" | "error" | "loading") => {
     notifications.value = [...notifications.value, { message, type }];
-    // Rimuovi la notifica dopo 3 secondi
-    setTimeout(() => {
-      notifications.value = notifications.value.filter(
-        (n) => n.message !== message,
-      );
-    }, 3000);
+    if (type !== "loading") {
+      setTimeout(() => {
+        notifications.value = notifications.value.filter((n) => n.message !== message);
+      }, 4000);
+    }
   });
 
   /*const handleError = $((error: any) => {
@@ -281,7 +306,7 @@ export default component$(() => {
   });
 
   const handleDelete = $(async (row: any) => {
-    if (await deleteVLAN({ vid: row.vid }))
+    if (await deleteVLAN({ vid: row.vid, clientId: localStorage.getItem("clientId") }))
       addNotification(
         lang === "en" ? "Deleted successfully" : "Eliminato con successo",
         "success",
@@ -333,22 +358,49 @@ export default component$(() => {
           </span>
         </div>
       )}
+      <div class="fixed top-8 left-1/2 z-50 flex flex-col items-center space-y-4 -translate-x-1/2">
+        {notifications.value.map((notification, index) => (
+          <div
+            key={index}
+            class={[
+              "flex items-center gap-3 min-w-[320px] max-w-md rounded-xl px-6 py-4 shadow-2xl border-2 transition-all duration-300 text-base font-semibold",
+              notification.type === "success"
+                ? "bg-green-500/90 border-green-700 text-white"
+                : notification.type === "error"
+                  ? "bg-red-500/90 border-red-700 text-white"
+                  : "bg-white border-blue-400 text-blue-800"
+            ]}
+            style={{
+              filter: "drop-shadow(0 4px 24px rgba(0,0,0,0.18))",
+              opacity: 0.98,
+            }}
+          >
+            {/* Icona */}
+            {notification.type === "success" && (
+              <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {notification.type === "error" && (
+              <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            {notification.type === "loading" && (
+              <svg class="h-7 w-7 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            )}
+
+            {/* Messaggio */}
+            <span class="flex-1">{notification.message}</span>
+          </div>
+        ))}
+      </div>
       {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split("vlan")[0] : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
       {mode == "view" ? (
         <div>
-          <div class="fixed top-4 right-4 z-50 space-y-2">
-            {notifications.value.map((notification, index) => (
-              <div
-                key={index}
-                class={`rounded-md p-4 shadow-lg ${notification.type === "success"
-                  ? "bg-green-500 text-white"
-                  : "bg-red-500 text-white"
-                  }`}
-              >
-                {notification.message}
-              </div>
-            ))}
-          </div>
           <PopupModal
             title="Filters"
             visible={filter.visible}
@@ -498,15 +550,12 @@ export default component$(() => {
               )}
               </div>
             </div>
-            <div class="flex flex-row items-center collapse gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
-                          <ButtonAddLink
-                            nomePulsante=""
-                            href=""
-                          ></ButtonAddLink>
-                          <div>
-                            
-                          </div>
-                        </div>
+            <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+                <ButtonAddLink
+                  nomePulsante={t("network.vlan.addvlan")}
+                  href={loc.url.href.replace("view", "insert")}
+                ></ButtonAddLink>
+            </div>
             <Dati
               DBTabella="vlan"
               title={t("network.vlan.vlanlist")}
@@ -541,17 +590,6 @@ export default component$(() => {
               </div> */}
               
             </Dati>
-            <div class="flex">
-              <ButtonAddLink
-                nomePulsante={t("network.vlan.addvlan")}
-                href={loc.url.href.replace("view", "insert")}
-              ></ButtonAddLink>
-              {/* <ImportCSV
-                OnError={handleError}
-                OnOk={handleOkay}
-                nomeImport="vlan"
-              /> */}
-            </div>
           </Table>
         </div>
       ) : (
@@ -579,10 +617,10 @@ export default component$(() => {
 
 export const FormBox = component$(({ title }: { title?: string }) => {
   return (
-    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 dark:bg-gray-800 shadow-lg">
       {title && (
-        <div class="w-full border-b border-gray-100 bg-gray-50 p-4">
-          <h1 class="text-lg font-semibold text-gray-700">{title}</h1>
+        <div class="w-full border-b border-gray-100 bg-gray dark:bg-gray-800 p-4">
+          <h1 class="text-lg font-semibold text-gray-700 dark:text-gray-100">{title}</h1>
         </div>
       )}
       <div class="flex w-full flex-col gap-4 p-6">
@@ -601,6 +639,11 @@ export const CRUDForm = component$(
   }) => {
     const loc = useLocation();
     const action = useAction();
+    const clientId = useSignal<string | undefined>(undefined);
+
+    useVisibleTask$(() => {
+      clientId.value = localStorage.getItem("clientId") ?? undefined;
+    });
 
     const formData = useStore<VLANModel>({
       descrizionevlan: "",
@@ -680,10 +723,10 @@ export const CRUDForm = component$(
           }
         >
           <div class="flex w-full justify-center">
-            <FormBox title="Informazioni">
+            <FormBox title={t("network.vlan.vlaninfo")}>
               <TextboxForm
                 id="txtIDV"
-                title="VID: "
+                title={t("network.vlan.vid")}
                 placeholder="es. 10"
                 value={formData.vid.toString()}
                 onInput$={(e) => {
@@ -726,7 +769,7 @@ export const CRUDForm = component$(
                 attempted.value = true;
                 return;
               }
-              await action.submit({ ...formData });
+              await action.submit({ ...formData, clientId: clientId.value });
               if (action.value && action.value.success) {
                 await new Promise((resolve) => {
                   setTimeout(resolve, 2000);
