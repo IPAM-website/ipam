@@ -69,14 +69,19 @@ export interface FilterObject {
   };
 }
 
-export const getVLANs = server$(async function (this, filter = { empty: 1 }) {
+export const getVLANs = server$(async function (this, query = "") {
   const sql = sqlForQwik(this.env)
-  filter.query = filter.query ? filter.query + "%" : (filter.query = "%");
-  filter.query = (filter.query as string).trim();
   let vlans: VLANModel[] = [];
 
-  if (filter.empty == 1) {
+
+  if (query == "") {
     const queryResult = await sql`SELECT * FROM vlan`;
+    vlans = queryResult as unknown as VLANModel[];
+    return vlans;
+  }
+  else {
+    query+='%';
+    const queryResult = await sql`SELECT * FROM vlan WHERE vlan.nomevlan LIKE ${query}`;
     vlans = queryResult as unknown as VLANModel[];
     return vlans;
   }
@@ -295,11 +300,13 @@ export default component$(() => {
       );
   });
 
+  const query = useSignal<string>("");
+
   const reloadData = $(async () => {
     // if (filter.active)
     //     return await useAddresses(filter.params);
     // else
-    return await getVLANs();
+    return await getVLANs(query.value);
   });
 
   const getREF = $((reloadFunc: () => void) => {
@@ -454,59 +461,52 @@ export default component$(() => {
                   ref={txtQuickSearch}
                   placeholder={t("quicksearch")}
                   onInput$={(e) => {
-                    filter.params.query = (e.target as HTMLInputElement).value;
-                    filter.active = false;
-                    for (const item in filter.params) {
-                      if (filter.params[item] && filter.params[item] != "") {
-                        filter.active = true;
-                        break;
-                      }
-                    }
+                    query.value = (e.target as HTMLInputElement).value;
                     if (reloadFN) reloadFN.value?.();
                   }}
                 />
 
                 {filter.active && (
-                <div class="has-tooltip">
-                  <button
-                    class="ms-2 flex size-[24px] cursor-pointer items-center justify-center rounded bg-red-500 text-white hover:bg-red-400"
-                    onClick$={() => {
-                      filter.active = false;
-                      for (const key in filter.params) filter.params[key] = "";
-                      nav(loc.url.pathname);
-                      if (txtQuickSearch.value) txtQuickSearch.value.value = "";
-                      reloadFN.value?.();
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="currentColor"
-                      class="size-4"
+                  <div class="has-tooltip">
+                    <button
+                      class="ms-2 flex size-[24px] cursor-pointer items-center justify-center rounded bg-red-500 text-white hover:bg-red-400"
+                      onClick$={() => {
+                        filter.active = false;
+                        for (const key in filter.params) filter.params[key] = "";
+                        nav(loc.url.pathname);
+                        if (txtQuickSearch.value) txtQuickSearch.value.value = "";
+                        reloadFN.value?.();
+                      }}
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6 18 18 6M6 6l12 12"
-                      />
-                    </svg>
-                    <span class="tooltip mb-1 ml-1.5">{t("erasefilters")}</span>
-                  </button>
-                </div>
-              )}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-4"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18 18 6M6 6l12 12"
+                        />
+                      </svg>
+                      <span class="tooltip mb-1 ml-1.5">{t("erasefilters")}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <div class="flex flex-row items-center collapse gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
-                          <ButtonAddLink
-                            nomePulsante=""
-                            href=""
-                          ></ButtonAddLink>
-                          <div>
-                            
-                          </div>
-                        </div>
+              <ButtonAddLink
+                nomePulsante=""
+                href=""
+              ></ButtonAddLink>
+              <div>
+
+              </div>
+            </div>
             <Dati
               DBTabella="vlan"
               title={t("network.vlan.vlanlist")}
@@ -539,7 +539,7 @@ export default component$(() => {
                 </button>
                 <span class="tooltip">{t("filters")}</span>
               </div> */}
-              
+
             </Dati>
             <div class="flex">
               <ButtonAddLink
