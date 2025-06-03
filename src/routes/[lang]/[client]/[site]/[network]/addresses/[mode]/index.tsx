@@ -391,6 +391,7 @@ export default component$(() => {
   const notifications = useSignal<Notification[]>([]);
   const showPreview = useSignal(false);
 
+  // eslint-disable-next-line qwik/no-use-visible-task
   useVisibleTask$(() => {
     const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
     eventSource.onmessage = async (event) => {
