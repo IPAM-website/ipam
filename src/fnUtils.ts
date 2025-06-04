@@ -39,9 +39,10 @@ export const isUserClient = server$(async function () {
       this.cookie.get("jwt")!.value,
       this.env.get("JWT_SECRET")!,
     );
-    user = user as { id: number; mail: string; admin: boolean };
+      user = user as { id: number; mail: string; admin: boolean };
     const query =
-      await sql`SELECT * FROM usercliente WHERE usercliente.iducliente=${user.id} AND usercliente.emailucliente=${user.mail}`;
+      await sql`SELECT * FROM usercliente WHERE usercliente.emailucliente=${user.mail}`;
+      //console.log(query);
     client = query.length != 0;
   } catch (e: any) {
     console.log(e);

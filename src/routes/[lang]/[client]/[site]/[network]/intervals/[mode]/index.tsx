@@ -37,7 +37,7 @@ import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 //import ImportCSV from "~/components/table/ImportCSV";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -113,23 +113,18 @@ export const useAction = routeAction$(async (data, {env , params}) => {
     let success = false;
     let type_message = 0;
     const user = await getUser()
-    const clientId = data.clientId;
     try {
       if (params.mode == "update") {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-          if (clientId) {
-            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-          }
+            await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
           await tx`UPDATE intervalli SET nomeintervallo= ${data.nomeintervallo},iniziointervallo = ${data.iniziointervallo}, lunghezzaintervallo = ${data.lunghezzaintervallo}, fineintervallo=${data.fineintervallo},idrete=${data.idrete} WHERE idintervallo=${data.idintervallo}`;
         });
         type_message = 2;
       } else {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-          if (clientId) {
-            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-          }
+            await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
           await tx`INSERT INTO intervalli(nomeintervallo,iniziointervallo,lunghezzaintervallo,fineintervallo,idrete) VALUES (${data.nomeintervallo},${data.iniziointervallo},${data.lunghezzaintervallo},${data.fineintervallo},${data.idrete})`;
         });
         type_message = 1;
@@ -151,8 +146,7 @@ export const useAction = routeAction$(async (data, {env , params}) => {
     iniziointervallo: z.string(),
     lunghezzaintervallo: z.number(),
     fineintervallo: z.string(),
-    idrete: z.number(),
-    clientId: z.string().optional(),
+    idrete: z.number()
   }),
 );
 
@@ -189,15 +183,12 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 export const deleteInterval = server$(async function (this, data) {
   const sql = sqlForQwik(this.env)
   const user = await getUser()
-  const clientId = data.clientId;
   try {
     if (isNaN(data.idintervallo))
       throw new Error("idintervallo non disponibile")
     await sql.begin(async (tx) => {
       await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-      if (clientId) {
-        await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-      }
+      await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
       await tx`DELETE FROM intervalli WHERE idintervallo=${data.idintervallo}`;
     });
     return true;
@@ -292,6 +283,8 @@ export default component$(() => {
   const mode = loc.params.mode ?? "view";
   const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
+  const isClient = useSignal<boolean>(false);
+  const user = useSignal<{ id: number; mail: string }>();
 
   useTask$(async () => {
     intervalList.value = await getAllIntervals();
@@ -319,17 +312,27 @@ export default component$(() => {
           const data = JSON.parse(event.data);
           //console.log(data)
           // Se il clientId dell'evento è diverso dal mio, mostra la notifica
+          if (isClient.value) {
+          reloadFN.value?.()
+        }
+        else{
           if (data.table == "intervalli"){
-            if (data.clientId !== localStorage.getItem('clientId')) {
+            if (data.clientId !== user.value?.id) {
               updateNotification.value = true;
             }
           }
+        }
         } catch (e) {
           console.error('Errore parsing SSE:', event?.data);
         }
       };
       return () => eventSource.close();
     });
+
+    useTask$(async () => {
+      user.value = await getUser()
+      isClient.value = await isUserClient()
+    })
 
   /*const handleError = $((error: any) => {
     console.log(error);
@@ -356,8 +359,7 @@ export default component$(() => {
 
   const handleDelete = $(async (row: any) => {
     addNotification(lang === "en" ? "Operation in progress..." : "Operazione in corso...", "loading");
-    const clientId = localStorage.getItem('clientId')
-    if (await deleteInterval({ idintervallo: row.idintervallo, clientId })) {
+    if (await deleteInterval({ idintervallo: row.idintervallo })) {
       notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(
         lang === "en" ? "Deleted successfully" : "Eliminato con successo",
@@ -861,7 +863,7 @@ export const CRUDForm = component$(
                   formData.lunghezzaintervallo = 0;
                 return;
               }
-              await action.submit({ ...formData, clientId: clientIdSig.value });
+              await action.submit({ ...formData });
               if (action.value && action.value.success) {
                 await new Promise((resolve) => {
                   setTimeout(resolve, 2000);

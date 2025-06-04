@@ -37,6 +37,7 @@ interface DatiProps {
   onRowClick?: (row: any) => void;
   modifyWhen?: QRL<(r: any) => boolean>;
   deleteWhen?: QRL<(r: any) => boolean>;
+  isClient?: boolean;
 }
 
 export default component$<DatiProps>(
@@ -53,6 +54,7 @@ export default component$<DatiProps>(
     onRowClick = undefined,
     modifyWhen,
     deleteWhen,
+    isClient = true
   }) => {
     const modificaIT_EN = ["Modifica", "Edit"];
     useStyles$(tableStyle);
@@ -421,7 +423,7 @@ export default component$<DatiProps>(
                         </div>
                       ))}
                       <div class="flex flex-1 justify-end p-4 font-['Inter'] text-base leading-normal font-medium text-black">
-                        {noModify == "" && (await mff(row)) && (
+                        {!isClient &&  noModify == "" && (await mff(row)) && (
                           <button
                             class="has-tooltip inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-amber-500 transition-colors hover:bg-amber-600"
                             onClick$={(e) => {
@@ -450,9 +452,10 @@ export default component$<DatiProps>(
                             </svg>
                           </button>
                         )}
+                        
 
                         {/* Pulsante Elimina */}
-                        {(await dff(row)) && (
+                        {!isClient && (await dff(row)) && (
                           <button
                             class={`has-tooltip relative ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md ${loadingStates[row[TableMaps[nT.value].keys[0]]] ? "cursor-wait bg-red-400" : "cursor-pointer bg-red-500 hover:bg-red-600"} transition-colors`}
                             onClick$={(e) => {

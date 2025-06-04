@@ -34,7 +34,7 @@ import Dati from "~/components/table/Dati_Headers";
 //import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -124,22 +124,17 @@ export const useAction = routeAction$(
     try {
       const sql = sqlForQwik(env)
       const user = await getUser()
-      const clientId = data.clientId;
       if (params.mode == "update") {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-          if (clientId) {
-            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-          }
+          await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
           await tx`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan} WHERE vid=${data.vid}`;
         });
         type_message = 2;
       } else {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-          if (clientId) {
-            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-          }
+          await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
           await tx`INSERT INTO vlan(vid,nomevlan,descrizionevlan) VALUES (${data.vid},${data.nomevlan},${data.descrizionevlan})`;
         });
         type_message = 1;
@@ -158,8 +153,7 @@ export const useAction = routeAction$(
   zod$({
     vid: z.number(),
     descrizionevlan: z.string(),
-    nomevlan: z.string(),
-    clientId: z.string().optional(),
+    nomevlan: z.string()
   }),
 );
 
@@ -196,16 +190,13 @@ export const getAllNetworksBySite = server$(async function (idsito: number) {
 export const deleteVLAN = server$(async function (this, data) {
   const sql = sqlForQwik(this.env)
   const user = await getUser()
-  const clientId = data.clientId;
   try {
     if (isNaN(data.vid))
       throw new Error("vid non disponibile")
     if (data.address != "") {
       await sql.begin(async (tx) => {
         await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-        if (clientId) {
-          await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-        }
+        await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
         await tx`DELETE FROM vlan WHERE vid=${data.vid}`;
       });
     }
@@ -243,6 +234,8 @@ export default component$(() => {
   const txtQuickSearch = useSignal<HTMLInputElement>();
   const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
+  const user = useSignal<{ id: number; mail: string; admin: boolean }>();
+  const isClient = useSignal<boolean>(false);
 
   useVisibleTask$(() => {
     const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
@@ -251,9 +244,13 @@ export default component$(() => {
         const data = JSON.parse(event.data);
         //console.log(data)
         // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-        if (data.table == "vlan") {
-          if (data.clientId !== localStorage.getItem('clientId')) {
-            updateNotification.value = true;
+        if (isClient.value) {
+          reloadFN.value?.()
+        } else {
+          if (data.table == "vlan") {
+            if (data.clientId !== user.value?.id) {
+              updateNotification.value = true;
+            }
           }
         }
       } catch (e) {
@@ -264,6 +261,8 @@ export default component$(() => {
   });
 
   useTask$(async () => {
+    isClient.value = await isUserClient()
+    user.value = await getUser();
     vlanList.value = await getVLANs();
     networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
 
@@ -306,7 +305,7 @@ export default component$(() => {
   });
 
   const handleDelete = $(async (row: any) => {
-    if (await deleteVLAN({ vid: row.vid, clientId: localStorage.getItem("clientId") }))
+    if (await deleteVLAN({ vid: row.vid }))
       addNotification(
         lang === "en" ? "Deleted successfully" : "Eliminato con successo",
         "success",
@@ -494,11 +493,11 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
-            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-3 md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-7 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.vlan.vlanlist")}</span>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 collapse">
                 <TextboxForm
                   id="txtfilter"
                   search={true}
@@ -519,42 +518,42 @@ export default component$(() => {
                 />
 
                 {filter.active && (
-                <div class="has-tooltip">
-                  <button
-                    class="ms-2 flex size-[24px] cursor-pointer items-center justify-center rounded bg-red-500 text-white hover:bg-red-400"
-                    onClick$={() => {
-                      filter.active = false;
-                      for (const key in filter.params) filter.params[key] = "";
-                      nav(loc.url.pathname);
-                      if (txtQuickSearch.value) txtQuickSearch.value.value = "";
-                      reloadFN.value?.();
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="currentColor"
-                      class="size-4"
+                  <div class="has-tooltip">
+                    <button
+                      class="ms-2 flex size-[24px] cursor-pointer items-center justify-center rounded bg-red-500 text-white hover:bg-red-400"
+                      onClick$={() => {
+                        filter.active = false;
+                        for (const key in filter.params) filter.params[key] = "";
+                        nav(loc.url.pathname);
+                        if (txtQuickSearch.value) txtQuickSearch.value.value = "";
+                        reloadFN.value?.();
+                      }}
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6 18 18 6M6 6l12 12"
-                      />
-                    </svg>
-                    <span class="tooltip mb-1 ml-1.5">{t("erasefilters")}</span>
-                  </button>
-                </div>
-              )}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        class="size-4"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18 18 6M6 6l12 12"
+                        />
+                      </svg>
+                      <span class="tooltip mb-1 ml-1.5">{t("erasefilters")}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-            <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
-                <ButtonAddLink
-                  nomePulsante={t("network.vlan.addvlan")}
-                  href={loc.url.href.replace("view", "insert")}
-                ></ButtonAddLink>
+            <div class={`flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 ${!isClient.value ? "" : "collapse"}`}>
+              <ButtonAddLink
+                nomePulsante={t("network.vlan.addvlan")}
+                href={loc.url.href.replace("view", "insert")}
+              ></ButtonAddLink>
             </div>
             <Dati
               DBTabella="vlan"
@@ -588,7 +587,7 @@ export default component$(() => {
                 </button>
                 <span class="tooltip">{t("filters")}</span>
               </div> */}
-              
+
             </Dati>
           </Table>
         </div>
@@ -639,10 +638,10 @@ export const CRUDForm = component$(
   }) => {
     const loc = useLocation();
     const action = useAction();
-    const clientId = useSignal<string | undefined>(undefined);
+    const user = useSignal<{ id: number; mail: string; admin: boolean }>();
 
-    useVisibleTask$(() => {
-      clientId.value = localStorage.getItem("clientId") ?? undefined;
+    useTask$(async () => {
+      user.value = await getUser();
     });
 
     const formData = useStore<VLANModel>({
@@ -769,7 +768,7 @@ export const CRUDForm = component$(
                 attempted.value = true;
                 return;
               }
-              await action.submit({ ...formData, clientId: clientId.value });
+              await action.submit({ ...formData });
               if (action.value && action.value.success) {
                 await new Promise((resolve) => {
                   setTimeout(resolve, 2000);

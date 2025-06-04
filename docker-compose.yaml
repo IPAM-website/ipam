@@ -1,7 +1,7 @@
 services:
   db:
     #ports:
-     #- "127.0.0.1:5432:5432"
+    # - "127.0.0.1:5432:5432"
     image: "postgres:17-alpine"
     container_name: "db"
     env_file:
@@ -60,9 +60,9 @@ services:
     depends_on:
       - db
     ports:
-      - "8080:3000"  # Qwik frontend
+     - "8080:3000"   # Qwik frontend
     networks:
-      - qwik-net
+     - qwik-net
 
   sse:
     container_name: "sse-server"
@@ -70,13 +70,13 @@ services:
       context: .
       dockerfile: Dockerfile.sse
     ports:
-      - "3010:3010"  # SSE server
+     - "3010:3010"   # SSE server
     depends_on:
-      - db
+     - db
     networks:
-      - qwik-net
+     - qwik-net
     env_file:
-      - .env
+     - .env
 
 volumes:
   postgresql-data:

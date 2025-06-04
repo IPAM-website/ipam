@@ -16,7 +16,7 @@ import TableInfoCSV from "~/components/table/tableInfoCSV";
 // import { useNotify } from "~/services/notifications";
 import bcrypt from "bcryptjs";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 
 type Notification = {
   message: string;
@@ -255,10 +255,11 @@ export default component$(() => {
   const filter = useSignal<FilterObject>({ value: '' });
   const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
   const showPreview = useSignal(false);
-
+  const isClient = useSignal<boolean>(false);
   const lastAdmin = useSignal<boolean>(false);
 
   useTask$(async ({ track }) => {
+    isClient.value = await isUserClient()
     const query = await getTecnici();
     dati.value = query;
     track(() => isEditing.value);
@@ -448,7 +449,7 @@ export default component$(() => {
                 <Import OnError={handleError} OnOk={handleOk}></Import>
               </div>
             </div>
-            <Dati dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
+            <Dati isClient={isClient.value} dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
           </Table>
         </div>
       </div>

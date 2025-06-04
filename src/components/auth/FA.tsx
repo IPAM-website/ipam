@@ -94,7 +94,6 @@ export default component$<LoginData>((props) => {
   const firstTime = useSignal(false);
   const verifiedClicked = useSignal(false);
   const tabella = useSignal(props.table);
-  const clientId = useSignal<string | null>(null);
   const cookie = useStore({
     mail: "",
     admin: false,
@@ -166,12 +165,6 @@ export default component$<LoginData>((props) => {
         body: JSON.stringify(cookie),
         credentials: "include",
       });
-      let id = localStorage.getItem('clientId');
-      if (!id) {
-        id = crypto.randomUUID();
-        localStorage.setItem('clientId', id);
-      }
-      clientId.value = id;
 
       nav("/" + getLocale("en") + "/dashboard");
       // window.location.href = "/"+getLocale("en")+"/dashboard";

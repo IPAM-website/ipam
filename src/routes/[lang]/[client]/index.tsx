@@ -469,6 +469,7 @@ export default component$(() => {
             </svg>
             <p class="flex w-full justify-between py-2 pe-2 text-sm font-medium">
               {t("location")}
+              {!isClient.value && (
               <button
                 onClick$={() => (siteAddMode.value = 1)}
                 class="has-tooltip rounded-lg p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 active:bg-gray-100"
@@ -489,6 +490,7 @@ export default component$(() => {
                 </svg>
                 <span class="tooltip">{t("client.addsite")}</span>
               </button>
+              )}
             </p>
           </div>
           <hr class="text-gray-300 transition-all duration-400 linear" style={{ opacity: seeLocMobile.value ? 1 : 0 }} />

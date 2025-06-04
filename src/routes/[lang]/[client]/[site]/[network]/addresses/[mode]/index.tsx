@@ -41,7 +41,7 @@ import PopupModal from "~/components/ui/PopupModal";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -139,25 +139,20 @@ export const useAction = routeAction$(
     const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
-    const clientId = data.clientId;
     const user = await getUser();
     // console.log(data.data_inserimento);
     try {
       if (data.mode == "update") {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-          if (clientId) {
-            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-          }
+          await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
           await tx`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, vid=${data.vid}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
         });
         type_message = 2;
       } else {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-          if (clientId) {
-            await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-          }
+          await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
           await tx`INSERT INTO indirizzi(ip,idrete,vid,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.vid},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
         });
         type_message = 1;
@@ -183,8 +178,7 @@ export const useAction = routeAction$(
     tipo_dispositivo: z.string(),
     brand_dispositivo: z.string(),
     nome_dispositivo: z.string(),
-    data_inserimento: z.any(),
-    clientId: z.string()
+    data_inserimento: z.any()
   }),
 );
 
@@ -204,15 +198,13 @@ export const getAllVLAN = server$(async function () {
 
 export const deleteIP = server$(async function (data) {
   const sql = sqlForQwik(this.env);
-  const clientId = data.clientId;
   const user = await getUser()
   try {
     if (data.address != "") {
       await sql.begin(async (tx) => {
         await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-        if (clientId) {
-          await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-        }
+          await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
+        
         await tx`DELETE FROM indirizzi WHERE ip=${data.address}`;
       });
     }
@@ -243,7 +235,6 @@ function isIPInSubnet(ip: string, subnet: string, prefix: number) {
 export const insertIPFromCSV = server$(async function (data) {
   const lang = getLocale("en")
   const sql = sqlForQwik(this.env);
-  const clientId = data.clientId;
   const address = data.address as string[][];
   try {
     const expectedHeaders = ["ip", "nome_dispositivo", "tipo_dispositivo", "brand_dispositivo", "n_prefisso"];
@@ -303,10 +294,8 @@ export const insertIPFromCSV = server$(async function (data) {
         vid = existingVlan[0]?.vid;
         if (!vid) {
           await sql.begin(async (tx) => {
-            if (clientId) {
-              await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-            }
-            const newVlan = await tx`
+              await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
+              const newVlan = await tx`
             INSERT INTO vlan (vid,nomevlan) 
             VALUES (${vlanId},${vlanName})
             RETURNING vid`;
@@ -342,9 +331,7 @@ export const insertIPFromCSV = server$(async function (data) {
       const user = await getUser();
       await sql.begin(async (tx) => {
         await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-        if (clientId) {
-          await tx.unsafe(`SET LOCAL app.client_id = '${clientId}'`);
-        }
+        await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
 
         await tx`
             INSERT INTO indirizzi (
@@ -390,6 +377,8 @@ export default component$(() => {
   const reloadFN = useSignal<(() => void) | null>(null);
   const notifications = useSignal<Notification[]>([]);
   const showPreview = useSignal(false);
+  const isClient = useSignal<boolean>(false);
+  const user = useSignal<{ id: number; mail: string; admin: boolean }>();
 
   useVisibleTask$(() => {
     const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
@@ -398,11 +387,18 @@ export default component$(() => {
         const data = JSON.parse(event.data);
         //console.log(data)
         // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-        if (data.table == "indirizzi") {
-          if (data.clientId !== localStorage.getItem("clientId")) {
-            updateNotification.value = true;
+        //console.log("Event received:", isClient.value);
+        if (isClient.value) {
+          reloadFN.value?.()
+        }
+        else{
+          if (data.table == "indirizzi") {
+            if (parseInt(data.clientId) !== user.value?.id) {
+              updateNotification.value = true;
+            }
           }
         }
+          
       } catch (e) {
         console.error('Errore parsing SSE:', event?.data);
       }
@@ -416,6 +412,8 @@ export default component$(() => {
   });
 
   useTask$(async () => {
+    user.value = await getUser();
+    isClient.value = await isUserClient()
     addressList.value = await getAddresses();
     network.value = (await getNetwork(
       parseInt(loc.params.network),
@@ -447,7 +445,7 @@ export default component$(() => {
   const handleOkay = $(async (data: any) => {
     addNotification(lang === "en" ? "Operation in progress..." : "Operazione in corso...", "loading");
     // console.log("ok");
-    const clientId = localStorage.getItem("clientId")
+    const clientId = getUser()
     try {
       const result = await insertIPFromCSV({ address: data, clientId })
       notifications.value = notifications.value.filter(n => n.type !== "loading");
@@ -471,9 +469,8 @@ export default component$(() => {
   });
 
   const handleDelete = $(async (row: any) => {
-    const clientId = localStorage.getItem("clientId")
     addNotification(lang === "en" ? "Deleting..." : "Eliminazione in corso...", "loading");
-    if (await deleteIP({ address: row.ip, clientId })) {
+    if (await deleteIP({ address: row.ip })) {
       notifications.value = notifications.value.filter(n => n.type !== "loading");
       addNotification(lang === "en" ? "Deleted successfully" : "Eliminato con successo", "success");
       reloadFN.value?.()
@@ -620,7 +617,7 @@ export default component$(() => {
             <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-3 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.addresses.addresslist")}</span>
-                <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+                {!isClient.value && (<BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>)}
               </div>
               <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 collapse">
                 <ButtonAddLink
@@ -666,7 +663,7 @@ export default component$(() => {
                                         </div>} */}
               </div>
             </div>
-            <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+            <div class={`flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 ${!isClient.value ? "" : "collapse"}`}>
               <ButtonAddLink
                 nomePulsante={t("network.addesses.addaddress")}
                 href={loc.url.href.replace("view", "insert")}
@@ -687,6 +684,7 @@ export default component$(() => {
               OnDelete={handleDelete}
               funcReloadData={reloadData}
               onReloadRef={getREF}
+              isClient={isClient.value}
             ></Dati>
           </Table>
         </div>
@@ -1106,7 +1104,6 @@ export const CRUDForm = component$(({
             }
             await action.submit({
               n_prefisso: parseInt(formData.prefix),
-              clientId: localStorage.getItem('clientId') || '',
               ip: formData.ip,
               idrete: formData.idrete,
               vid: formData.vid,

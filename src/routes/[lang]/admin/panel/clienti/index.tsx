@@ -14,7 +14,7 @@ import PopupModal from "~/components/ui/PopupModal";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 
 type Notification = {
   message: string;
@@ -229,8 +229,10 @@ export default component$(() => {
   const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
   const reloadFN = useSignal<() => void>();
   const showPreview = useSignal(false);
+  const isClient = useSignal(true);
 
   useTask$(async ({ track }) => {
+    isClient.value = await isUserClient()
     const query = await getTecnici();
     dati.value = query;
     track(() => isEditing.value);
@@ -398,7 +400,7 @@ export default component$(() => {
                 <Import OnError={handleError} OnOk={handleOk}></Import>
               </div>
             </div>
-            <Dati dati={dati.value} title={t("admin.client.list")} nomeTabella={t("admin.client.clients")} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
+            <Dati isClient={isClient.value} dati={dati.value} title={t("admin.client.list")} nomeTabella={t("admin.client.clients")} OnModify={Modify} OnDelete={Delete} DBTabella="clienti" onReloadRef={getRef} funcReloadData={reload}></Dati>
           </Table>
         </div>
       </div>
