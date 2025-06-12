@@ -57,7 +57,9 @@ export default component$(() => {
     loc.params.client +
     "/" +
     loc.params.site +
-    "/0/";
+    "/" +
+    (loc.params.network!=undefined ? loc.params.network : "0") +
+    "/";
 
   const t = inlineTranslate();
 
@@ -108,7 +110,7 @@ export default component$(() => {
                   onClick$={toggleSidebar}
                   >{t("sidebar.intervals.view")}</NavLink>
                   <NavLink
-                  href={baseSiteUrl + "intervals/create"}
+                  href={baseSiteUrl + "intervals/insert"}
                   activeClass="text-black"
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}
@@ -122,23 +124,23 @@ export default component$(() => {
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}
                   >{t("sidebar.aggregates.view")}</NavLink>
-                  <NavLink
+                  {/* <NavLink
                   href={baseSiteUrl + "aggregates/create"}
                   activeClass="text-black"
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}
-                  >{t("sidebar.aggregates.add")}</NavLink>
+                  >{t("sidebar.aggregates.add")}</NavLink> */}
                 </Accordion>
 
-                <Accordion title="VFR">
+                <Accordion title="VRF">
                   <NavLink
-                  href={baseSiteUrl + "VFR/view"}
+                  href={baseSiteUrl + "vrf/view"}
                   activeClass="text-black"
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}
                   >{t("sidebar.vrf.view")}</NavLink>
                   <NavLink
-                  href={baseSiteUrl + "VFR/create"}
+                  href={baseSiteUrl + "vrf/insert"}
                   activeClass="text-black"
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}
@@ -147,13 +149,13 @@ export default component$(() => {
 
                 <Accordion title="VLAN">
                   <NavLink
-                  href={baseSiteUrl + "VLAN/view"}
+                  href={baseSiteUrl + "vlan/view"}
                   activeClass="text-black"
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}
                   >{t("sidebar.vlan.view")}</NavLink>
                   <NavLink
-                  href={baseSiteUrl + "VLAN/create"}
+                  href={baseSiteUrl + "vlan/insert"}
                   activeClass="text-black"
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}

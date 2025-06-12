@@ -144,7 +144,7 @@ export default component$(
                       : " dark:text-gray-100 text-gray-700")
                   }
                 >
-                  {t("aggregates")}
+                  {t("network.aggregates.aggregate")}
                 </button>
               </li>
               <li>
@@ -166,7 +166,7 @@ export default component$(
               <li>
                 <span class="h-6 w-px self-center bg-gray-200"></span>
               </li>
-              {/* <li>
+              <li>
                 <button
                   onClick$={() => smartRedirect("/vrf")}
                   class={
@@ -178,7 +178,7 @@ export default component$(
                 >
                   VRF
                 </button>
-              </li> */}
+              </li>
               <li>
                 <span class="h-6 w-px self-center bg-gray-200"></span>
               </li>

@@ -16,7 +16,7 @@ import PopupModal from "~/components/ui/PopupModal";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 
 // Aggiungi questo tipo per la notifica
 type Notification = {
@@ -201,7 +201,7 @@ export const insertRow = server$(async function(data: string[][]) {
       const idcliente = await sql`SELECT idcliente FROM clienti WHERE nomecliente = ${nomecliente}`;
       if (idcliente.length == 0)
         throw new Error("Cliente non trovato");
-      console.log(idcliente[0].idcliente)
+      //console.log(idcliente[0].idcliente)
 
       const user = await getUser()
       await sql.begin(async (tx) => {
@@ -261,8 +261,10 @@ export default component$(() => {
   const filter = useSignal<FilterObject>({ value: '' });
   const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
   const showPreview = useSignal(false);
+  const isClient = useSignal<boolean>(false);
 
   useTask$(async ({ track }) => {
+    isClient.value = await isUserClient();
     const query = await getUserCliente();
     dati.value = query;
     track(() => isEditing.value);
@@ -492,6 +494,7 @@ export default component$(() => {
             DBTabella="usercliente"
             onReloadRef={reload2}
             funcReloadData={reload}
+            isClient={isClient.value}
           />
         </Table>
       </div>

@@ -16,7 +16,7 @@ import TableInfoCSV from "~/components/table/tableInfoCSV";
 // import { useNotify } from "~/services/notifications";
 import bcrypt from "bcryptjs";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 
 type Notification = {
   message: string;
@@ -160,7 +160,7 @@ export const insertRow = server$(async function (data: string[][]) {
   const lang = getLocale("en");
   const sql = sqlForQwik(this.env);
   try {
-    const expectedHeaders = ["cometecnico", "cognometecnico", "ruolo", "emailtecnico", "pwdtecnico"];
+    const expectedHeaders = ["nometecnico", "cognometecnico", "ruolo", "emailtecnico", "telefonotecnico", "pwdtecnico"];
 
     if (data.length === 0) {
       throw new Error(lang == "it" ? "CSV vuoto" : "CSV is empty");
@@ -179,7 +179,7 @@ export const insertRow = server$(async function (data: string[][]) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       const [nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow] = row;
-      console.log(nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow)
+      //console.log(nomeTecnicoRow, cognomeTecnicoRow, ruoloRow, emailTecnicoRow, telefonoTecnicoRow, pwdTecnicoRow)
       const nomeTecnico = nomeTecnicoRow.replace(/^"|"$/g, '').trim();
       const cognomeTecnico = cognomeTecnicoRow.replace(/^"|"$/g, '').trim();
       const ruolo = ruoloRow.replace(/^"|"$/g, '').trim();
@@ -255,10 +255,11 @@ export default component$(() => {
   const filter = useSignal<FilterObject>({ value: '' });
   const txtQuickSearch = useSignal<HTMLInputElement | undefined>(undefined);
   const showPreview = useSignal(false);
-
+  const isClient = useSignal<boolean>(false);
   const lastAdmin = useSignal<boolean>(false);
 
   useTask$(async ({ track }) => {
+    isClient.value = await isUserClient()
     const query = await getTecnici();
     dati.value = query;
     track(() => isEditing.value);
@@ -448,7 +449,7 @@ export default component$(() => {
                 <Import OnError={handleError} OnOk={handleOk}></Import>
               </div>
             </div>
-            <Dati dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
+            <Dati isClient={isClient.value} dati={dati.value} title={t("admin.tech.list")} nomeTabella={t("admin.tech.technicians")} OnModify={Modify} OnDelete={Delete} onReloadRef={getREF} DBTabella="tecnici" deleteWhen={dff} funcReloadData={reload}></Dati>
           </Table>
         </div>
       </div>

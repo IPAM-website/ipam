@@ -28,6 +28,7 @@ import Dati from "~/components/table/Dati_Headers";
 import { inlineTranslate } from "qwik-speak";
 import { getLocale } from "@builder.io/qwik";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
+import { getUser, isUserClient } from "~/fnUtils";
 
 type CustomRow = AggregatoModel & { idretec: number; ipretec?: string };
 
@@ -68,9 +69,11 @@ export const useAction = routeAction$(
   }),
 );
 
-export const getAllNetworksBySite = server$(async function (idsito: number) {
+export const getAllNetworksBySite = server$(async function () {
   const sql = sqlForQwik(this.env);
   let networks: ReteModel[] = [];
+  const pathParts = new URL(this.request.url).pathname.split('/');
+  const idsito = parseInt(pathParts[3]);
   try {
     if (isNaN(idsito))
       return [];
@@ -106,7 +109,7 @@ export const getAllAggregatesByNetwork = server$(async function (
   try {
     if (isNaN(idsito))
       return [];
-    const networks = await getAllNetworksBySite(idsito);
+    const networks = await getAllNetworksBySite();
     const prefixes: number[] = [];
 
     networks.forEach((x) => {
@@ -198,6 +201,7 @@ export const search = server$(async function (this, filter: FilterObject) {
 
 export default component$(() => {
   // const notify = useNotify();
+  const isClient = useSignal<boolean>(false);
   const lang = getLocale("en");
   const updateNotification = useSignal(false);
   const filter = useSignal<FilterObject>({ value: '' });
@@ -212,6 +216,7 @@ export default component$(() => {
   // const txtQuickSearch = useSignal<HTMLInputElement>();
   const reloadFN = useSignal<(() => void) | null>(null);
   // const notifications = useSignal<Notification[]>([]);
+  const user = useSignal<{ id: number; mail: string, admin: boolean }>();
 
   useVisibleTask$(() => {
     const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
@@ -220,9 +225,14 @@ export default component$(() => {
         const data = JSON.parse(event.data);
         //console.log(data)
         // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-        if (data.table == "aggregati") {
-          if (data.clientId !== localStorage.getItem('clientId')) {
-            updateNotification.value = true;
+        if (isClient.value) {
+          reloadFN.value?.()
+        }
+        else {
+          if (data.table == "aggregati") {
+            if (data.clientId !== user.value?.id) {
+              updateNotification.value = true;
+            }
           }
         }
       } catch (e) {
@@ -233,7 +243,9 @@ export default component$(() => {
   });
 
   useTask$(async () => {
-    networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
+    user.value = await getUser();
+    isClient.value = await isUserClient();
+    networks.value = await getAllNetworksBySite();
 
     // if (loc.url.searchParams.has("network")) {
     // }
@@ -349,19 +361,19 @@ export default component$(() => {
 
 
           <Table>
-            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 max-md:py-12 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.aggregates.aggregatelist")}</span>
               </div>
 
             </div>
-            <div class="flex flex-row items-center collapse gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+            <div class="flex flex-row items-center sm:collapse max-sm:hidden gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
               <ButtonAddLink
                 nomePulsante=""
                 href=""
               ></ButtonAddLink>
               <div>
-                
+
               </div>
             </div>
             <Dati
@@ -422,7 +434,7 @@ export const CRUDForm = component$(
     const networks = useSignal<ReteModel[]>([]);
 
     useTask$(async () => {
-      networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
+      networks.value = await getAllNetworksBySite();
 
       if (loc.params.mode == "update") {
         Object.assign(formData, data);

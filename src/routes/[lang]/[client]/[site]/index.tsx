@@ -38,7 +38,7 @@ import SelectForm from "~/components/form/formComponents/SelectForm";
 import CHKForms from "~/components/form/formComponents/CHKForms";
 import SelectFormLive from "~/components/form/formComponents/SelectFormLive";
 import { inlineTranslate } from "qwik-speak";
-import { getUser } from "~/fnUtils";
+import { getUser, isUserClient } from "~/fnUtils";
 import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 
@@ -334,6 +334,7 @@ export const insertNetworkFromCSV = server$(async function (data: string[][]) {
 export const search = server$(async function (data) {
   const sql = sqlForQwik(this.env);
   //console.log(data)
+  data.value += "%"; // Add wildcard for LIKE search
   try {
     const pathParts = new URL(this.request!.url).pathname.split('/');
     const sitoId = parseInt(pathParts[3]);
@@ -343,10 +344,11 @@ export const search = server$(async function (data) {
       FROM rete
       INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete
       WHERE siti_rete.idsito=${sitoId}
-      AND (rete.nomerete LIKE ${data.filter}
-      OR rete.descrizione LIKE ${data.filter}
-      OR rete.iprete LIKE ${data.filter})
+      AND rete.iprete LIKE ${data.value}
+      OR rete.nomerete LIKE ${data.value}
+      OR rete.descrizione LIKE ${data.value}
     `;
+    console.log(query);
     return query;
   } catch (e) {
     console.log(e);
@@ -402,11 +404,14 @@ export default component$(() => {
 
   const updateAddr1 = useSignal<() => void>(() => { });
   const updateAddr2 = useSignal<() => void>(() => { });
+  const isClient = useSignal<boolean>(false);
   // const updateParents = useSignal<() => void>(() => { });
 
 
 
   useTask$(async () => {
+    isClient.value = await isUserClient()
+    console.log(isClient.value)
     if (isNaN(parseInt(loc.params.site)) || isNaN(parseInt(loc.params.client))) {
       return;
     }
@@ -497,6 +502,11 @@ export default component$(() => {
 
   const getReloader = $((e: () => void) => {
     reloadFN.value = e;
+  });
+
+  const reloadData = $(async () => {
+    if (filter.value.value != "") return await search(filter.value);
+    else return await getAllNetworksBySite(parseInt(loc.params.site));
   });
 
   const handleRowClick = $((row: any) => {
@@ -635,7 +645,7 @@ export default component$(() => {
               <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 dark:border-gray-700 dark:bg-gray-800 bg-gray-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
                 <div class="flex items-center gap-2">
                   <span class="text-lg font-semibold text-gray-800 dark:text-gray-200">{t("network.networks")}</span>
-                  <BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>
+                  {!isClient.value && (<BtnInfoTable showPreviewInfo={showPreviewCSV}></BtnInfoTable>)}
                 </div>
                 <div class="flex items-center gap-2">
                   <TextboxForm
@@ -651,7 +661,7 @@ export default component$(() => {
                   />
                 </div>
               </div>
-              <div class="flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+              <div class={`flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 ${!isClient.value ? "" : "collapse"}`}>
                 <ButtonAdd
                   nomePulsante={t("network.addnetwork")}
                   onClick$={() => {
@@ -688,6 +698,7 @@ export default component$(() => {
                 OnModify={handleModify}
                 OnDelete={handleDelete}
                 onRowClick={handleRowClick}
+                isClient={isClient.value}
               />
             </Table>
           </div>

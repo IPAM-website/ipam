@@ -57,8 +57,10 @@
     "vlan": {
       "addvlan": "Add VLAN",
       "vlandescription": "VLAN description",
+      "vlaninfo": "VLAN info",
       "vlanlist": "VLAN list",
-      "vlanname": "VLAN name"
+      "vlanname": "VLAN name",
+      "vid": "VLAN ID"
     },
     "vrf": {
       "addvrf": "Add VRF",
@@ -70,7 +72,6 @@
     {
       "aggregatelist": "Aggregates list",
       "aggregate": "Aggregates"
-
     }
   }
 }

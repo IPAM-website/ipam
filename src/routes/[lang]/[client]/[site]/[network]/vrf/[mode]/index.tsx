@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import type {
-  Signal} from "@builder.io/qwik";
+  Signal
+} from "@builder.io/qwik";
 import {
   $,
   component$,
@@ -11,7 +12,8 @@ import {
   useTask$,
 } from "@builder.io/qwik";
 import type {
-  RequestHandler} from "@builder.io/qwik-city";
+  RequestHandler
+} from "@builder.io/qwik-city";
 import {
   routeAction$,
   routeLoader$,
@@ -31,9 +33,7 @@ import Dati from "~/components/table/Dati_Headers";
 import { inlineTranslate } from "qwik-speak";
 // import { useNotify } from "~/services/notifications";
 
-export const onRequest: RequestHandler = ({ params, redirect, url,locale }) => {
-  /* disattivazione della pagina VRF */
-  throw redirect(302, `/${locale()}/${params.client}/${params.site}/${params.network}/info/` );
+export const onRequest: RequestHandler = ({ params, redirect, url, locale }) => {
 
   if (!["view", "insert", "update"].includes(params.mode)) {
     const splitURL = url.href.split("/");
@@ -115,7 +115,7 @@ export const useSiteName = routeLoader$(async ({ params, env }) => {
 });
 
 export const useAction = routeAction$(
-  async (data, {  env, params }) => {
+  async (data, { env, params }) => {
     const sql = sqlForQwik(env);
     let success = false;
     let type_message = 0;
@@ -297,8 +297,8 @@ export default component$(() => {
               <div
                 key={index}
                 class={`rounded-md p-4 shadow-lg ${notification.type === "success"
-                    ? "bg-green-500 text-white"
-                    : "bg-red-500 text-white"
+                  ? "bg-green-500 text-white"
+                  : "bg-red-500 text-white"
                   }`}
               >
                 {notification.message}
@@ -349,6 +349,22 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-7 max-md:py-12 md:flex-row md:items-center md:justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.vrf.vrflist")}</span>
+              </div>
+            </div>
+
+
+            <div class={`flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0`}>
+              <ButtonAddLink
+                nomePulsante={t("network.vrf.addvrf")}
+                href={loc.url.href.replace("view", "insert")}
+              ></ButtonAddLink>
+            </div>
+
+
+
             <Dati
               DBTabella="vrf"
               title={t("network.vrf.vrflist")}
@@ -359,6 +375,8 @@ export default component$(() => {
               funcReloadData={reloadData}
               onReloadRef={getREF}
             >
+
+
               {/* <TextboxForm id="txtfilter" value={filter.params.query} ref={txtQuickSearch} placeholder={$localize`Ricerca rapida`} OnInput$={(e) => {
                                         filter.params.query = (e.target as HTMLInputElement).value;
                                         filter.active = false;
@@ -388,17 +406,9 @@ export default component$(() => {
                                         <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
                                     </button></div>} */}
             </Dati>
-            <div class="flex">
-              <ButtonAddLink
-                nomePulsante={t("network.vrf.addvrf")}
-                href={loc.url.href.replace("view", "insert")}
-              ></ButtonAddLink>
-              {/* <ImportCSV
-                OnError={handleError}
-                OnOk={handleOkay}
-                nomeImport="vrf"
-              /> */}
-            </div>
+
+
+
           </Table>
         </div>
       ) : (
@@ -426,10 +436,10 @@ export default component$(() => {
 
 export const FormBox = component$(({ title }: { title?: string }) => {
   return (
-    <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+    <div class="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-600 dark:bg-gray-800 shadow-lg">
       {title && (
-        <div class="w-full border-b border-gray-100 bg-gray-50 p-4">
-          <h1 class="text-lg font-semibold text-gray-700">{title}</h1>
+        <div class="w-full border-b border-gray-100 bg-gray dark:bg-gray-800 p-4">
+          <h1 class="text-lg font-semibold text-gray-700 dark:text-gray-100">{title}</h1>
         </div>
       )}
       <div class="flex w-full flex-col gap-4 p-6">
@@ -522,7 +532,7 @@ export const CRUDForm = component$(
       <>
         <div
           class={
-            "relative m-2 w-full gap-4 max-sm:*:my-2 " +
+            "relative m-2 w-full gap-4 max-sm:*:my-2 dark:" +
             (action.value?.success ? "pointer-events-none opacity-50" : "")
           }
         >
@@ -572,7 +582,7 @@ export const CRUDForm = component$(
                     ? {
                       failed: true,
                       fieldErrors: {
-                        descrizionevrf: t("network.vrf.necessaryvalue") ,
+                        descrizionevrf: t("network.vrf.necessaryvalue"),
                       },
                     }
                     : null
