@@ -157,6 +157,7 @@ CREATE TABLE VRF(
     IDVrf SERIAL,
     nomeVrf VARCHAR(50) NOT NULL,
     descrizioneVRF VARCHAR(255),
+    vxlan INT,
     PRIMARY KEY (IDVrf)
 );
 
@@ -169,6 +170,7 @@ CREATE TABLE Indirizzi(
     brand_dispositivo VARCHAR(20),
     data_inserimento DATE DEFAULT CURRENT_DATE,
     VID INTEGER,
+    change VARCHAR(50),
     PRIMARY KEY (IP, IDRete),
     CONSTRAINT fk_idRete FOREIGN KEY (IDRete) REFERENCES Rete(IDRete) ON DELETE CASCADE
 );
