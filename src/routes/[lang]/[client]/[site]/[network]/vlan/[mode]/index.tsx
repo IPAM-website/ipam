@@ -551,22 +551,11 @@ export default component$(() => {
                 )}
               </div>
             </div>
-<<<<<<< HEAD
-            <div class="flex flex-row items-center collapse gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
-              <ButtonAddLink
-                nomePulsante=""
-                href=""
-              ></ButtonAddLink>
-              <div>
-
-              </div>
-=======
             <div class={`flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 ${!isClient.value ? "" : "collapse"}`}>
               <ButtonAddLink
                 nomePulsante={t("network.vlan.addvlan")}
                 href={loc.url.href.replace("view", "insert")}
               ></ButtonAddLink>
->>>>>>> master
             </div>
             <Dati
               DBTabella="vlan"
