@@ -361,13 +361,13 @@ export default component$(() => {
 
 
           <Table>
-            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-6 max-md:py-12 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.aggregates.aggregatelist")}</span>
               </div>
 
             </div>
-            <div class="flex flex-row items-center collapse gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
+            <div class="flex flex-row items-center sm:collapse max-sm:hidden gap-2 mb-4 [&>*]:my-0 [&>*]:py-0">
               <ButtonAddLink
                 nomePulsante=""
                 href=""

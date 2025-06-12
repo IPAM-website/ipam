@@ -14,6 +14,7 @@ interface TextBoxFormProps {
   onInput$?: (event: InputEvent) => void;
   ref?: Signal<HTMLInputElement | undefined>;
   search?: boolean;
+  type?:string;
 }
 
 export default component$<TextBoxFormProps>(
@@ -24,6 +25,7 @@ export default component$<TextBoxFormProps>(
     title,
     placeholder,
     error,
+    type="text",
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onInput$ = $((event: InputEvent) => {}),
     ref,
@@ -59,8 +61,9 @@ export default component$<TextBoxFormProps>(
           )}
           <input
             ref={ref}
-            type="text"
+            type={type}
             name={nameT}
+            min={1}
             id={"txt" + id}
             placeholder={placeholder || "Cerca..."}
             style={css}

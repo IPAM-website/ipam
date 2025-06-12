@@ -128,14 +128,14 @@ export const useAction = routeAction$(
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
           await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan} WHERE vid=${data.vid}`;
+          await tx`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan}, vxlan=${data.vxlan} WHERE vid=${data.vid}`;
         });
         type_message = 2;
       } else {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
           await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`INSERT INTO vlan(vid,nomevlan,descrizionevlan) VALUES (${data.vid},${data.nomevlan},${data.descrizionevlan})`;
+          await tx`INSERT INTO vlan(vid,nomevlan,descrizionevlan,vxlan) VALUES (${data.vid},${data.nomevlan},${data.descrizionevlan},${data.vxlan})`;
         });
         type_message = 1;
       }
@@ -153,7 +153,8 @@ export const useAction = routeAction$(
   zod$({
     vid: z.number(),
     descrizionevlan: z.string(),
-    nomevlan: z.string()
+    nomevlan: z.string(),
+    vxlan: z.number()
   }),
 );
 
@@ -224,6 +225,7 @@ export default component$(() => {
     descrizionevlan: "",
     nomevlan: "",
     vid: 0,
+    vxlan: 0
   });
   const filter = useStore<FilterObject>({
     active: false,
@@ -564,6 +566,7 @@ export default component$(() => {
               OnDelete={handleDelete}
               funcReloadData={reloadData}
               onReloadRef={getREF}
+              isClient={isClient.value}
             >
               {/* <div class="has-tooltip">
                 <button
@@ -648,6 +651,7 @@ export const CRUDForm = component$(
       descrizionevlan: "",
       vid: 0,
       nomevlan: "",
+      vxlan: 0
     });
 
     const attempted = useSignal<boolean>(false);
@@ -752,6 +756,18 @@ export const CRUDForm = component$(
                 ).value)
                 }
               />
+              <TextboxForm
+                type="number"
+                id="txtVLAN"
+                title="VXLAN:"
+                value={formData.vxlan.toString()}
+                placeholder="1, 2 ..."
+                onInput$={(e) =>
+                (formData.vxlan = parseInt((
+                  e.target as HTMLInputElement
+                ).value))
+                }
+              />
             </FormBox>
           </div>
         </div>
@@ -763,7 +779,8 @@ export const CRUDForm = component$(
               if (
                 !formData.vid ||
                 formData.descrizionevlan == "" ||
-                formData.nomevlan == ""
+                formData.nomevlan == "" ||
+                formData.vxlan == 0
               ) {
                 attempted.value = true;
                 return;

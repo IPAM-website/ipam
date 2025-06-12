@@ -67,6 +67,7 @@ export interface RowAddress {
   brand_dispositivo?: string;
   data_inserimento?: string;
   tipo_dispositivo?: string;
+  change?: string;
 }
 
 export interface FilterObject {
@@ -146,14 +147,14 @@ export const useAction = routeAction$(
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
           await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, vid=${data.vid}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento} WHERE ip=${data.ip}`;
+          await tx`UPDATE indirizzi SET ip=${data.to_ip}, idrete=${data.idrete}, vid=${data.vid}, n_prefisso=${data.n_prefisso}, tipo_dispositivo=${data.tipo_dispositivo}, brand_dispositivo=${data.brand_dispositivo}, nome_dispositivo=${data.nome_dispositivo}, data_inserimento=${data.data_inserimento}, change=${data.change} WHERE ip=${data.ip}`;
         });
         type_message = 2;
       } else {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
           await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`INSERT INTO indirizzi(ip,idrete,vid,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento) VALUES (${data.ip},${data.idrete},${data.vid},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento})`;
+          await tx`INSERT INTO indirizzi(ip,idrete,vid,n_prefisso,tipo_dispositivo,brand_dispositivo,nome_dispositivo,data_inserimento,change) VALUES (${data.ip},${data.idrete},${data.vid},${data.n_prefisso},${data.tipo_dispositivo},${data.brand_dispositivo},${data.nome_dispositivo},${data.data_inserimento},${data.change})`;
         });
         type_message = 1;
       }
@@ -178,7 +179,8 @@ export const useAction = routeAction$(
     tipo_dispositivo: z.string(),
     brand_dispositivo: z.string(),
     nome_dispositivo: z.string(),
-    data_inserimento: z.any()
+    data_inserimento: z.any(),
+    change: z.string()
   }),
 );
 
@@ -203,8 +205,8 @@ export const deleteIP = server$(async function (data) {
     if (data.address != "") {
       await sql.begin(async (tx) => {
         await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-          await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-        
+        await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
+
         await tx`DELETE FROM indirizzi WHERE ip=${data.address}`;
       });
     }
@@ -294,8 +296,8 @@ export const insertIPFromCSV = server$(async function (data) {
         vid = existingVlan[0]?.vid;
         if (!vid) {
           await sql.begin(async (tx) => {
-              await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-              const newVlan = await tx`
+            await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
+            const newVlan = await tx`
             INSERT INTO vlan (vid,nomevlan) 
             VALUES (${vlanId},${vlanName})
             RETURNING vid`;
@@ -391,14 +393,14 @@ export default component$(() => {
         if (isClient.value) {
           reloadFN.value?.()
         }
-        else{
+        else {
           if (data.table == "indirizzi") {
             if (parseInt(data.clientId) !== user.value?.id) {
               updateNotification.value = true;
             }
           }
         }
-          
+
       } catch (e) {
         console.error('Errore parsing SSE:', event?.data);
       }
@@ -573,8 +575,8 @@ export default component$(() => {
         <div>
           {/* <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
                                 <div class="flex">
-                                    <div class="w-full">
-                                        <span class="ms-2">Network</span>
+                                    <div class="w-full">default
+
                                         <SelectForm OnClick$={(e) => { filter.params.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.params.network} listName="Reti">
                                             {networks.value.map((x: ReteModel) => <option value={x.idrete}>{x.nomerete}</option>)}
                                         </SelectForm>
@@ -999,6 +1001,17 @@ export const CRUDForm = component$(({
               formData.idrete = parseInt((e.target as any).value);
             }}
           />
+
+          <TextboxForm
+            type="number"
+            id="txtChange"
+            value={formData.change}
+            title="Change"
+            placeholder="Change"
+            onInput$={(e) => {
+              formData.change = (e.target as any).value;
+            }}
+          />
           {/* {attempted.value && !formData.idrete && <span class="text-red-600">{$localize`Please select a network`}</span>} */}
 
           <SelectForm
@@ -1112,6 +1125,7 @@ export const CRUDForm = component$(({
               nome_dispositivo: formData.nome_dispositivo ?? "",
               tipo_dispositivo: formData.tipo_dispositivo ?? "",
               brand_dispositivo: formData.brand_dispositivo ?? "",
+              change: formData.change ?? "",
               data_inserimento:
                 new Date(formData.data_inserimento ?? "").toString() ==
                   "Invalid Date"

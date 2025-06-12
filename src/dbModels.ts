@@ -7,6 +7,7 @@ export interface IndirizziModel {
   brand_dispositivo: string;
   data_inserimento: Date;
   vid: number;
+  change: string;
 }
 
 export interface ClienteModel {
@@ -68,6 +69,7 @@ export interface VLANModel {
   vid: number;
   nomevlan: string;
   descrizionevlan: string;
+  vxlan: number;
 }
 
 export interface AggregatoModel {

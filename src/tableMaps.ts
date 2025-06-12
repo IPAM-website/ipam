@@ -56,6 +56,7 @@ const TableMaps: { [key: string]: TableMap } = {
         "Data Inserimento",
         "Tipo",
         "VLAN",
+        "Change",
         "",
       ],
       en: [
@@ -66,6 +67,7 @@ const TableMaps: { [key: string]: TableMap } = {
         "Insert Date",
         "Type",
         "VLAN",
+        "Change",
         "",
       ],
     },
@@ -77,6 +79,7 @@ const TableMaps: { [key: string]: TableMap } = {
       "data_inserimento",
       "tipo_dispositivo",
       "vid",
+      "change"
     ],
   },
   rete: {
@@ -133,10 +136,10 @@ const TableMaps: { [key: string]: TableMap } = {
   },
   vlan: {
     headers: {
-      it: ["VID", "Nome", "Descrizione"],
-      en: ["VID", "Name", "Description"],
+      it: ["VID", "Nome", "Descrizione", "VXLAN"],
+      en: ["VID", "Name", "Description", "VXLAN"],
     },
-    keys: ["vid", "nomevlan", "descrizionevlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan", "vxlan"],
   },
   vrf: {
     headers: {
@@ -195,6 +198,7 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
       "tipo_dispositivo",
       "n_prefisso",
       "vid",
+      "change"
     ],
   },
   rete: {
@@ -207,7 +211,7 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     keys: ["prefisso"],
   },
   vlan: {
-    keys: ["vid", "nomevlan", "descrizionevlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan","vxlan"],
   },
   vrf: {
     keys: ["idvrf", "nomevrf", "descrizionevrf"],
@@ -270,6 +274,7 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
       "brand_dispositivo",
       "tipo_dispositivo",
       "n_prefisso",
+      "change",
       "vlan (opzionale)",
       "nome_vlan (opzionale)"
     ],
@@ -279,6 +284,7 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
       "DELL",
       "Server",
       "24",
+      "1",
       "200",
       "VLAN 200"
     ],
@@ -299,7 +305,7 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
     keys: ["prefisso"],
   },
   vlan: {
-    keys: ["vid", "nomevlan", "descrizionevlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan","vxlan"],
   },
   vrf: {
     keys: ["idvrf", "nomevrf", "descrizionevrf"],
