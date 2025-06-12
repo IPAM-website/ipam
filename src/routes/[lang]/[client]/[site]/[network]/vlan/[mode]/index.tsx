@@ -502,11 +502,11 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
-            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-7 md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-4 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.vlan.vlanlist")}</span>
               </div>
-              <div class="flex items-center gap-2 collapse">
+              <div class="flex items-center gap-2">
                 <TextboxForm
                   id="txtfilter"
                   search={true}
