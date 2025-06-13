@@ -9,6 +9,8 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import pkg from "./package.json";
 import tailwindcss from "@tailwindcss/vite";
 import { qwikSpeakInline } from 'qwik-speak/inline';
+import fs from 'fs';
+import path from 'path';
 
 type PkgDep = Record<string, string>;
 const { dependencies = {}, devDependencies = {} } = pkg as any as {
@@ -22,6 +24,12 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
  */
 
 export default defineConfig(({ command, mode }): UserConfig => {
+  const certPath = path.resolve(__dirname, 'cert');
+  const https = {
+    key: fs.readFileSync(path.join(certPath, 'localhost+1-key.pem')),
+    cert: fs.readFileSync(path.join(certPath, 'localhost+1.pem')),
+  };
+
   return {
     base: '/',
     plugins: [qwikCity(), qwikVite(), qwikSpeakInline({
@@ -29,34 +37,22 @@ export default defineConfig(({ command, mode }): UserConfig => {
         defaultLang: 'en',
         assetsPath: 'i18n'
       }), tsconfigPaths(), tailwindcss()],
-    // This tells Vite which dependencies to pre-build in dev mode.
+    server: {
+      https: {
+        ...https,
+        rejectUnauthorized: false
+      },
+      port: 4433,
+      strictPort: true,
+      headers: {
+        // Don't cache the server response in dev mode
+        "Cache-Control": "public, max-age=0",
+      }
+    },
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.
       // For example ['better-sqlite3'] if you use that in server functions.
       exclude: [],
-    },
-    /**
-     * This is an advanced setting. It improves the bundling of your server code. To use it, make sure you understand when your consumed packages are dependencies or dev dependencies. (otherwise things will break in production)
-     */
-    // ssr:
-    //   command === "build" && mode === "production"
-    //     ? {
-    //         // All dev dependencies should be bundled in the server build
-    //         noExternal: Object.keys(devDependencies),
-    //         // Anything marked as a dependency will not be bundled
-    //         // These should only be production binary deps (including deps of deps), CLI deps, and their module graph
-    //         // If a dep-of-dep needs to be external, add it here
-    //         // For example, if something uses `bcrypt` but you don't have it as a dep, you can write
-    //         // external: [...Object.keys(dependencies), 'bcrypt']
-    //         external: Object.keys(dependencies),
-    //       }
-    //     : undefined,
-    server: {
-      headers: {
-        // Don't cache the server response in dev mode
-        "Cache-Control": "public, max-age=0",
-      },
-      
     },
     preview: {
       headers: {

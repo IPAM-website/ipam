@@ -25,12 +25,13 @@ export default component$(() => {
     <QwikCityProvider>
       <head>
         <meta charset="utf-8" />
-        {!isDev && (
+        {/* {!isDev && (
           <link
             rel="manifest"
             href={`${import.meta.env.BASE_URL}manifest.json`}
           />
-        )}
+        )} */}
+        <link rel="manifest" href="/manifest.json" />
         <script dangerouslySetInnerHTML={`
   (function() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

@@ -33,7 +33,7 @@ import Dati from "~/components/table/Dati_Headers";
 import { inlineTranslate } from "qwik-speak";
 // import { useNotify } from "~/services/notifications";
 
-export const onRequest: RequestHandler = ({ params, redirect, url, locale }) => {
+export const onRequest: RequestHandler = ({ params, redirect, url }) => {
 
   if (!["view", "insert", "update"].includes(params.mode)) {
     const splitURL = url.href.split("/");

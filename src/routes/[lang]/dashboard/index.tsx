@@ -485,7 +485,7 @@ export const onRequest: RequestHandler = async ({ redirect, sharedMap, html, env
         if (e.code != 'ECONNREFUSED')
             throw redirect(302, getBaseURL() + "login");
         else {
-            const errorpage = fs.readFileSync("~/../errors/dbconnection.html", "utf-8");
+            const errorpage = fs.readFileSync("errors/dbconnection.html", "utf-8");
             html(200, errorpage);
         }
     }

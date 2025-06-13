@@ -9,8 +9,9 @@ export const getBaseURL = () => {
 
 export const getUser = server$(function () {
   if (!this.cookie.has("jwt")) {
-    console.log("Token not found");
-    return { id: 0, mail: "", admin: false };
+    // console.log("Token not found");
+    // return { id: -1, mail: "", admin: false };
+    throw new Error("Token not found");
   }
   let user;
   try {

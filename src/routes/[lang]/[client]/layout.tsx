@@ -19,7 +19,6 @@ export const onRequest: RequestHandler = async ({ redirect, env }) => {
       await sql`SELECT * FROM usercliente WHERE usercliente.iducliente=${user.id} AND usercliente.emailucliente=${user.mail}`;
     if (query.length == 0) throw new Error("Unauthorized access");
   } catch (e) {
-    console.log(e);
     throw redirect(301, getBaseURL() + "dashboard");
   }
 };

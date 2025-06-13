@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY pnpm-lock.yaml ./
 COPY errors ./errors
+COPY cert ./cert
 RUN corepack enable pnpm
 RUN pnpm install --frozen-lockfile
 COPY . .
