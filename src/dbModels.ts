@@ -27,7 +27,6 @@ export interface ReteModel {
   idrete: number;
   nomerete: string;
   descrizione: string;
-  vrf: number;
   iprete: string;
   prefissorete: number;
   vid?: number;
@@ -70,6 +69,7 @@ export interface VLANModel {
   nomevlan: string;
   descrizionevlan: string;
   vxlan: number;
+  vrf: number;
 }
 
 export interface AggregatoModel {

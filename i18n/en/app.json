@@ -39,5 +39,6 @@
   "other":"Other",
   "addresses":"Addresses",
   "aggregates":"Aggregates",
-  "intervals":"Intervals"
+  "intervals":"Intervals",
+  "information":"information"
 }

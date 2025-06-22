@@ -37,18 +37,18 @@ export default defineConfig(({ command, mode }): UserConfig => {
         defaultLang: 'en',
         assetsPath: 'i18n'
       }), tsconfigPaths(), tailwindcss()],
-    server: {
-      https: {
-        ...https,
-        rejectUnauthorized: false
-      },
-      port: 4433,
-      strictPort: true,
-      headers: {
-        // Don't cache the server response in dev mode
-        "Cache-Control": "public, max-age=0",
-      }
-    },
+    // server: {
+    //   https: {
+    //     ...https,
+    //     rejectUnauthorized: false
+    //   },
+    //   port: 4433,
+    //   strictPort: true,
+    //   headers: {
+    //     // Don't cache the server response in dev mode
+    //     "Cache-Control": "public, max-age=0",
+    //   }
+    // },
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.
       // For example ['better-sqlite3'] if you use that in server functions.

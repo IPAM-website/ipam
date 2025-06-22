@@ -571,50 +571,9 @@ export default component$(() => {
           </div>
         ))}
       </div>
-      {/* <Title haveReturn={true} url={mode == "view" ? loc.url.pathname.split('/info')[0].split('/').slice(0,4).join('/') : loc.url.pathname.replace(mode, "view")} > {sitename.value.toString()} - {mode.charAt(0).toUpperCase() + mode.substring(1)} IP</Title> */}
       {mode == "view" ? (
         <div>
-          {/* <PopupModal title="Filters" visible={filter.visible} onClosing$={() => filter.visible = false}>
-                                <div class="flex">
-                                    <div class="w-full">default
-
-                                        <SelectForm OnClick$={(e) => { filter.params.network = (e.target as HTMLOptionElement).value }} id="filter-network" name="" value={filter.params.network} listName="Reti">
-                                            {networks.value.map((x: ReteModel) => <option value={x.idrete}>{x.nomerete}</option>)}
-                                        </SelectForm>
-                                    </div>
-                                </div>
-                                notifications.value = notifications.value.filter(n => n.type !== "loading");     <div class="flex-auto"></div>
-                                    <button class=" flex gap-1 items-center p-2 px-4 border-gray-300 hover:bg-gray-100 disabled:bg-gray-100 disabled:text-gray-500 border cursor-pointer disabled:cursor-default text-gray-900 rounded-lg mx-2" disabled={filter.params.subsite == ''} onClick$={() => {
-                                        window.location.href = loc.url.pathname;
-                                    }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                        </svg>
-                                        Reset</button>
-
-                                    <button class="p-2 flex items-center gap-1 px-4 bg-black hover:bg-gray-800 disabled:bg-gray-400 cursor-pointer disabled:cursor-default text-white rounded-md" disabled={filter.params.subsite == ''} onClick$={async () => {
-                                        let url = loc.url.pathname + "?";
-                                        let searchParams = new URLSearchParams();
-                                        for (let key in filter.params)
-                                            if (filter.params[key] != '') {
-                                                searchParams.append(key, filter.params[key])
-                                                filter.active = true;
-                                            }
-
-                                        nav(url + searchParams);
-
-                                        if (reloadFN) {
-                                            reloadFN.value?.();
-                                            filter.visible = false;
-                                        }
-                                    }}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                                        </svg>
-                                        Search</button>
-
-                                </div>
-                            </PopupModal> */}
-
-          {/* <SiteNavigator /> */}
+          
 
           <Table>
             <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-3 md:flex-row md:items-center md:justify-between">
@@ -647,26 +606,9 @@ export default component$(() => {
                     if (reloadFN) reloadFN.value?.();
                   }}
                 />
-                {/* <div class="has-tooltip">
-                                            <button class="cursor-pointer p-1 rounded-md bg-black hover:bg-gray-700 text-white size-[32px] flex items-center justify-center" onClick$={() => filter.visible = true} >
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
-                                                </svg>
-                                            </button>
-                                            <span class="tooltip">
-                                                {$localize`Filters`}
-                                            </span>
-                                        </div>
-                                        {filter.active && <div class="has-tooltip"><button class="size-[24px] bg-red-500 cursor-pointer hover:bg-red-400 text-white flex justify-center items-center rounded ms-2" onClick$={() => { filter.active = false; for (const key in filter.params) filter.params[key] = ''; nav(loc.url.pathname); if (txtQuickSearch.value) txtQuickSearch.value.value = ""; reloadFN.value?.() }}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                            </svg>
-                                            <span class="tooltip mb-1 ml-1.5">{$localize`Erase Filters`}</span>
-                                        </button>
-                                        </div>} */}
               </div>
             </div>
-            <div class={`flex flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 ${!isClient.value ? "" : "collapse"}`}>
+            <div class={`flex options flex-row items-center gap-2 mb-4 [&>*]:my-0 [&>*]:py-0 ${!isClient.value ? "" : "collapse"}`}>
               <ButtonAddLink
                 nomePulsante={t("network.addesses.addaddress")}
                 href={loc.url.href.replace("view", "insert")}

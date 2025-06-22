@@ -38,5 +38,6 @@
   "surname": "Cognome",
   "other": "Altro",
   "addresses": "Indirizzi",
-  "intervals": "Intervalli"
+  "intervals": "Intervalli",
+  "information":"Informazioni"
 }

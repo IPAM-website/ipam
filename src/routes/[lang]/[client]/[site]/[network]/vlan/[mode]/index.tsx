@@ -27,14 +27,15 @@ import {
 import { sqlForQwik } from "~/../db";
 import SelectForm from "~/components/form/formComponents/SelectForm";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
-import type { ReteModel, VLANModel } from "~/dbModels";
+import type { ReteModel, VLANModel, VRFModel } from "~/dbModels";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 //import ImportCSV from "~/components/table/ImportCSV";
 import PopupModal from "~/components/ui/PopupModal";
 import { inlineTranslate } from "qwik-speak";
-import { getUser, isUserClient } from "~/fnUtils";
+  import { getUser, isUserClient } from "~/fnUtils";
+  import { getAllVRF } from "../../../index";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -133,19 +134,20 @@ export const useAction = routeAction$(
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
           await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan}, vxlan=${data.vxlan} WHERE vid=${data.vid}`;
+          await tx`UPDATE vlan SET vid=${data.vid}, nomevlan=${data.nomevlan}, descrizionevlan=${data.descrizionevlan}, vxlan=${data.vxlan}, vrf=${data.vrf} WHERE vid=${data.vid}`;
         });
         type_message = 2;
       } else {
         await sql.begin(async (tx) => {
           await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
           await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`INSERT INTO vlan(vid,nomevlan,descrizionevlan,vxlan) VALUES (${data.vid},${data.nomevlan},${data.descrizionevlan},${data.vxlan})`;
+          await tx`INSERT INTO vlan(vid,nomevlan,descrizionevlan,vxlan,vrf) VALUES (${data.vid},${data.nomevlan},${data.descrizionevlan},${data.vxlan},${data.vrf})`;
         });
         type_message = 1;
       }
       success = true;
     } catch (e) {
+      console.log(e);
       if (params.mode == "update") type_message = 4;
       else type_message = 3;
     }
@@ -159,7 +161,8 @@ export const useAction = routeAction$(
     vid: z.number(),
     descrizionevlan: z.string(),
     nomevlan: z.string(),
-    vxlan: z.number()
+    vxlan: z.number(),
+    vrf: z.number()
   }),
 );
 
@@ -230,7 +233,8 @@ export default component$(() => {
     descrizionevlan: "",
     nomevlan: "",
     vid: 0,
-    vxlan: 0
+    vxlan: 0,
+    vrf: 0
   });
   const filter = useStore<FilterObject>({
     active: false,
@@ -642,16 +646,19 @@ export const CRUDForm = component$(
     const loc = useLocation();
     const action = useAction();
     const user = useSignal<{ id: number; mail: string; admin: boolean }>();
+    const vrf = useSignal<VRFModel[]>([]);
 
     useTask$(async () => {
       user.value = await getUser();
+      vrf.value = await getAllVRF();
     });
 
     const formData = useStore<VLANModel>({
       descrizionevlan: "",
       vid: 0,
       nomevlan: "",
-      vxlan: 0
+      vxlan: 1,
+      vrf: 0
     });
 
     const attempted = useSignal<boolean>(false);
@@ -768,6 +775,20 @@ export const CRUDForm = component$(
                 ).value))
                 }
               />
+              <SelectForm 
+                id="txtVRF"
+                title="VRF:"
+                value="1"
+                name=""
+                listName="VRF"
+                OnClick$={(e) => {
+                  formData.vrf = parseInt((e.target as HTMLOptionElement).value);
+                }}
+              >
+                {vrf.value.map(x=>{
+                  return <option value={x.idvrf}>{x.idvrf.toString()}</option>
+                })}
+              </SelectForm>
             </FormBox>
           </div>
         </div>
@@ -780,7 +801,8 @@ export const CRUDForm = component$(
                 !formData.vid ||
                 formData.descrizionevlan == "" ||
                 formData.nomevlan == "" ||
-                formData.vxlan == 0
+                formData.vxlan == 0 ||
+                formData.vrf == 0 
               ) {
                 attempted.value = true;
                 return;
@@ -799,7 +821,9 @@ export const CRUDForm = component$(
             disabled={
               formData.vid <= 0 ||
               formData.descrizionevlan == "" ||
-              formData.nomevlan == ""
+              formData.nomevlan == "" ||
+              formData.vxlan <= 0 ||
+              formData.vrf <= 0
             }
           >
             <svg

@@ -66,7 +66,8 @@
       "addvrf": "Add VRF",
       "necessaryvalue": "Required value",
       "vrflist": "VRF list",
-      "vrfname": "VRF name"
+      "vrfname": "VRF name",
+      "description": "VRF description"
     },
     "aggregates":
     {

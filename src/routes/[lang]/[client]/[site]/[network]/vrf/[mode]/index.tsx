@@ -349,7 +349,7 @@ export default component$(() => {
           {/* <SiteNavigator /> */}
 
           <Table>
-            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-7 max-md:py-12 md:flex-row md:items-center md:justify-between">
+            <div class="mb-4 flex flex-col gap-2 rounded-t-xl border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-600 px-4 py-7 md:flex-row md:items-center md:justify-between">
               <div class="flex items-center gap-2">
                 <span class="text-lg font-semibold text-gray-800 dark:text-gray-50">{t("network.vrf.vrflist")}</span>
               </div>
@@ -527,7 +527,7 @@ export const CRUDForm = component$(
     // )
 
     const t = inlineTranslate();
-
+    const title = t('information');
     return (
       <>
         <div
@@ -537,15 +537,16 @@ export const CRUDForm = component$(
           }
         >
           <div class="flex w-full justify-center">
-            <FormBox title="Informazioni">
+            <FormBox title={title}>
               <TextboxForm
                 id="txtIDVRF"
-                disabled={"disabled"}
                 title="ID: "
                 placeholder="es. 65000"
-                value={formData.idvrf.toString()}
+                value={formData.idvrf == -1 ? "" : formData.idvrf.toString()}
                 onInput$={(e) => {
-                  formData.idvrf = parseInt(
+                  formData.idvrf = isNaN(parseInt(
+                    (e.target as HTMLInputElement).value,
+                  )) ? -1 : parseInt(
                     (e.target as HTMLInputElement).value,
                   );
                 }}
@@ -569,7 +570,7 @@ export const CRUDForm = component$(
               />
               <TextboxForm
                 id="txtDescrizione"
-                title={t("network.vrf.vrfname")}
+                title={t("network.vrf.description")}
                 value={formData.descrizionevrf}
                 placeholder="Es. Main Circuit"
                 onInput$={(e) =>

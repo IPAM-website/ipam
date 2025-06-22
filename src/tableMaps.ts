@@ -84,42 +84,18 @@ const TableMaps: { [key: string]: TableMap } = {
   },
   rete: {
     headers: {
-      it: ["Indirizzo", "Prefisso", "Nome", "Descrizione", "VRF", "ID", ""],
-      en: ["Address", "Prefix", "Name", "Description", "VRF", "ID", ""],
+      it: ["Indirizzo", "Prefisso", "Nome", "Descrizione", "VLAN", "ID", "VRF", ""],
+      en: ["Address", "Prefix", "Name", "Description", "VLAN", "ID", "VRF",""],
     },
     keys: [
       "iprete",
       "prefissorete",
       "nomerete",
       "descrizione",
-      "vrf",
+      "vid",
       "idrete",
     ],
   },
-  // "aggregati": {
-  //     headers: {
-  //         it: [
-  //             'Nome',
-  //             'Descrizione',
-  //             'ID',
-  //             'Rete',
-  //             ''
-  //         ],
-  //         en: [
-  //             'Name',
-  //             'Description',
-  //             'ID',
-  //             'Network',
-  //             ''
-  //         ]
-  //     },
-  //     keys: [
-  //         'nomeaggregato',
-  //         'descrizioneaggregato',
-  //         'idaggregato',
-  //         'idrete'
-  //     ]
-  // },
   aggregati: {
     headers: {
       it: ["Indirizzo", "Prefisso"],
@@ -136,10 +112,10 @@ const TableMaps: { [key: string]: TableMap } = {
   },
   vlan: {
     headers: {
-      it: ["VID", "Nome", "Descrizione", "VXLAN"],
-      en: ["VID", "Name", "Description", "VXLAN"],
+      it: ["VID", "Nome", "Descrizione", "VRF", "VXLAN"],
+      en: ["VID", "Name", "Description", "VRF","VXLAN"],
     },
-    keys: ["vid", "nomevlan", "descrizionevlan", "vxlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan", "vrf", "vxlan"],
   },
   vrf: {
     headers: {
@@ -202,7 +178,7 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     ],
   },
   rete: {
-    keys: ["iprete", "nomerete", "descrizione", "vrf", "idrete"],
+    keys: ["iprete", "nomerete", "descrizione", "vid", "idrete"],
   },
   aggregati: {
     keys: ["nomeaggregato", "descrizioneaggregato", "idaggregato", "idrete"],
@@ -211,7 +187,7 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     keys: ["prefisso"],
   },
   vlan: {
-    keys: ["vid", "nomevlan", "descrizionevlan","vxlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan","vrf","vxlan"],
   },
   vrf: {
     keys: ["idvrf", "nomevrf", "descrizionevrf"],
@@ -305,7 +281,7 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
     keys: ["prefisso"],
   },
   vlan: {
-    keys: ["vid", "nomevlan", "descrizionevlan","vxlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan","vrf","vxlan"],
   },
   vrf: {
     keys: ["idvrf", "nomevrf", "descrizionevrf"],

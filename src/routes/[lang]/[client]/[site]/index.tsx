@@ -121,11 +121,11 @@ export const getAllVRF = server$(async function() {
   return vrf;
 });
 
-export const getAllVLAN = server$(async function () {
+export const getAllVLAN = server$(async function (vrf: number) {
   const sql = sqlForQwik(this.env);
   let vlans: VLANModel[] = [];
   try {
-    const query = await sql`SELECT * FROM vlan`;
+    const query = await sql`SELECT * FROM vlan WHERE vlan.vrf=${vrf}`;
     // console.log(query);
     vlans = query as unknown as VLANModel[];
   } catch (e) {
@@ -160,9 +160,9 @@ export const useInsertNetwork = routeAction$(
     const sql = sqlForQwik(env);
     try {
       if (data.idretesup)
-        await sql`INSERT INTO rete (nomerete,descrizione,vrf,iprete,prefissorete,idretesup,vid) VALUES (${data.nomerete},${data.descrizione},${data.vrf},${data.iprete},${data.prefissorete},${data.idretesup},${data.vid})`;
+        await sql`INSERT INTO rete (nomerete,descrizione,iprete,prefissorete,idretesup,vid) VALUES (${data.nomerete},${data.descrizione},${data.iprete},${data.prefissorete},${data.idretesup},${data.vid})`;
       else
-        await sql`INSERT INTO rete (nomerete,descrizione,vrf,iprete,prefissorete,vid) VALUES (${data.nomerete},${data.descrizione},${data.vrf},${data.iprete},${data.prefissorete},${data.vid})`;
+        await sql`INSERT INTO rete (nomerete,descrizione,iprete,prefissorete,vid) VALUES (${data.nomerete},${data.descrizione},${data.iprete},${data.prefissorete},${data.vid})`;
       const id = (
         await sql`SELECT idrete FROM rete ORDER BY idrete DESC LIMIT 1`
       )[0].idrete;
@@ -209,9 +209,9 @@ export const useUpdateNetwork = routeAction$(
     const sql = sqlForQwik(env);
     try {
       if (data.idretesup)
-        await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, vrf = ${data.vrf}, prefissorete = ${data.prefissorete}, idretesup = ${data.idretesup} , iprete = ${data.iprete}, vid = ${data.vid} WHERE idrete = ${data.idrete}`;
+        await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, iprete = ${data.iprete}, prefissorete = ${data.prefissorete}, idretesup = ${data.idretesup} , vid = ${data.vid} WHERE idrete = ${data.idrete}`;
       else
-        await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, vrf = ${data.vrf}, prefissorete = ${data.prefissorete} , iprete = ${data.iprete}, vid = ${data.vid} WHERE idrete = ${data.idrete}`;
+        await sql`UPDATE rete SET nomerete = ${data.nomerete}, descrizione = ${data.descrizione}, iprete = ${data.iprete}, prefissorete = ${data.prefissorete} , vid = ${data.vid} WHERE idrete = ${data.idrete}`;
 
       return {
         success: true,
@@ -377,7 +377,7 @@ export default component$(() => {
 
   const insertAction = useInsertNetwork();
   const updateAction = useUpdateNetwork();
-  const formData = useStore<ReteModel>({
+  const formData = useStore<ReteModel & {vrf:number}>({
     descrizione: "",
     idrete: 0,
     nomerete: "",
@@ -420,12 +420,21 @@ export default component$(() => {
 
     try {
       vrfs.value = await getAllVRF();
-      vlans.value = await getAllVLAN();
+      vlans.value = await getAllVLAN(formData.vrf);
       site.value = await getSite(parseInt(loc.params.site));
       networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
       city.value = await getCity(parseInt(loc.params.site));
       client.value = await getClient(parseInt(loc.params.client));
     } catch {
+      console.log("Fetch error")
+    }
+  })
+
+  useTask$(async ({track})=>{
+    track(() => formData.vrf);
+    try{
+      vlans.value = await getAllVLAN(formData.vrf);
+    }catch{
       console.log("Fetch error")
     }
   })
@@ -769,6 +778,13 @@ export default component$(() => {
                 >
                   VLAN
                 </button>
+                <button
+                  type="button"
+                  class="flex flex-1 border-b border-gray-100 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
+                  onClick$={() => nav("0/vrf/view")}
+                >
+                  VRF
+                </button>
               </div>
             </div>
           </div>
@@ -939,7 +955,7 @@ export default component$(() => {
           >
             {vlans.value.map((x: VLANModel) => (
               <option key={x.vid} about={x.descrizionevlan} value={x.vid}>
-                {x.nomevlan}
+                {x.vid.toString()}
               </option>
             ))}
           </SelectForm>

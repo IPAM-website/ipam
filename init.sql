@@ -133,8 +133,7 @@ CREATE TABLE Rete(
     IPrete VARCHAR(15) NOT NULL,
     prefissorete INTEGER NOT NULL CHECK (prefissorete BETWEEN 0 AND 32),
     idretesup INTEGER,
-    vid INTEGER,
-    vrf INTEGER,
+    vid INTEGER DEFAULT 1,
     UNIQUE (nomeRete, IPrete, prefissorete)
 );
 
@@ -150,6 +149,8 @@ CREATE TABLE VLAN(
     VID SERIAL,
     nomeVLAN VARCHAR(50) NOT NULL,
     descrizioneVLAN VARCHAR(255),
+    vxlan INT DEFAULT 1,
+    vrf INTEGER DEFAULT 1,
     PRIMARY KEY (VID)
 );
 
@@ -157,7 +158,6 @@ CREATE TABLE VRF(
     IDVrf SERIAL,
     nomeVrf VARCHAR(50) NOT NULL,
     descrizioneVRF VARCHAR(255),
-    vxlan INT,
     PRIMARY KEY (IDVrf)
 );
 
@@ -335,12 +335,12 @@ COMMENT ON COLUMN Rete.IPrete IS 'Indirizzo di rete in formato CIDR (es: 192.168
 COMMENT ON COLUMN Rete.prefissorete IS 'Prefisso della rete (0-32)';
 COMMENT ON COLUMN Rete.idretesup IS 'Identificatore della rete superiore (padre)';
 COMMENT ON COLUMN Rete.vid IS 'Identificatore della VLAN associata';
-COMMENT ON COLUMN Rete.vrf IS 'Identificatore della VRF associata';
 
 -- Commenti per la tabella VLAN
 COMMENT ON COLUMN VLAN.VID IS 'Identificatore univoco della VLAN';
 COMMENT ON COLUMN VLAN.nomeVLAN IS 'Nome della VLAN';
 COMMENT ON COLUMN VLAN.descrizioneVLAN IS 'Descrizione della VLAN';
+COMMENT ON COLUMN VLAN.vrf IS 'Identificatore della VRF associata';
 
 -- Commenti per la tabella VRF
 COMMENT ON COLUMN VRF.IDVrf IS 'Identificatore univoco della VRF';
@@ -584,7 +584,7 @@ FOR EACH ROW EXECUTE FUNCTION audit_trigger();
 
 
 INSERT INTO vrf (nomevrf,descrizionevrf) VALUES ('default','default virtual routing table');
-INSERT INTO vlan (nomevlan,descrizionevlan) VALUES ('default','global VLAN');
+INSERT INTO vlan (nomevlan,descrizionevlan,vrf) VALUES ('default','global VLAN',1);
 
 INSERT INTO
     paesi (idpaese, nomepaese)
