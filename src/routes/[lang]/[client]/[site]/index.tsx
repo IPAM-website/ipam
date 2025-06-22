@@ -92,15 +92,15 @@ export const getClient = server$(async function (idclient: number) {
 
 export const getAllNetworksBySite = server$(async function (idsito: number) {
   const sql = sqlForQwik(this.env);
-  let networks: ReteModel[] = [];
+  let networks: (ReteModel & {vrf:number})[] = [];
   try {
     if (isNaN(idsito)) {
       throw new Error("idsito non valido")
     }
     const query =
-      await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete 
+      await sql`SELECT rete.*, vlan.vrf FROM vlan INNER JOIN (rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete) ON vlan.vid=rete.vid 
                                 WHERE siti_rete.idsito=${idsito}`;
-    networks = query as unknown as ReteModel[];
+    networks = query as unknown as (ReteModel & {vrf:number})[];
   } catch (e) {
     console.log(e);
   }
@@ -246,7 +246,7 @@ export const getCity = server$(async function (data) {
 
 export const reloadData = server$(async function () {
   const sql = sqlForQwik(this.env);
-  return (await sql`SELECT rete.* FROM rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete WHERE siti_rete.idsito=${this.params.site}`) as unknown as ReteModel[];
+  return (await sql`SELECT rete.*, vlan.vrf FROM vlan INNER JOIN (rete INNER JOIN siti_rete ON rete.idrete=siti_rete.idrete) ON vlan.vid=rete.vid WHERE siti_rete.idsito=${this.params.site}`) as unknown as (ReteModel & {vrf:number})[];
 });
 
 export const insertNetworkFromCSV = server$(async function (data: string[][]) {
@@ -369,7 +369,7 @@ export default component$(() => {
   const lang = getLocale("en");
   const site = useSignal<SiteModel>();
   const client = useSignal<ClienteModel>();
-  const networks = useSignal<ReteModel[]>([]);
+  const networks = useSignal<(ReteModel & {vrf:number})[]>([]);
   const filteredNetworks = useSignal<ReteModel[]>([]);
   const city = useSignal<CittaModel>();
 
@@ -420,7 +420,6 @@ export default component$(() => {
 
     try {
       vrfs.value = await getAllVRF();
-      vlans.value = await getAllVLAN(formData.vrf);
       site.value = await getSite(parseInt(loc.params.site));
       networks.value = await getAllNetworksBySite(parseInt(loc.params.site));
       city.value = await getCity(parseInt(loc.params.site));
@@ -434,6 +433,7 @@ export default component$(() => {
     track(() => formData.vrf);
     try{
       vlans.value = await getAllVLAN(formData.vrf);
+      formData.vid = vlans.value[0].vid;
     }catch{
       console.log("Fetch error")
     }
@@ -570,6 +570,9 @@ export default component$(() => {
   const showPreviewCSV = $(() => {
     showPreview.value = true;
   });
+
+  const dmVLAN = $((e:any) => e.vid.toString())
+  const mVLAN = $((e:any) => e.vid.toString())
 
   return (
     <>
@@ -942,7 +945,7 @@ export default component$(() => {
                 <span class="text-red-600">{t("network.invalidprefix")}</span>
               )}
           </div>
-          <SelectForm
+          <SelectFormLive
             id="cmbVLAN"
             title="VLAN"
             name="VLAN"
@@ -952,13 +955,10 @@ export default component$(() => {
               formData.vid = parseInt((e.target as HTMLOptionElement).value);
             }}
             listName=""
-          >
-            {vlans.value.map((x: VLANModel) => (
-              <option key={x.vid} about={x.descrizionevlan} value={x.vid}>
-                {x.vid.toString()}
-              </option>
-            ))}
-          </SelectForm>
+            data={vlans.value}
+            displayMember={dmVLAN}
+            valueMember={"vid"}
+          />
           {attempted.value && !formData.vid && (
             <span class="text-red-600">{t("network.selectVLAN")}</span>
           )}
@@ -974,7 +974,7 @@ export default component$(() => {
             {vrfs.value.length > 0 &&
               vrfs.value.map((x) => (
                 <option key={x.idvrf} value={x.idvrf} about={x.descrizionevrf}>
-                  {x.nomevrf}
+                  {x.idvrf.toString()}
                 </option>
               ))}
           </SelectForm>
@@ -1022,7 +1022,7 @@ export default component$(() => {
           <div class="flex w-full justify-end">
             <input
               type="submit"
-              class="w-1/2 cursor-pointer rounded-md bg-black p-2 text-white hover:bg-gray-900 active:bg-gray-800 disabled:cursor-default disabled:bg-gray-600 dark:bg-gray-200 dark:hover:bg-white dark:text-gray-800"
+              class="w-1/2 cursor-pointer rounded-md bg-black p-2 text-white dark:text-black hover:bg-gray-900 dark:hover:bg-gray-100 active:bg-gray-800 disabled:cursor-default disabled:bg-gray-600 dark:bg-gray-200 not:disabled:dark:hover:bg-white disabled:dark:text-gray-800"
               value={t("confirm")}
               disabled={
                 formData.descrizione == "" ||

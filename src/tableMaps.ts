@@ -94,6 +94,7 @@ const TableMaps: { [key: string]: TableMap } = {
       "descrizione",
       "vid",
       "idrete",
+      "vrf"
     ],
   },
   aggregati: {

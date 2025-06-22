@@ -97,7 +97,7 @@ export default component$<DatiProps>(
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const freshData = funcReloadData
           ? await funcReloadData()
-          : await server$(async function () {
+          : await server$(async function()  {
             const sql = sqlForQwik(this.env)
             //console.log("Fetching data from server for table:", nT.value);
             const result = await sql`SELECT * FROM ${sql(nT.value)}`;
@@ -231,84 +231,80 @@ export default component$<DatiProps>(
 
     const t = inlineTranslate();
 
-    const topvalue = useSignal<number>(0);
-    useVisibleTask$(()=>{
-      const opt = document.getElementsByClassName("options")[0];
-      topvalue.value = opt?.clientTop;
-    })
+
 
     return (
       <>
         {/* Pulsante Ricarica */}
-        <div class="flex items-center justify-end sm:absolute right-0 px-1 pe-3 " style={{top:topvalue.value+"px"}}>
-        {/* <div class="m-5 mb-3 flex-auto font-['Inter'] text-base font-semibold text-black dark:text-gray-200">
+        <div class="flex items-center justify-end sm:absolute right-0 md:top-25 top-34 px-1 pe-3">
+          {/* <div class="m-5 mb-3 flex-auto font-['Inter'] text-base font-semibold text-black dark:text-gray-200">
             {title}
           </div> */}
-        <div class="has-tooltip flex h-full items-center">
-          <button
-            class="mx-2 cursor-pointer rounded-md border-[1.5px] border-black dark:border-gray-500 px-0.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-600"
-            onClick$={() => {
-              settings.visible = true;
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-6"
+          <div class="has-tooltip flex h-full items-center">
+            <button
+              class="mx-2 cursor-pointer rounded-md border-[1.5px] border-black dark:border-gray-500 px-0.5 py-0.5 hover:bg-gray-100 dark:hover:bg-gray-600"
+              onClick$={() => {
+                settings.visible = true;
+              }}
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-              />
-            </svg>
-          </button>
-          <span class="tooltip">{t("table.settings")}</span>
-        </div>
-
-        <button
-          id="btnReload"
-          onClick$={reloadData}
-          disabled={store.globalLoading}
-          class={`flex items-center rounded-md justify-center px-1.5 sm:px-3.5 py-1.5 ${store.globalLoading
-            ? "cursor-wait bg-gray-400 dark:bg-gray-600"
-            : "cursor-pointer bg-black text-white hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-white dark:text-black"
-            } transition-colors`}
-        >
-          {store.globalLoading ? (
-            <>
-              <div class="loader-spinner-small mr-2"></div>
-              {lang === "en" ? "Loading..." : "Caricamento..."}
-            </>
-          ) : (
-            <>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke-width="1.5"
                 stroke="currentColor"
-                class="sm:mr-2 h-5 w-5"
+                class="size-6"
               >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                  d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                 />
               </svg>
-              <span class="hidden sm:block">{t("table.reload")}</span>
-            </>
-          )}
-        </button>
-      </div>
+            </button>
+            <span class="tooltip">{t("table.settings")}</span>
+          </div>
+
+          <button
+            id="btnReload"
+            onClick$={reloadData}
+            disabled={store.globalLoading}
+            class={`flex items-center rounded-md px-3.5 py-1.5 ${store.globalLoading
+                ? "cursor-wait bg-gray-400 dark:bg-gray-600"
+                : "cursor-pointer bg-black text-white hover:bg-gray-900 dark:bg-gray-200 dark:hover:bg-white dark:text-black"
+              } transition-colors`}
+          >
+            {store.globalLoading ? (
+              <>
+                <div class="loader-spinner-small mr-2"></div>
+                {lang === "en" ? "Loading..." : "Caricamento..."}
+              </>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="mr-2 h-5 w-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                  />
+                </svg>
+                {t("table.reload")}
+              </>
+            )}
+          </button>
+        </div>
         <div class="mx-13 mt-2 flex items-center">
           <Slot></Slot>
         </div>
@@ -427,7 +423,7 @@ export default component$<DatiProps>(
                         </div>
                       ))}
                       <div class="flex flex-1 justify-end p-4 font-['Inter'] text-base leading-normal font-medium text-black">
-                        {!isClient && noModify == "" && (await mff(row)) && (
+                        {!isClient &&  noModify == "" && (await mff(row)) && (
                           <button
                             class="has-tooltip inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-amber-500 transition-colors hover:bg-amber-600"
                             onClick$={(e) => {
@@ -456,7 +452,7 @@ export default component$<DatiProps>(
                             </svg>
                           </button>
                         )}
-
+                        
 
                         {/* Pulsante Elimina */}
                         {!isClient && (await dff(row)) && (

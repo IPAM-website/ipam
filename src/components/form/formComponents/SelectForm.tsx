@@ -79,6 +79,7 @@ export default component$<SelectFormProps>(
         }
 
         opt.addEventListener("mouseenter", (e) => {
+          if(hoverTimeout.value) clearTimeout(hoverTimeout.value);
           hoverTimeout.value = setTimeout(() => {
             showToolTip(opt.getAttribute("about") ?? "", e);
           }, 500);
@@ -283,7 +284,7 @@ export default component$<SelectFormProps>(
         </div>
         <div
           ref={tooltip}
-          class="absolute z-50 rounded-xl border border-gray-400 bg-white p-2 text-gray-500 shadow"
+          class="absolute z-50 rounded-xl border border-gray-400 bg-gray-50/90 dark:bg-black/50 p-2 text-gray-800 dark:text-gray-300 shadow"
           style={{
             display: tooltipVisible.value ? "block" : "none",
             top: topDistance.value + "px",

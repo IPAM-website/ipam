@@ -101,14 +101,14 @@ export default component$<SelectFormProps>(
     const t = inlineTranslate();
 
     return (
-      <div class="flex w-full flex-row items-center bg-white px-2 py-2">
+      <div class="flex w-full flex-row items-center px-2 py-2">
         <label class="w-24 font-semibold" for={id}>
           {title}
         </label>
         <div
-          class="relative w-full bg-white"
+          class="relative w-full bg-transparent"
           style={{
-            backgroundColor: disabled ? "#f5f5f5" : "",
+            backgroundColor: disabled ? "rgba(255,255,255,0.2)" : "transparent",
             color: disabled ? "#ddd" : "",
           }}
         >
@@ -196,12 +196,12 @@ export default component$<SelectFormProps>(
               userSelect: "none",
               cursor: disabled ? "default" : "",
             }}
-            class="text-md relative flex w-full cursor-pointer items-center justify-start rounded-sm border border-gray-200 p-1.5 px-3 *:font-['Inter'] focus:border focus:border-black focus:outline-0"
+            class="text-md relative flex w-full cursor-pointer dark:bg-gray-600 items-center justify-start rounded-sm border border-gray-200 dark:border-gray-600 p-1.5 px-3 *:font-['Inter'] focus:border focus:border-black focus:outline-0"
             onClick$={handleSelected}
           >
             <div
               ref={selectedOption}
-              class="w-full flex-1"
+              class="w-full flex-1 dark:bg-gray-600"
             >{t("selectoption")}</div>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -211,7 +211,7 @@ export default component$<SelectFormProps>(
               stroke="currentColor"
               style="width:40px"
               class={
-                "absolute right-0 ms-2 size-3.5 flex-none text-gray-600 transition-all " +
+                "absolute right-0 ms-2 size-3.5 flex-none dark:text-gray-100 text-gray-600 transition-all " +
                 (clicked.value ? "rotate-z-180" : "")
               }
             >
@@ -241,15 +241,15 @@ export default component$<SelectFormProps>(
                 : "",
               zIndex: clicked.value ? "10" : "-100000",
             }}
-            class="text-md border-sm absolute -z-40 w-full rounded-md border border-gray-200 bg-white px-1 shadow-sm"
+            class="text-md border-sm absolute -z-40 w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-700 px-1 shadow-sm"
           >
             {listName != "" && (
-              <h3 class="bg-white p-1 ps-3 font-semibold">{listName}</h3>
+              <h3 class="bg-white p-1 dark:bg-gray-700 ps-3 font-semibold">{listName}</h3>
             )}
             {data.length != 0 ? (
               <div
                 ref={options}
-                class="max-h-[120px] cursor-pointer overflow-auto scroll-smooth *:bg-white *:p-1 *:px-2 *:pe-5 *:transition-all *:hover:bg-gray-50"
+                class="z-10 max-h-[120px] cursor-pointer overflow-auto scroll-smooth bg-white dark:*:bg-gray-700 *:bg-white *:p-1 *:px-2 *:pe-5 *:transition-all *:hover:bg-gray-50 dark:*:hover:bg-gray-600"
               >
                 {data.map(async (x) => (
                   <option value={x[valueMember]} key={x}>
