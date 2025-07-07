@@ -162,6 +162,13 @@ const TableMaps: { [key: string]: TableMap } = {
       "idrete",
     ],
   },
+  siti: {
+    headers: {
+      en: ["ID","Name","Datacenter","Type","City ID","Client ID"],
+      it: ["ID","Nome","Datacenter","Tipologia","ID Città","ID Cliente"]
+    },
+    keys: ["idsito", "nomesito", "datacenter", "tipologia", "idcitta", "idcliente"]
+  }
 };
 
 export const DBTableMaps: { [key: string]: DBTableMap } = {
@@ -211,7 +218,7 @@ export const DBTableMaps: { [key: string]: DBTableMap } = {
     keys: ["prefisso"],
   },
   vlan: {
-    keys: ["vid", "nomevlan", "descrizionevlan","vxlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan", "vxlan"],
   },
   vrf: {
     keys: ["idvrf", "nomevrf", "descrizionevrf"],
@@ -305,7 +312,7 @@ export const CSVInfoDBTableMaps: { [key: string]: CSVInfoDBTableMaps } = {
     keys: ["prefisso"],
   },
   vlan: {
-    keys: ["vid", "nomevlan", "descrizionevlan","vxlan"],
+    keys: ["vid", "nomevlan", "descrizionevlan", "vxlan"],
   },
   vrf: {
     keys: ["idvrf", "nomevrf", "descrizionevrf"],

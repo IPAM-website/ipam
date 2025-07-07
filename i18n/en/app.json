@@ -17,6 +17,7 @@
   "erasefilters": "Clear filters",
   "filters": "Filters",
   "importcsv": "Import CSV",
+  "exportcsv": "Export CSV",
   "infotabella": "Table information",
   "invalidlength": "Invalid length",
   "ipaddresses": "IP addresses",

@@ -13,7 +13,9 @@
       "clientSelection": "Client selection",
       "import": "Import",
       "placeholdercliente": "Client name",
-      "titleInfoCSV": "Format required for CSV import"
+      "titleInfoCSV": "Format required for CSV import",
+      "export":"Export",
+      "titleExportCSV":"Export CSV"
     },
     "gotoadmin": "Go to admin area",
     "infotabella": "Table information"

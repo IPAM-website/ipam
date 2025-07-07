@@ -42,6 +42,7 @@ import BtnInfoTable from "~/components/table/btnInfoTable";
 import TableInfoCSV from "~/components/table/tableInfoCSV";
 import { inlineTranslate } from "qwik-speak";
 import { getUser, isUserClient } from "~/fnUtils";
+import ExportCSV from "~/components/table/ExportCSV";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -674,6 +675,11 @@ export default component$(() => {
                 <ImportCSV
                   OnError={handleError}
                   OnOk={handleOkay}
+                />
+                <ExportCSV 
+                  OnError={handleError}
+                  OnOk={handleOkay}
+                  TABLENAME="indirizzi"
                 />
               </div>
             </div>

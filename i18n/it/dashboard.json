@@ -13,7 +13,8 @@
       "clientSelection": "Selezione cliente",
       "import": "Importa",
       "placeholdercliente": "Nome del cliente",
-      "titleInfoCSV": "Formato richiesto per l'importazione CSV"
+      "titleInfoCSV": "Formato richiesto per l'importazione CSV",
+      "export":"Esporta","titleExportCSV":"Esporta CSV"
     },
     "gotoadmin": "Vai all'area di amministrazione",
     "infotabella": "Informazioni tabella"
