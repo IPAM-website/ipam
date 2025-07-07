@@ -30,14 +30,15 @@ import SelectForm from "~/components/form/formComponents/SelectForm";
 import TextboxForm from "~/components/form/formComponents/TextboxForm";
 import type {
   ReteModel,
-  IntervalloModel
+  IntervalloModel,
+  IndirizziModel
 } from "~/dbModels";
 import ButtonAddLink from "~/components/table/ButtonAddLink";
 import Table from "~/components/table/Table";
 import Dati from "~/components/table/Dati_Headers";
 //import ImportCSV from "~/components/table/ImportCSV";
 import { inlineTranslate } from "qwik-speak";
-import { getUser, isUserClient } from "~/fnUtils";
+import { compareIPs, getUser, isUserClient } from "~/fnUtils";
 // import { useNotify } from "~/services/notifications";
 
 export const onRequest: RequestHandler = ({ params, redirect, url }) => {
@@ -108,38 +109,38 @@ export const useSiteName = routeLoader$(async ({ params, env }) => {
     .nomesito;
 });
 
-export const useAction = routeAction$(async (data, {env , params}) => {
-    const sql = sqlForQwik(env);
-    let success = false;
-    let type_message = 0;
-    const user = await getUser()
-    try {
-      if (params.mode == "update") {
-        await sql.begin(async (tx) => {
-          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-            await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`UPDATE intervalli SET nomeintervallo= ${data.nomeintervallo},iniziointervallo = ${data.iniziointervallo}, lunghezzaintervallo = ${data.lunghezzaintervallo}, fineintervallo=${data.fineintervallo},idrete=${data.idrete} WHERE idintervallo=${data.idintervallo}`;
-        });
-        type_message = 2;
-      } else {
-        await sql.begin(async (tx) => {
-          await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
-            await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
-          await tx`INSERT INTO intervalli(nomeintervallo,iniziointervallo,lunghezzaintervallo,fineintervallo,idrete) VALUES (${data.nomeintervallo},${data.iniziointervallo},${data.lunghezzaintervallo},${data.fineintervallo},${data.idrete})`;
-        });
-        type_message = 1;
-      }
-      success = true;
-    } catch (e) {
-      if (params.mode == "update") type_message = 4;
-      else type_message = 3;
+export const useAction = routeAction$(async (data, { env, params }) => {
+  const sql = sqlForQwik(env);
+  let success = false;
+  let type_message = 0;
+  const user = await getUser()
+  try {
+    if (params.mode == "update") {
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
+        await tx`UPDATE intervalli SET nomeintervallo= ${data.nomeintervallo},iniziointervallo = ${data.iniziointervallo}, lunghezzaintervallo = ${data.lunghezzaintervallo}, fineintervallo=${data.fineintervallo},idrete=${data.idrete} WHERE idintervallo=${data.idintervallo}`;
+      });
+      type_message = 2;
+    } else {
+      await sql.begin(async (tx) => {
+        await tx.unsafe(`SET LOCAL app.audit_user TO '${user.mail.replace(/'/g, "''")}'`);
+        await tx.unsafe(`SET LOCAL app.client_id = '${user.id}'`);
+        await tx`INSERT INTO intervalli(nomeintervallo,iniziointervallo,lunghezzaintervallo,fineintervallo,idrete) VALUES (${data.nomeintervallo},${data.iniziointervallo},${data.lunghezzaintervallo},${data.fineintervallo},${data.idrete})`;
+      });
+      type_message = 1;
     }
+    success = true;
+  } catch (e) {
+    if (params.mode == "update") type_message = 4;
+    else type_message = 3;
+  }
 
-    return {
-      success,
-      type_message,
-    };
-  },
+  return {
+    success,
+    type_message,
+  };
+},
   zod$({
     idintervallo: z.number(),
     nomeintervallo: z.string(),
@@ -202,26 +203,38 @@ export const isOccupied = server$(async function (this, data) {
   const sql = sqlForQwik(this.env)
   try {
     if (this.params.mode == "insert") {
-      const result = await sql`
-            SELECT COUNT(*) as count 
+      const result =( await sql`
+            SELECT *
             FROM indirizzi 
-            WHERE ip >= ${data.iniziointervallo} AND ip <= ${data.fineintervallo} AND idrete = ${data.idrete}
-            UNION 
-            SELECT COUNT(*) as count 
+            WHERE idrete = ${data.idrete}
+        `) as IndirizziModel[];
+      const  addresses = result.filter((x:IndirizziModel)=>(compareIPs(x.ip,data.iniziointervallo)>=0 && (compareIPs(x.ip,data.fineintervallo)<=0)))
+      const result2 = (await sql`SELECT *
             FROM intervalli 
-            WHERE idrete = ${data.idrete} 
-            
-            AND (
-            (iniziointervallo >= ${data.iniziointervallo} AND iniziointervallo <= ${data.fineintervallo}) 
-            OR (fineintervallo >= ${data.iniziointervallo} AND fineintervallo <= ${data.fineintervallo}) 
-            OR (iniziointervallo <= ${data.iniziointervallo} AND fineintervallo >= ${data.fineintervallo})
-            )
-        `;
-      const count = result.reduce((acc: number, i: any) => {
-        if (acc === undefined) acc = 0;
-        return acc + parseInt(i.count, 10);
-      }, 0);
-      return count > 0;
+            WHERE idrete = ${data.idrete}`) as IntervalloModel[];
+
+      let occupied = false;
+      for (const item of result2) {
+        if (
+          (compareIPs(item.iniziointervallo, data.iniziointervallo) <= 0 && compareIPs(item.fineintervallo, data.iniziointervallo) >= 0) ||
+          (compareIPs(item.iniziointervallo, data.iniziointervallo) >= 0 && compareIPs(item.iniziointervallo, data.fineintervallo) <= 0) ||
+          (compareIPs(item.fineintervallo,data.iniziointervallo)>=0 && compareIPs(item.fineintervallo,data.fineintervallo)<=0)
+        ) {
+          occupied = true;
+          break;
+        }
+
+      }
+      console.log("indirizzi trovati:",addresses)
+      console.log("intervalli:",occupied)
+      // const count = result.reduce((acc: number, i: any) => {
+      //   if (acc === undefined) acc = 0;
+      //   return acc + parseInt(i.cont, 10);
+      // }, 0);
+      // console.log(count)
+
+      // return count > 0;
+      return addresses.length > 0 || occupied;
     } else if (this.params.mode == "update") {
       const result = await sql`
             SELECT COUNT(*) as count 
@@ -306,33 +319,33 @@ export default component$(() => {
   });
 
   useVisibleTask$(() => {
-      const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
-      eventSource.onmessage = async (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          //console.log(data)
-          // Se il clientId dell'evento è diverso dal mio, mostra la notifica
-          if (isClient.value) {
+    const eventSource = new EventSource(`http://${window.location.hostname}:3010/events`);
+    eventSource.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        //console.log(data)
+        // Se il clientId dell'evento è diverso dal mio, mostra la notifica
+        if (isClient.value) {
           reloadFN.value?.()
         }
-        else{
-          if (data.table == "intervalli"){
+        else {
+          if (data.table == "intervalli") {
             if (data.clientId !== user.value?.id) {
               updateNotification.value = true;
             }
           }
         }
-        } catch (e) {
-          console.error('Errore parsing SSE:', event?.data);
-        }
-      };
-      return () => eventSource.close();
-    });
+      } catch (e) {
+        console.error('Errore parsing SSE:', event?.data);
+      }
+    };
+    return () => eventSource.close();
+  });
 
-    useTask$(async () => {
-      user.value = await getUser()
-      isClient.value = await isUserClient()
-    })
+  useTask$(async () => {
+    user.value = await getUser()
+    isClient.value = await isUserClient()
+  })
 
   /*const handleError = $((error: any) => {
     console.log(error);
@@ -597,7 +610,7 @@ export const CRUDForm = component$(
     useVisibleTask$(() => {
       clientIdSig.value = localStorage.getItem('clientId') ?? undefined;
     })
-    
+
 
     const network = useSignal<ReteModel>();
 

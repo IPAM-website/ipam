@@ -159,7 +159,7 @@ export default component$(() => {
                   activeClass="text-black"
                   class="block font-['Inter'] text-sm leading-6 font-semibold text-[#827d7d] hover:text-black dark:hover:text-gray-100"
                   onClick$={toggleSidebar}
-                  >{t("sidebar.vlan.view")}</NavLink>
+                  >{t("sidebar.vlan.insert")}</NavLink>
                 </Accordion>
               </div>
             ) : (
@@ -188,7 +188,7 @@ export default component$(() => {
                 <button
                   type="button"
                   class="my-1 block w-full cursor-pointer rounded-lg bg-[#d506ff] dark:bg-[#b506ff] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#c405ee]"
-                  onClick$={() => nav(baseSiteUrl.replace(loc.params.site + "/", ""))}
+                  onClick$={() => nav(getBaseURL()+"/"+loc.params.client)}
                 >
                   {t("sidebar.buttons.changesite")}
                 </button>
@@ -198,7 +198,7 @@ export default component$(() => {
                 <button
                   type="button"
                   class="my-1 block w-full cursor-pointer rounded-lg bg-[#1ada3a] dark:bg-[#10d030] p-1 text-center font-['Inter'] text-base leading-normal text-white hover:bg-[#10d030]"
-                  onClick$={() => nav(baseSiteUrl)}
+                  onClick$={() => nav(`${getBaseURL()}/${loc.params.client}/${loc.params.site}`)}
                 >
                   {t("sidebar.buttons.gotosite")}
                 </button>

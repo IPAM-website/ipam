@@ -50,3 +50,18 @@ export const isUserClient = server$(async function () {
 
   return client;
 });
+
+export const compareIPs = (ip1:string,ip2:string)=>{
+  if(ip1.split('.').length!=4 || ip2.split('.').length!=4) throw new Error("Format Error");
+  const parsedIP1 = ip1.split('.').map((x:string)=>parseInt(x));
+  const parsedIP2 = ip2.split('.').map((x:string)=>parseInt(x));
+  for(const index in parsedIP1)
+  {
+    if(parsedIP1[index]<parsedIP2[index])
+      return -1;      
+    else if(parsedIP1[index]>parsedIP2[index])
+      return 1;
+  }
+
+  return 0;
+}

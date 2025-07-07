@@ -17,7 +17,7 @@ import {
 } from "@builder.io/qwik-city";
 import { inlineTranslate } from "qwik-speak";
 import { sqlForQwik } from "~/../db";
-import type { ReteModel } from "~/dbModels";
+import type { IntervalloModel, ReteModel } from "~/dbModels";
 
 export const onRequest: RequestHandler = ({ redirect, params, url }) => {
   if (params.mode != "view")
@@ -63,6 +63,23 @@ export const getNetworkSpace = server$(async function (idrete: number) {
     result += (
       await sql`SELECT * FROM indirizzi WHERE indirizzi.idrete = ${idrete}`
     ).length;
+
+    const intervals = (
+      await sql`SELECT * FROM intervalli WHERE intervalli.idrete = ${idrete}`
+    ) as IntervalloModel[];
+
+    for(const item of intervals){
+      const parsedSIP = item.iniziointervallo.split(".").map((x:string)=>parseInt(x));
+      const parsedFIP = item.fineintervallo.split(".").map((x:string)=>parseInt(x));
+      for(let i=0;i<parsedSIP.length;i++)
+      {
+        result += Math.pow(256,3-i)*(parsedFIP[i]-parsedSIP[i]);
+      }
+    }
+
+
+
+    console.log(intervals)
 
     return result;
   } catch (e) {
@@ -224,7 +241,6 @@ export default component$(() => {
           <div class="flex flex-col gap-4 md:flex-row">
             <div class="mt-4 inline-flex flex-1 flex-col items-start justify-start gap-1 rounded-md border-1 border-gray-300 dark:bg-gray-800 dark:border-neutral-700 dark:text-gray-100 dark:**:text-gray-100  dark:**:border-gray-600 px-5 py-3 shadow-md">
               <div class="flex h-[50px] w-full items-center overflow-hidden">
-                <div class="text-lg font-semibold text-black">{t("network.info.networkinformation")}</div>
                 <div class="text-lg font-semibold text-black">{t("network.info.networkinformation")}</div>
               </div>
               <div class="inline-flex w-full items-center justify-between overflow-hidden border-t border-gray-300 px-2 py-2.5">

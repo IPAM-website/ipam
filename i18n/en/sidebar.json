@@ -26,7 +26,8 @@
     "logout": "Logout",
     "nooptions": "No options available. Please select a site first.",
     "vlan": {
-      "view": "View VLAN"
+      "view": "View VLAN",
+      "insert": "Add VLAN"
     },
     "vrf": {
       "add": "Add VRF",
